@@ -115,7 +115,7 @@ void subfind_loctree_findExtent(int npart, struct unbind_data *mp)
       if(mp)
         i = mp[k].index;
       else
-        terminate("what?");
+        terminate_program("what?");
 
 #ifdef CELL_CENTER_GRAVITY
       if(P[i].Type == 0)
@@ -224,7 +224,7 @@ int subfind_loctree_treebuild(int npart, struct unbind_data **udp)
       if(mp)
         i = mp[k].index;
       else
-        terminate("what?");
+        terminate_program("what?");
 
       MyDouble *posp;
 
@@ -354,7 +354,7 @@ int subfind_loctree_treebuild(int npart, struct unbind_data **udp)
 
                       sprintf(buf, "maximum number %d of tree-nodes reached., for particle %d  %g %g %g", MaxNodes, i, P[i].Pos[0],
                               P[i].Pos[1], P[i].Pos[2]);
-                      terminate(buf);
+                      terminate_program(buf);
                     }
                 }
             }
@@ -764,7 +764,7 @@ double subfind_locngb_treefind(MyDouble xyz[3], int desngb, double hguess)
   double h2max;
 
   if(hguess == 0)
-    terminate("hguess needed");
+    terminate_program("hguess needed");
 
   while(1)
     {
@@ -894,7 +894,7 @@ size_t subfind_loctree_treeallocate(int maxnodes, int maxpart)
   size_t bytes, allbytes = 0;
 
   if(LocNextNode)
-    terminate("loctree already allocated");
+    terminate_program("loctree already allocated");
 
   MaxNodes   = maxnodes;
   LocMaxPart = maxpart;

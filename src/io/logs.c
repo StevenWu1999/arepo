@@ -84,7 +84,7 @@ void open_logfiles(void)
 #ifdef DETAILEDTIMINGS
   sprintf(buf, "%stimings_detailed_%d.txt", All.OutputDir, ThisTask);
   if(!(FdDetailed = fopen(buf, mode)))
-    terminate("error in opening file '%s'\n", buf);
+    terminate_program("error in opening file '%s'\n", buf);
 #endif /* #ifdef DETAILEDTIMINGS */
 
   if(ThisTask != 0) /* only the root processors writes to the log files */
@@ -94,56 +94,56 @@ void open_logfiles(void)
   if(!(FdCPU = fopen(buf, mode)))
     {
       sprintf(msg, "error in opening file '%s'\n", buf);
-      terminate(msg);
+      terminate_program(msg);
     }
 
   sprintf(buf, "%s%s", All.OutputDir, "info.txt");
   if(!(FdInfo = fopen(buf, mode)))
     {
       sprintf(msg, "error in opening file '%s'\n", buf);
-      terminate(msg);
+      terminate_program(msg);
     }
 
   sprintf(buf, "%s%s", All.OutputDir, "energy.txt");
   if(!(FdEnergy = fopen(buf, mode)))
     {
       sprintf(msg, "error in opening file '%s'\n", buf);
-      terminate(msg);
+      terminate_program(msg);
     }
 
   sprintf(buf, "%s%s", All.OutputDir, "timings.txt");
   if(!(FdTimings = fopen(buf, mode)))
     {
       sprintf(msg, "error in opening file '%s'\n", buf);
-      terminate(msg);
+      terminate_program(msg);
     }
 
   sprintf(buf, "%s%s", All.OutputDir, "balance.txt");
   if(!(FdBalance = fopen(buf, mode)))
     {
       sprintf(msg, "error in opening file '%s'\n", buf);
-      terminate(msg);
+      terminate_program(msg);
     }
 
   sprintf(buf, "%s%s", All.OutputDir, "timebins.txt");
   if(!(FdTimebin = fopen(buf, mode)))
     {
       sprintf(msg, "error in opening file '%s'\n", buf);
-      terminate(msg);
+      terminate_program(msg);
     }
 
   sprintf(buf, "%s%s", All.OutputDir, "domain.txt");
   if(!(FdDomain = fopen(buf, mode)))
     {
       sprintf(msg, "error in opening file '%s'\n", buf);
-      terminate(msg);
+      terminate_program(msg);
     }
 
   sprintf(buf, "%s%s", All.OutputDir, "memory.txt");
   if(!(FdMemory = fopen(buf, mode)))
     {
       sprintf(msg, "error in opening file '%s'\n", buf);
-      terminate(msg);
+      terminate_program(msg);
     }
 
 #ifdef FORCETEST
@@ -151,7 +151,7 @@ void open_logfiles(void)
   if(!(FdForceTest = fopen(buf, mode)))
     {
       sprintf(msg, "error in opening file '%s'\n", buf);
-      terminate(msg);
+      terminate_program(msg);
     }
   fclose(FdForceTest);
 #endif /* #ifdef FORCETEST */
@@ -161,7 +161,7 @@ void open_logfiles(void)
   if(!(FdRestartTest = fopen(buf, mode)))
     {
       sprintf(msg, "error in opening file '%s'\n", buf);
-      terminate(msg);
+      terminate_program(msg);
     }
 #endif /* #ifdef RESTART_DEBUG */
 
@@ -170,7 +170,7 @@ void open_logfiles(void)
   if(!(FdCPUCSV = fopen(buf, mode)))
     {
       sprintf(msg, "error in opening file '%s'\n", buf);
-      terminate(msg);
+      terminate_program(msg);
     }
 #endif /* #ifdef OUTPUT_CPU_CSV */
 
@@ -179,7 +179,7 @@ void open_logfiles(void)
   if(!(FdSfr = fopen(buf, mode)))
     {
       sprintf(msg, "error in opening file '%s'\n", buf);
-      terminate(msg);
+      terminate_program(msg);
     }
 #endif /* #ifdef USE_SFR */
 

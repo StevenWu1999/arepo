@@ -1516,7 +1516,7 @@ int pmforce_nonperiodic(int grnr)
 
 #ifndef NUMPART_PER_TASK_LARGE
   if((((long long)NumPart) << 3) >= (((long long)1) << 31))
-    terminate("We are dealing with a too large particle number per MPI rank - enabling NUMPART_PER_TASK_LARGE might help.");
+    terminate_program("We are dealing with a too large particle number per MPI rank - enabling NUMPART_PER_TASK_LARGE might help.");
 #endif /* #ifndef NUMPART_PER_TASK_LARGE */
 
   double fac = All.G / pow(All.TotalMeshSize[grnr], 4) * pow(All.TotalMeshSize[grnr] / GRID, 3); /* to get potential */

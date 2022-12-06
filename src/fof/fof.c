@@ -105,7 +105,7 @@ void fof_fof(int num)
   /* check */
   for(i = 0; i < NumPart; i++)
     if((P[i].Mass == 0 && P[i].ID == 0) || (P[i].Type == 4 && P[i].Mass == 0))
-      terminate("this should not happen");
+      terminate_program("this should not happen");
 
   /* this structure will hold auxiliary information for each particle, needed only during group finding */
   PS = (struct subfind_data *)mymalloc_movable(&PS, "PS", All.MaxPart * sizeof(struct subfind_data));
@@ -240,11 +240,11 @@ void fof_fof(int num)
         {
           start++;
           if(start > NumPart)
-            terminate("start > NumPart");
+            terminate_program("start > NumPart");
         }
 
       if(FOF_PList[start].MinID != FOF_GList[i].MinID)
-        terminate("ID mismatch");
+        terminate_program("ID mismatch");
 
       for(lenloc = 0; start + lenloc < NumPart;)
         if(FOF_PList[start + lenloc].MinID == FOF_GList[i].MinID)
@@ -523,17 +523,17 @@ void fof_compile_catalogue(void)
         {
           start++;
           if(start >= NgroupsExt)
-            terminate("start >= NgroupsExt");
+            terminate_program("start >= NgroupsExt");
         }
 
       if(get_FOF_GList[i].LocCount != 0)
-        terminate("start >= NgroupsExt");
+        terminate_program("start >= NgroupsExt");
 
       if(FOF_GList[start].MinIDTask != ThisTask)
-        terminate("FOF_GList[start].MinIDTask != ThisTask");
+        terminate_program("FOF_GList[start].MinIDTask != ThisTask");
 
       if(FOF_GList[start].MinID != get_FOF_GList[i].MinID)
-        terminate(
+        terminate_program(
             "FOF_GList[start].MinID != get_FOF_GList[i].MinID start=%d i=%d FOF_GList[start].MinID=%llu get_FOF_GList[i].MinID=%llu\n",
             start, i, (long long)FOF_GList[start].MinID, (long long)get_FOF_GList[i].MinID);
 
@@ -547,7 +547,7 @@ void fof_compile_catalogue(void)
         {
           start++;
           if(start >= NgroupsExt)
-            terminate("start >= NgroupsExt");
+            terminate_program("start >= NgroupsExt");
         }
 
       get_FOF_GList[i].ExtCount = FOF_GList[start].ExtCount;
@@ -648,7 +648,7 @@ void fof_assign_group_numbers(void)
   if(ngr_sum != TotNgroups)
     {
       printf("ngr_sum=%d\n", (int)ngr_sum);
-      terminate("inconsistency");
+      terminate_program("inconsistency");
     }
 
   /* bring the group list back into the original order */
@@ -661,7 +661,7 @@ void fof_assign_group_numbers(void)
         {
           start++;
           if(start >= NgroupsExt)
-            terminate("start >= NgroupsExt");
+            terminate_program("start >= NgroupsExt");
         }
       Group[i].GrNr = FOF_GList[start].GrNr;
     }
@@ -678,11 +678,11 @@ void fof_assign_group_numbers(void)
         {
           start++;
           if(start > NumPart)
-            terminate("start > NumPart");
+            terminate_program("start > NumPart");
         }
 
       if(FOF_PList[start].MinID != FOF_GList[i].MinID)
-        terminate("FOF_PList[start=%d].MinID=%lld != FOF_GList[i=%d].MinID=%lld", start, (long long)FOF_PList[start].MinID, i,
+        terminate_program("FOF_PList[start=%d].MinID=%lld != FOF_GList[i=%d].MinID=%lld", start, (long long)FOF_PList[start].MinID, i,
                   (long long)FOF_GList[i].MinID);
 
       for(lenloc = 0; start + lenloc < NumPart;)
@@ -704,7 +704,7 @@ void fof_assign_group_numbers(void)
     {
       char buf[1000];
       sprintf(buf, "Task=%d Nids=%d totNids=%d TotNids=%d\n", ThisTask, Nids, (int)totNids, (int)TotNids);
-      terminate(buf);
+      terminate_program(buf);
     }
 
   t1 = second();
@@ -856,7 +856,7 @@ void fof_exchange_group_data(void)
         {
           start++;
           if(start >= NgroupsExt)
-            terminate("start >= NgroupsExt");
+            terminate_program("start >= NgroupsExt");
         }
 
       Group[start].Len += get_Group[i].Len;
@@ -921,7 +921,7 @@ void fof_finish_group_properties(void)
     }
 
   if(ngr != Ngroups)
-    terminate("ngr != Ngroups");
+    terminate_program("ngr != Ngroups");
 
   mysort(Group, Ngroups, sizeof(struct group_properties), fof_compare_Group_MinID);
 }

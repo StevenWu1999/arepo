@@ -467,18 +467,18 @@ static void check_restart_files(char *buf, struct check *ch, int *success)
               size_t n = PageSize - (size % PageSize);
               char *p  = calloc(n, 1);
               if(p == NULL)
-                terminate("p == NULL");
+                terminate_program("p == NULL");
               printf("RESTART: Topping of restart file '%s' by %lld bytes\n", buf, (long long)n);
               fwrite(p, n, 1, fd);
               fclose(fd);
               free(p);
             }
           else
-            terminate("can't increase length of restart file '%s'", buf);
+            terminate_program("can't increase length of restart file '%s'", buf);
         }
     }
   else
-    terminate("Restart file '%s' not found.\n", buf);
+    terminate_program("Restart file '%s' not found.\n", buf);
 #endif /* #ifdef USE_DIRECT_IO_FOR_RESTARTS */
   int oflag = O_RDONLY;
 #ifdef USE_DIRECT_IO_FOR_RESTARTS
@@ -486,7 +486,7 @@ static void check_restart_files(char *buf, struct check *ch, int *success)
 #endif /* #ifdef USE_DIRECT_IO_FOR_RESTARTS */
 
   if((fdint = open(buf, oflag)) < 0)
-    terminate("Restart file '%s' not found.\n", buf);
+    terminate_program("Restart file '%s' not found.\n", buf);
 
   allocate_iobuf();
 
@@ -528,7 +528,7 @@ static void check_restart_files(char *buf, struct check *ch, int *success)
       sprintf(newname, "%s-damaged", buf);
       rename(buf, newname);
 
-      terminate("RESTART: file '%s' has MD5 hash of '%s', does not match expected hash '%s' or written hash '%s'.", newname, str_has,
+      terminate_program("RESTART: file '%s' has MD5 hash of '%s', does not match expected hash '%s' or written hash '%s'.", newname, str_has,
                 str_expected, str_written);
       *success = 0;
     }
@@ -660,7 +660,7 @@ static void work_files(int modus)
 {
   if(ThisTask == 0)
     if(!(seq = malloc(NTask * sizeof(struct seq_data))))
-      terminate("can't allocate seq_data");
+      terminate_program("can't allocate seq_data");
 
   struct seq_data seq_loc;
   seq_loc.thistask   = ThisTask;
@@ -673,7 +673,7 @@ static void work_files(int modus)
     {
       qsort(seq, NTask, sizeof(struct seq_data), compare_seq_data);
       if(seq[0].thistask != 0)
-        terminate("unexpected");
+        terminate_program("unexpected");
 
       files_started   = 0;
       files_completed = 0;
@@ -841,9 +841,9 @@ void restart(int modus)
     if(ThisTask == 0)
       {
         if(!(checks = malloc(NTask * sizeof(struct check))))
-          terminate("can't allocate checks");
+          terminate_program("can't allocate checks");
         if(!(write_success = malloc(NTask)))
-          terminate("can't allocate write_success");
+          terminate_program("can't allocate write_success");
 
         for(int i = 0; i < NTask; i++)
           {
@@ -891,7 +891,7 @@ void restart(int modus)
 
           iter++;
           if(iter > 4)
-            terminate("Too many iterations, fix your file system.");
+            terminate_program("Too many iterations, fix your file system.");
 
           work_files(MODUS_WRITE);
         };
@@ -910,7 +910,7 @@ void restart(int modus)
       MPI_Bcast(&all_task0, sizeof(struct global_data_all_processes), MPI_BYTE, 0, MPI_COMM_WORLD);
 
       if(all_task0.Time != All.Time)
-        terminate("The restart file on task=%d is not consistent with the one on task=0\n", ThisTask);
+        terminate_program("The restart file on task=%d is not consistent with the one on task=0\n", ThisTask);
     }
 
   long long byte_count_all;
@@ -990,25 +990,25 @@ static int execute_write_or_read(int modus, char *buf, struct check *ch)
                       size_t n = PageSize - (size % PageSize);
                       char *p  = calloc(n, 1);
                       if(p == NULL)
-                        terminate("p == NULL");
+                        terminate_program("p == NULL");
                       printf("RESTART: Topping of restart file '%s' by %lld bytes\n", buf, (long long)n);
                       fwrite(p, n, 1, fd);
                       fclose(fd);
                       free(p);
                     }
                   else
-                    terminate("can't increase length of restart file '%s'", buf);
+                    terminate_program("can't increase length of restart file '%s'", buf);
                 }
             }
           else
-            terminate("Restart file '%s' not found.\n", buf);
+            terminate_program("Restart file '%s' not found.\n", buf);
 #endif /* #ifdef USE_DIRECT_IO_FOR_RESTARTS */
           int oflag = O_RDONLY;
 #ifdef USE_DIRECT_IO_FOR_RESTARTS
           oflag |= O_DIRECT;
 #endif /* #ifdef USE_DIRECT_IO_FOR_RESTARTS */
           if((fdint = open(buf, oflag)) < 0)
-            terminate("Restart file '%s' not found.\n", buf);
+            terminate_program("Restart file '%s' not found.\n", buf);
 
           allocate_iobuf();
         }
@@ -1037,14 +1037,14 @@ static int execute_write_or_read(int modus, char *buf, struct check *ch)
             }
 
           if(try_open == IO_TRIALS)
-            terminate("Opening of restart file failed too often!");
+            terminate_program("Opening of restart file failed too often!");
 #else /* #ifdef TOLERATE_WRITE_ERROR */
       int oflag = O_WRONLY | O_CREAT | O_TRUNC;
 #ifdef USE_DIRECT_IO_FOR_RESTARTS
       oflag |= O_DIRECT;
 #endif /* #ifdef USE_DIRECT_IO_FOR_RESTARTS */
       if((fdint = open(buf, oflag, S_IRUSR | S_IWUSR | S_IRGRP)) < 0)
-        terminate("Restart file '%s' cannot be opened.\n", buf);
+        terminate_program("Restart file '%s' cannot be opened.\n", buf);
 #endif /* #ifdef TOLERATE_WRITE_ERROR #else */
           allocate_iobuf();
         }
@@ -1077,7 +1077,7 @@ static int execute_write_or_read(int modus, char *buf, struct check *ch)
 
               str_has[32] = str_written[32] = 0;
 
-              terminate("RESTART: file '%s' does not match expected MD5 hash of '%s', found '%s' instead.", buf, str_has, str_written);
+              terminate_program("RESTART: file '%s' does not match expected MD5 hash of '%s', found '%s' instead.", buf, str_has, str_written);
             }
         }
       else if(modus == MODUS_READCHECK)
@@ -1095,7 +1095,7 @@ static int execute_write_or_read(int modus, char *buf, struct check *ch)
 
               failed_flag = 1;
 
-              terminate(
+              terminate_program(
                   "RESTART-READCHECK: file '%s' does not match expected MD5 hash of '%s' after read-back check, has '%s' instead.",
                   buf, str_should, str_has);
             }
@@ -1129,7 +1129,7 @@ static int execute_write_or_read(int modus, char *buf, struct check *ch)
             should_hash[k] = has_hash[k];
         }
       else
-        terminate("This should not happen - wrong modus!");
+        terminate_program("This should not happen - wrong modus!");
 
       deallocate_iobuf(modus);
 
@@ -1151,7 +1151,7 @@ static int execute_write_or_read(int modus, char *buf, struct check *ch)
         }
       else
         {
-          terminate("TOLERATE_WRITE_ERROR: Second try with alternative file failed too.\n");
+          terminate_program("TOLERATE_WRITE_ERROR: Second try with alternative file failed too.\n");
         }
     }
 #endif /* #ifdef TOLERATE_WRITE_ERROR */
@@ -1184,7 +1184,7 @@ static void contents_restart_file(int modus)
 
   if(modus == MODUS_READ)
     if(ntask != NTask)
-      terminate("The restart files were written for ntask=%d while you're using now %d MPI ranks\n", ntask, NTask);
+      terminate_program("The restart files were written for ntask=%d while you're using now %d MPI ranks\n", ntask, NTask);
 
   in(&NumPart, modus);
 
@@ -1312,12 +1312,12 @@ void readjust_timebase(double TimeMax_old, double TimeMax_new)
   long long ti_end;
 
   if(sizeof(long long) != 8)
-    terminate("\nType 'long long' is not 64 bit on this platform\n\n");
+    terminate_program("\nType 'long long' is not 64 bit on this platform\n\n");
 
   mpi_printf("\nRESTART: All.TimeMax has been changed in the parameterfile\nNeed to adjust integer timeline\n\n\n");
 
   if(TimeMax_new < TimeMax_old)
-    terminate("\nIt is not allowed to reduce All.TimeMax\n\n");
+    terminate_program("\nIt is not allowed to reduce All.TimeMax\n\n");
 
   if(All.ComovingIntegrationOn)
     ti_end = (long long)(log(TimeMax_new / All.TimeBegin) / All.Timebase_interval);
@@ -1348,7 +1348,7 @@ void readjust_timebase(double TimeMax_old, double TimeMax_new)
                 {
                   char buf[1000];
                   sprintf(buf, "Error in readjust_timebase(). Minimum Timebin for particle %d reached.\n", i);
-                  terminate(buf);
+                  terminate_program(buf);
                 }
             }
 
@@ -1360,7 +1360,7 @@ void readjust_timebase(double TimeMax_old, double TimeMax_new)
                   {
                     char buf[1000];
                     sprintf(buf, "Error in readjust_timebase(). Minimum Timebin for particle %d reached.\n", i);
-                    terminate(buf);
+                    terminate_program(buf);
                   }
               }
         }
@@ -1460,7 +1460,7 @@ void byten_hash(void *x, size_t n, int modus, int hash)
                     nn = MAX_BLOCK_SIZE - fillp;
 
                   if(read(fdint, iobuf_aligned + fillp, nn) != nn)
-                    terminate("read error");
+                    terminate_program("read error");
 
                   fillp += nn;
                 }
@@ -1493,7 +1493,7 @@ void byten_hash(void *x, size_t n, int modus, int hash)
                 {
                   size_t nn = MAX_BLOCK_SIZE;
                   if(write(fdint, iobuf_aligned, nn) != nn)
-                    terminate("write error");
+                    terminate_program("write error");
 
                   iop = 0;
                 }
@@ -1512,10 +1512,10 @@ void byten_hash(void *x, size_t n, int modus, int hash)
 void allocate_iobuf(void)
 {
   if((MAX_BLOCK_SIZE % PageSize) > 0)
-    terminate("MAX_BLOCK_SIZE must be a multiple of PageSize");
+    terminate_program("MAX_BLOCK_SIZE must be a multiple of PageSize");
 
   if(!(io_buf = malloc(MAX_BLOCK_SIZE + PageSize)))
-    terminate("cannot allocated IO buffer");
+    terminate_program("cannot allocated IO buffer");
 
   iobuf_aligned = (char *)(((((size_t)io_buf) + (PageSize - 1)) / PageSize) * PageSize);
 
@@ -1541,7 +1541,7 @@ void deallocate_iobuf(int modus)
             iop = ((iop / PageSize) + 1) * PageSize;
 
           if(write(fdint, iobuf_aligned, iop) != iop)
-            terminate("write error");
+            terminate_program("write error");
         }
     }
 

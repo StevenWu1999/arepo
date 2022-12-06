@@ -124,7 +124,7 @@ void read_ic(const char *fname, int readTypes)
 
   if((All.ICFormat < 1) || (All.ICFormat > 4))
     {
-      mpi_terminate("ICFormat=%d not supported.\n", All.ICFormat);
+      mpi_terminate_program("ICFormat=%d not supported.\n", All.ICFormat);
     }
 
   t0 = second();
@@ -233,7 +233,7 @@ void read_ic(const char *fname, int readTypes)
           if(All.TotPartSpecial != 0)
             All.MaxPartSpecial = (int)(All.TotPartSpecial);
           else
-            terminate("Code compiled with option EXACT_GRAVITY_FOR_PARTICLE_TYPE but no particles of specified type found in ICs.");
+            terminate_program("Code compiled with option EXACT_GRAVITY_FOR_PARTICLE_TYPE but no particles of specified type found in ICs.");
 #endif /* #ifdef EXACT_GRAVITY_FOR_PARTICLE_TYPE */
           allocate_memory();
 
@@ -261,7 +261,7 @@ void read_ic(const char *fname, int readTypes)
   if(header.flag_entropy_instead_u)
     {
       sprintf(buf, "\nProblem: Legacy ICs cannot contain entropy in the u field!\n");
-      terminate(buf);
+      terminate_program(buf);
     }
 
   for(i = 0; i < NumGas; i++)
@@ -320,7 +320,7 @@ void read_ic(const char *fname, int readTypes)
           NumGas += count;
 
           if(NumGas > All.MaxPartSph)
-            terminate("Task=%d ends up getting more SPH particles (%d) than allowed (%d)\n", ThisTask, NumGas, All.MaxPartSph);
+            terminate_program("Task=%d ends up getting more SPH particles (%d) than allowed (%d)\n", ThisTask, NumGas, All.MaxPartSph);
 
 #ifdef REFINEMENT_HIGH_RES_GAS
           for(i = 0; i < NumGas - count; i++) /* make sure that AllowRefinement is shifted with the particles */
@@ -384,7 +384,7 @@ void read_ic(const char *fname, int readTypes)
     domain_resize_storage(0, NumPart, 0);
 
     if(NumGas > All.MaxPartSph)
-      terminate("Task=%d ends up getting more SPH particles (%d) than allowed (%d)\n", ThisTask, NumGas, All.MaxPartSph);
+      terminate_program("Task=%d ends up getting more SPH particles (%d) than allowed (%d)\n", ThisTask, NumGas, All.MaxPartSph);
 
     for(i = 0; i < NumPart; i++)
       {
@@ -477,7 +477,7 @@ void read_ic(const char *fname, int readTypes)
     num += 1;
   sumup_large_ints(1, &num, &glob_num);
   if(glob_num != All.TotNumPart)
-    terminate("glob_num (=%lld) != All.TotNumPart (=%lld)", glob_num, All.TotNumPart);
+    terminate_program("glob_num (=%lld) != All.TotNumPart (=%lld)", glob_num, All.TotNumPart);
 
   mpi_printf("READIC: Total number of particles :  %lld\n\n", All.TotNumPart);
 
@@ -513,7 +513,7 @@ MyIDType determine_ids_offset(void)
   All.MaxID = 0; /* reset to allow recomputing */
 
   if(ids_offset <= 0)
-    terminate("not enough memory to generate id offsets. Used %d bits out of %d\n", bits_used, bits_available);
+    terminate_program("not enough memory to generate id offsets. Used %d bits out of %d\n", bits_used, bits_available);
 
 #ifdef LONGIDS
   mpi_printf("GENERATE_GAS_IN_ICS: determined id offset as %llu. Used %d bits out of %d\n", ids_offset, bits_used, bits_available);
@@ -582,7 +582,7 @@ void empty_read_buffer(enum iofields blocknr, int offset, int pc, int type)
     }
 
   if(field < 0)
-    terminate("error: field not found");
+    terminate_program("error: field not found");
 
   for(n = 0; n < pc; n++)
     {
@@ -597,17 +597,17 @@ void empty_read_buffer(enum iofields blocknr, int offset, int pc, int type)
                 particle = offset + n;
                 break;
               case A_PS:
-                terminate("Not good, trying to read into PS[]?\n");
+                terminate_program("Not good, trying to read into PS[]?\n");
                 break;
               default:
-                terminate("ERROR in empty_read_buffer: Array not found!\n");
+                terminate_program("ERROR in empty_read_buffer: Array not found!\n");
                 break;
             }
 
           switch(IO_Fields[field].type_in_file_input)
             {
               case FILE_NONE:
-                terminate("error");
+                terminate_program("error");
                 break;
               case FILE_INT:
                 IO_Fields[field].io_func(particle, IO_Fields[field].values_per_block, intp, 1);
@@ -646,10 +646,10 @@ void empty_read_buffer(enum iofields blocknr, int offset, int pc, int type)
                 array_pos = P + offset + n;
                 break;
               case A_PS:
-                terminate("Not good, trying to read into PS[]?\n");
+                terminate_program("Not good, trying to read into PS[]?\n");
                 break;
               default:
-                terminate("ERROR in empty_read_buffer: Array not found!\n");
+                terminate_program("ERROR in empty_read_buffer: Array not found!\n");
                 break;
             }
 
@@ -705,7 +705,7 @@ void empty_read_buffer(enum iofields blocknr, int offset, int pc, int type)
                     break;
 
                   default:
-                    terminate("ERROR in empty_read_buffer: Type not found!\n");
+                    terminate_program("ERROR in empty_read_buffer: Type not found!\n");
                     break;
                 }
             }
@@ -753,7 +753,7 @@ void share_particle_number_in_file(const char *fname, int filenr, int readTask, 
           if(!(fd = fopen(fname, "r")))
             {
               sprintf(buf, "can't open file `%s' for reading initial conditions.\n", fname);
-              terminate(buf);
+              terminate_program(buf);
             }
 
           if(All.ICFormat == 2)
@@ -779,7 +779,7 @@ void share_particle_number_in_file(const char *fname, int filenr, int readTask, 
           swap_Nbyte((char *)&blksize2, 1, 4);
 
           if(blksize1 != 256 || blksize2 != 256)
-            terminate("incorrect header format blocksize %d, %d\n", blksize1, blksize2);
+            terminate_program("incorrect header format blocksize %d, %d\n", blksize1, blksize2);
 
           swap_header();
 
@@ -800,7 +800,7 @@ void share_particle_number_in_file(const char *fname, int filenr, int readTask, 
 
           hdf5_file = my_H5Fopen(fname, H5F_ACC_RDONLY, H5P_DEFAULT);
           if(hdf5_file < 0)
-            terminate("cannot read initial conditions file %s", fname);
+            terminate_program("cannot read initial conditions file %s", fname);
 
           for(type = 0; type < NTYPES; type++)
             {
@@ -871,7 +871,7 @@ void share_particle_number_in_file(const char *fname, int filenr, int readTask, 
       if(RestartFlag == 0)
         {
           if(All.TotNumGas > 0)
-            terminate("You specified GENERATE_GAS_IN_ICS but your ICs already contain gas! (namely %lld gas cells)\n", All.TotNumGas);
+            terminate_program("You specified GENERATE_GAS_IN_ICS but your ICs already contain gas! (namely %lld gas cells)\n", All.TotNumGas);
 
 #ifdef SPLIT_PARTICLE_TYPE
           for(i = 0; i < NTYPES; i++)
@@ -1002,7 +1002,7 @@ void read_file(const char *fname, int filenr, int readTask, int lastTask, int re
           if(!(fd = fopen(fname, "r")))
             {
               sprintf(buf, "can't open file `%s' for reading initial conditions.\n", fname);
-              terminate(buf);
+              terminate_program(buf);
             }
 
           if(All.ICFormat == 2)
@@ -1045,7 +1045,7 @@ void read_file(const char *fname, int filenr, int readTask, int lastTask, int re
 
           hdf5_file = my_H5Fopen(fname, H5F_ACC_RDONLY, H5P_DEFAULT);
           if(hdf5_file < 0)
-            terminate("cannot read initial conditions file %s", fname);
+            terminate_program("cannot read initial conditions file %s", fname);
 
           for(type = 0; type < NTYPES; type++)
             {
@@ -1077,13 +1077,13 @@ void read_file(const char *fname, int filenr, int readTask, int lastTask, int re
   if(header.flag_doubleprecision == 0)
     {
       sprintf(buf, "\nProblem: Code compiled with INPUT_IN_DOUBLEPRECISION, but input files are in single precision!\n");
-      terminate(buf);
+      terminate_program(buf);
     }
 #else  /* #ifdef INPUT_IN_DOUBLEPRECISION */
   if(header.flag_doubleprecision)
     {
       sprintf(buf, "\nProblem: Code not compiled with INPUT_IN_DOUBLEPRECISION, but input files are in double precision!\n");
-      terminate(buf);
+      terminate_program(buf);
     }
 #endif /* #ifdef INPUT_IN_DOUBLEPRECISION #else */
 
@@ -1198,7 +1198,7 @@ void read_file(const char *fname, int filenr, int readTask, int lastTask, int re
                         {
                           sprintf(buf, "incorrect block-structure!\nexpected '%c%c%c%c' but found '%c%c%c%c'\n", expected_label[0],
                                   expected_label[1], expected_label[2], expected_label[3], label[0], label[1], label[2], label[3]);
-                          terminate(buf);
+                          terminate_program(buf);
                         }
                     }
 
@@ -1232,7 +1232,7 @@ void read_file(const char *fname, int filenr, int readTask, int lastTask, int re
 
                           if(task == ThisTask)
                             if(NumPart + n_for_this_task > All.MaxPart)
-                              terminate("too many particles. %d %d %d\n", NumPart, n_for_this_task, All.MaxPart);
+                              terminate_program("too many particles. %d %d %d\n", NumPart, n_for_this_task, All.MaxPart);
 
                           /* blocked load to fit in finite size of CommBuffer */
                           do
@@ -1297,7 +1297,7 @@ void read_file(const char *fname, int filenr, int readTask, int lastTask, int re
                                             hdf5_datatype = my_H5Tcopy(H5T_NATIVE_FLOAT);
                                             break;
                                           default:
-                                            terminate("can't process this input type");
+                                            terminate_program("can't process this input type");
                                             break;
                                         }
 
@@ -1366,7 +1366,7 @@ void read_file(const char *fname, int filenr, int readTask, int lastTask, int re
                             {
                               strcat(buf, "Possible mismatch of 32bit and 64bit ID's in IC file and AREPO compilation !\n");
                             }
-                          terminate(buf);
+                          terminate_program(buf);
                         }
                     }
                 }
@@ -1432,7 +1432,7 @@ int find_files(const char *fname)
 #ifndef HAVE_HDF5
   if(All.ICFormat == 3)
     {
-      mpi_terminate("Code wasn't compiled with HDF5 support enabled!\n");
+      mpi_terminate_program("Code wasn't compiled with HDF5 support enabled!\n");
     }
 #endif /* #ifndef HAVE_HDF5 */
 
@@ -1489,9 +1489,9 @@ int find_files(const char *fname)
   MPI_Bcast(&header, sizeof(header), MPI_BYTE, 0, MPI_COMM_WORLD);
 
   if(header.num_files < 0)
-    terminate("header.num_files < 0");
+    terminate_program("header.num_files < 0");
   if(header.num_files > 100000)
-    terminate("header.num_files=%d read from %s does not make sense - header possibly corrupt.", header.num_files, buf);
+    terminate_program("header.num_files=%d read from %s does not make sense - header possibly corrupt.", header.num_files, buf);
   if(header.num_files > 0)
     return header.num_files;
 
@@ -1549,7 +1549,7 @@ int find_files(const char *fname)
   if(header.num_files > 0)
     return header.num_files;
 
-  mpi_terminate("\nCan't find initial conditions file, neither as '%s'\nnor as '%s'\n", buf, buf1);
+  mpi_terminate_program("\nCan't find initial conditions file, neither as '%s'\nnor as '%s'\n", buf, buf1);
   return -1;
 }
 
@@ -1591,7 +1591,7 @@ void distribute_file(int nfiles, int firstfile, int firsttask, int lasttask, int
       if(*last >= NTask)
         *last = *last - 1;
       if(*last < *master)
-        terminate("last < master");
+        terminate_program("last < master");
       *filenr = i;
 
       if(i == nfiles - 1)
@@ -1615,7 +1615,7 @@ herr_t hdf5_header_error_handler(void *unused)
   write_error(3, 0, 0);
   return 1;
 #else
-  terminate("Failed to read HDF5 header attribute. Probably your file is corrupt.\n");
+  terminate_program("Failed to read HDF5 header attribute. Probably your file is corrupt.\n");
   return 0;
 #endif
 }

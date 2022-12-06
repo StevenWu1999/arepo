@@ -200,7 +200,7 @@ void move_collisionless_particle(int new_i, int old_i)
   else
     {
       if(tbData->FirstInTimeBin[bin] != old_i)
-        terminate("strange");
+        terminate_program("strange");
       tbData->FirstInTimeBin[bin] = new_i;
     }
 
@@ -209,7 +209,7 @@ void move_collisionless_particle(int new_i, int old_i)
   else
     {
       if(tbData->LastInTimeBin[bin] != old_i)
-        terminate("strange");
+        terminate_program("strange");
       tbData->LastInTimeBin[bin] = new_i;
     }
 }

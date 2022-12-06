@@ -108,7 +108,7 @@ void subfind_save_final(int num)
 #ifndef HAVE_HDF5
   if(All.SnapFormat == 3)
     {
-      mpi_terminate("Code wasn't compiled with HDF5 support enabled!\n");
+      mpi_terminate_program("Code wasn't compiled with HDF5 support enabled!\n");
     }
 #endif /* #ifndef  HAVE_HDF5 */
 

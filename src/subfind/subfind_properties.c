@@ -146,7 +146,7 @@ void subfind_determine_sub_halo_properties(struct unbind_data *d, int num, struc
       myfree(minpotlist);
 
       if(mincpu < 0)
-        terminate("mincpu < 0");
+        terminate_program("mincpu < 0");
 
       if(SubThisTask == mincpu)
         for(j = 0; j < 3; j++)
@@ -170,7 +170,7 @@ void subfind_determine_sub_halo_properties(struct unbind_data *d, int num, struc
   else
     {
       if(minindex == -1)
-        terminate("minindex == -1");
+        terminate_program("minindex == -1");
 
       for(j = 0; j < 3; j++)
         {
@@ -213,7 +213,7 @@ void subfind_determine_sub_halo_properties(struct unbind_data *d, int num, struc
       myfree(minpotlist);
 
       if(mincpu < 0)
-        terminate("mincpu < 0");
+        terminate_program("mincpu < 0");
 
       if(SubThisTask == mincpu)
         {
@@ -225,7 +225,7 @@ void subfind_determine_sub_halo_properties(struct unbind_data *d, int num, struc
   else
     {
       if(minindex == -1)
-        terminate("minindex == -1");
+        terminate_program("minindex == -1");
 
       mostboundid = P[minindex].ID;
     }
@@ -597,7 +597,7 @@ void subfind_determine_sub_halo_properties(struct unbind_data *d, int num, struc
         }
 
       if(itmp != len_type_loc[type])
-        terminate("should not occur: %d %d", itmp, len_type_loc[type]);
+        terminate_program("should not occur: %d %d", itmp, len_type_loc[type]);
 
       if(parallel_flag)
         parallel_sort_comm(rr_list, len_type_loc[type], sizeof(sort_r2list), subfind_compare_dist_rotcurve, SubComm);

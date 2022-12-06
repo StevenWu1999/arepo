@@ -177,7 +177,7 @@ void subfind_coll_domain_decomposition(void)
           zb >>= blocks;
           int idx = (xb & 1) | ((yb & 1) << 1) | ((zb & 1) << 2);
           if(idx < 0 || idx > 7)
-            terminate("j=%d  idx=%d", j, idx);
+            terminate_program("j=%d  idx=%d", j, idx);
 
           SubTopNodes[i].MortonToPeanoSubnode[idx] = j;
         }
@@ -294,7 +294,7 @@ int subfind_coll_domain_determineTopTree(void)
     }
 
   if(count != NumPartGroup)
-    terminate("cost != NumPartGroup");
+    terminate_program("cost != NumPartGroup");
 
   mysort_domain(mp, count, sizeof(struct domain_peano_hilbert_data));
 
@@ -311,7 +311,7 @@ int subfind_coll_domain_determineTopTree(void)
   int limitNTopNodes = 2 * imax(1 + (NTask / 7 + 1) * 8, All.TopNodeFactor * SubNTask);
 
   if(limitNTopNodes > MaxTopNodes)
-    terminate("limitNTopNodes > MaxTopNodes");
+    terminate_program("limitNTopNodes > MaxTopNodes");
 
   RB_INIT(&queue_load);
   nload     = mymalloc("nload", limitNTopNodes * sizeof(struct mydata));
@@ -378,7 +378,7 @@ int subfind_coll_domain_determineTopTree(void)
   subfind_coll_domain_walktoptree(0);
 
   if(SubNTopleaves < SubNTask)
-    terminate("SubNTopleaves = %d < SubNTask = %d", SubNTopleaves, SubNTask);
+    terminate_program("SubNTopleaves = %d < SubNTask = %d", SubNTopleaves, SubNTask);
 
   return 0;
 }
@@ -422,7 +422,7 @@ void subfind_domain_do_local_refine(int n, int *list)
       for(int p = Sub_LocTopNodes[i].PIndex, j = 0; p < Sub_LocTopNodes[i].PIndex + Sub_LocTopNodes[i].Count; p++)
         {
           if(PS[mp[p].index].GrNr != GrNr)
-            terminate("Houston, we have a problem.");
+            terminate_program("Houston, we have a problem.");
 
           if(j < 7)
             while(mp[p].key >= Sub_LocTopNodes[sub + 1].StartKey)
@@ -595,7 +595,7 @@ void subfind_coll_domain_allocate(void)
   MaxTopNodes = (int)(All.TopNodeAllocFactor * All.MaxPart + 1);
 
   if(SubDomainTask)
-    terminate("subfind collective domain storage already allocated");
+    terminate_program("subfind collective domain storage already allocated");
 
   SubTopNodes   = (struct topnode_data *)mymalloc_movable(&SubTopNodes, "SubTopNodes", (MaxTopNodes * sizeof(struct topnode_data)));
   SubDomainTask = (int *)mymalloc_movable(&SubDomainTask, "SubDomainTask", (MaxTopNodes * sizeof(int)));
@@ -608,7 +608,7 @@ void subfind_coll_domain_allocate(void)
 void subfind_coll_domain_free(void)
 {
   if(!SubDomainTask)
-    terminate("subfind collective domain storage not allocated");
+    terminate_program("subfind collective domain storage not allocated");
 
   myfree(SubDomainTask);
   myfree(SubTopNodes);

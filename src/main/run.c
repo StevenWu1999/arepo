@@ -556,12 +556,12 @@ integertime find_next_outputtime(integertime ti_curr)
       if(All.ComovingIntegrationOn)
         {
           if(All.TimeBetSnapshot <= 1.0)
-            terminate("TimeBetSnapshot > 1.0 required for your simulation.\n");
+            terminate_program("TimeBetSnapshot > 1.0 required for your simulation.\n");
         }
       else
         {
           if(All.TimeBetSnapshot <= 0.0)
-            terminate("TimeBetSnapshot > 0.0 required for your simulation.\n");
+            terminate_program("TimeBetSnapshot > 0.0 required for your simulation.\n");
         }
 
       time = All.TimeOfFirstSnapshot;
@@ -577,7 +577,7 @@ integertime find_next_outputtime(integertime ti_curr)
           iter++;
 
           if(iter > 1000000)
-            terminate("Can't determine next output time.\n");
+            terminate_program("Can't determine next output time.\n");
         }
 
       while(time <= All.TimeMax)
@@ -601,7 +601,7 @@ integertime find_next_outputtime(integertime ti_curr)
           iter++;
 
           if(iter > 1000000)
-            terminate("Can't determine next output time.\n");
+            terminate_program("Can't determine next output time.\n");
         }
     }
 

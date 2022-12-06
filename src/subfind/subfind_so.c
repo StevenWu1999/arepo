@@ -435,7 +435,7 @@ double subfind_overdensity(void)
                                timediff(t0, t1));
 
                   if(iter > MAXITER)
-                    terminate("failed to converge in SO iteration");
+                    terminate_program("failed to converge in SO iteration");
                 }
             }
           while(ntot > 0);
@@ -750,7 +750,7 @@ static int subfind_overdensity_evaluate(int target, int mode, int threadid)
                   if(get_random_number_aux() < rate)
                     {
                       if(NumPaux >= NumPart)
-                        terminate("NumPaux >= NumPart");
+                        terminate_program("NumPaux >= NumPart");
 
                       Paux[NumPaux].Pos[0]        = NEAREST_X(P[p].Pos[0] - pos[0]);
                       Paux[NumPaux].Pos[1]        = NEAREST_Y(P[p].Pos[1] - pos[1]);
@@ -906,7 +906,7 @@ static int subfind_overdensity_evaluate(int target, int mode, int threadid)
           else /* pseudo particle */
             {
               if(mode == MODE_IMPORTED_PARTICLES)
-                terminate("mode == MODE_IMPORTED_PARTICLES");
+                terminate_program("mode == MODE_IMPORTED_PARTICLES");
 
               if(mode == MODE_LOCAL_PARTICLES)
                 tree_treefind_export_node_threads(no, target, threadid);

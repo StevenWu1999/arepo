@@ -75,7 +75,7 @@ void fof_subfind_exchange(MPI_Comm Communicator)
       size_t ExportSpace = 0.5 * (FreeBytes); /* we will try to grab at most half of the still available memory  */
       size_t PartSpace   = sizeof(struct particle_data) + sizeof(struct subfind_data) + sizeof(struct sph_particle_data);
       if(PartSpace > ExportSpace)
-        terminate("seems like we have insufficient storage, PartSpace=%lld ExportSpace=%lld", (long long)PartSpace,
+        terminate_program("seems like we have insufficient storage, PartSpace=%lld ExportSpace=%lld", (long long)PartSpace,
                   (long long)ExportSpace);
 
       int glob_flag = 0;
@@ -99,7 +99,7 @@ void fof_subfind_exchange(MPI_Comm Communicator)
                   target = PS[n].TargetTask;
 
                   if(target < 0 || target >= CommNTask)
-                    terminate("n=%d targettask=%d", n, target);
+                    terminate_program("n=%d targettask=%d", n, target);
 
                   AvailableSpace -= PartSpace;
 
@@ -189,7 +189,7 @@ void fof_subfind_exchange(MPI_Comm Communicator)
 
           if(delta_numgas > 0)
             if(delta_numpart != delta_numgas)
-              terminate("delta_numpart=%d != delta_numgas=%d", delta_numpart, delta_numgas);
+              terminate_program("delta_numpart=%d != delta_numgas=%d", delta_numpart, delta_numgas);
 
           /* now close gap (if present) */
           memmove(P + nstay, P + nstay + delta_numpart, (NumPart - (nstay + delta_numpart)) * sizeof(struct particle_data));

@@ -133,7 +133,7 @@ static void out2particle(data_out *out, int i, int mode)
 {
   if(mode == MODE_LOCAL_PARTICLES) /* initial store */
     {
-      terminate("here not used");
+      terminate_program("here not used");
     }
   else /* combine */
     {
@@ -591,7 +591,7 @@ static int fof_treefind_fof_primary(MyDouble searchcenter[3], MyFloat hsml, int 
             }
           else if(no >= Tree_ImportedNodeOffset) /* point from imported nodelist */
             {
-              terminate("do not expect imported points here");
+              terminate_program("do not expect imported points here");
             }
           else
             {
@@ -605,7 +605,7 @@ static int fof_treefind_fof_primary(MyDouble searchcenter[3], MyFloat hsml, int 
                   nexport_flag = 1;
                 }
               else if(mode == MODE_IMPORTED_PARTICLES)
-                terminate("stop no=%d Tree_MaxPart=%d Tree_MaxNodes=%d", no, Tree_MaxPart, Tree_MaxNodes);
+                terminate_program("stop no=%d Tree_MaxPart=%d Tree_MaxNodes=%d", no, Tree_MaxPart, Tree_MaxNodes);
 
               no = Nextnode[no - Tree_MaxNodes];
               continue;

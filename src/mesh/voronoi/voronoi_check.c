@@ -79,7 +79,7 @@ void check_for_min_distance(tessellation *T)
           if(r2min == 0)
             {
               sprintf(msg, "i=%d j=%d equal.  DP[i].index=%d DP[j].index=%d\n", i, j, DP[i].index, DP[j].index);
-              terminate(msg)
+              terminate_program(msg)
             }
         }
     }
@@ -138,7 +138,7 @@ void check_links(tessellation *T)
             }
 
           if(flag)
-            terminate(msg);
+            terminate_program(msg);
         }
     }
 
@@ -181,7 +181,7 @@ void check_orientations(tessellation *T)
         {
           sprintf(msg, "Tetra %d is NEGATIVE (%d %d %d %d) oriented or FLAT: ivol=%d vol=%g\n", i, (int)(t->p[0]), (int)(t->p[1]),
                   (int)(t->p[2]), (int)(t->p[3]), ivol, vol);
-          terminate(msg);
+          terminate_program(msg);
         }
 
       if(vol < volmin)
@@ -229,7 +229,7 @@ void check_tetras(tessellation *T, int npoints)
       else
         {
           sprintf(msg, "Tetra %d is NEGATIVE oriented\n", i);
-          terminate(msg);
+          terminate_program(msg);
         }
 
       for(j = 0; j < npoints; j++)
@@ -249,7 +249,7 @@ void check_tetras(tessellation *T, int npoints)
                           {
                             sprintf(msg, "ERROR tetra=%d: point=%d  in tetra with edges=%d|%d|%d|%d   res=%d|%d\n", i, j,
                                     (int)(t->p[0]), (int)(t->p[1]), (int)(t->p[2]), (int)(t->p[3]), res, res_exact);
-                            terminate(msg);
+                            terminate_program(msg);
                           }
                       }
                   }
@@ -307,7 +307,7 @@ void check_triangles(tessellation *T, int npoints)
       if(Orient2d_Exact(T, DT[i].p[0], DT[i].p[1], DT[i].p[2]) != 1)
         {
           sprintf(msg, "Triangle %d is NEGATIVE oriented or FLAT\n", i);
-          terminate(msg);
+          terminate_program(msg);
         }
 
       for(j = 0; j < npoints; j++)
@@ -326,7 +326,7 @@ void check_triangles(tessellation *T, int npoints)
                         {
                           sprintf(msg, "ERROR: point=%d lies in triangle=%d with edges=%d|%d|%d   res=%d|%d\n", j, i,
                                   (int)(DT[i].p[0]), (int)(DT[i].p[1]), (int)(DT[i].p[2]), res, res_exact);
-                          terminate(msg);
+                          terminate_program(msg);
                         }
                     }
                 }
@@ -368,7 +368,7 @@ void check_orientations(tessellation *T)
 
           sprintf(msg, "Triangle %d is NEGATIVE (%d %d %d) oriented or FLAT: ivol=%d vol=%g|%g\n", i, (int)(DT[i].p[0]),
                   (int)(DT[i].p[1]), (int)(DT[i].p[2]), ivol, vol, vol2);
-          terminate(msg);
+          terminate_program(msg);
         }
 
       if(vol < volmin)
@@ -398,7 +398,7 @@ void check_links(tessellation *T)
           if(DT[DT[i].t[j]].t[DT[i].s[j]] != i)
             {
               sprintf(msg, "LINK for i=%d j=%d  incorrect\n", i, j);
-              terminate(msg);
+              terminate_program(msg);
             }
         }
     }

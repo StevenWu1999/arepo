@@ -122,7 +122,7 @@ static void particle2in(data_in *in, int i, int firstnode)
     }
 
   if(q == -1)
-    terminate("q=-1");
+    terminate_program("q=-1");
 
   in->Pos[0] = DTC[i].cx;
   in->Pos[1] = DTC[i].cy;
@@ -247,7 +247,7 @@ static void kernel_local(void)
               continue;
 
             if(q == -1)
-              terminate("q==-1");
+              terminate_program("q==-1");
 #else  /* #ifndef DOUBLE_STENCIL */
             /* here comes the check for a double stencil */
             for(j = 0, q = -1; j < (NUMDIMS + 1); j++)
@@ -265,7 +265,7 @@ static void kernel_local(void)
               continue;
 
             if(q == -1)
-              terminate("q==-1");
+              terminate_program("q==-1");
 #endif /* #ifndef DOUBLE_STENCIL #else */
             voronoi_ghost_search_evaluate(T, i, MODE_LOCAL_PARTICLES, q, thread_id);
           }
@@ -443,7 +443,7 @@ static void voronoi_pick_up_additional_DP_points(void)
       T->DP += 5;
 
       if(nimport + T->Ndp > T->MaxNdp && NumGas == 0)
-        terminate("nimport + Ndp > MaxNdp");
+        terminate_program("nimport + Ndp > MaxNdp");
     }
 
   /* get the delaunay points */
@@ -742,7 +742,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
             if(bitflags != image_flag)
               {
                 printf("bitflags=%d image_flag=%d xbits=%d ybits=%d zbits=%d  \n", bitflags, image_flag, xbits, ybits, zbits);
-                terminate("problem");
+                terminate_program("problem");
               }
 
           no    = *startnode;
@@ -929,7 +929,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
               else /* pseudo particle */
                 {
                   if(mode == 1)
-                    terminate("mode == 1");
+                    terminate_program("mode == 1");
 
                   if(target >= 0) /* if no target is given, export will not occur */
                     {
@@ -947,7 +947,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
                               NadditionalPoints = nadditionalpoints_save;
                               *nexport          = nexport_save;
                               if(nexport_save == 0)
-                                terminate(
+                                terminate_program(
                                     "nexport_save == 0"); /* in this case, the buffer is too small to process even a single particle */
                               for(task = 0; task < NTask; task++)
                                 nsend_local[task] = 0;
@@ -1019,7 +1019,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
                           ListExports = myrealloc_movable(ListExports, MaxNinlist * sizeof(struct list_export_data));
 
                           if(Ninlist >= MaxNinlist)
-                            terminate("Ninlist >= MaxNinlist");
+                            terminate_program("Ninlist >= MaxNinlist");
                         }
 
                       List_P[p].currentexport                         = Ninlist++;
@@ -1049,7 +1049,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
               ListExports = myrealloc_movable(ListExports, MaxNinlist * sizeof(struct list_export_data));
 
               if(Ninlist >= MaxNinlist)
-                terminate("Ninlist >= MaxNinlist");
+                terminate_program("Ninlist >= MaxNinlist");
             }
 
           List_InMesh[NumGasInMesh++] = p;
@@ -1062,7 +1062,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
         }
 
       if((ListExports[List_P[p].currentexport].image_bits & (1 << image_flag)))
-        terminate("this should not happen");
+        terminate_program("this should not happen");
 
       ListExports[List_P[p].currentexport].image_bits |= (1 << image_flag);
 
@@ -1071,7 +1071,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
       if(origin == ThisTask)
         {
           if(mode == 1)
-            terminate("mode==1: how can this be?");
+            terminate_program("mode==1: how can this be?");
 
           if(T->Ndp >= T->MaxNdp)
             {
@@ -1085,7 +1085,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
               T->DP += 5;
 
               if(T->Ndp >= T->MaxNdp)
-                terminate("Ndp >= MaxNdp");
+                terminate_program("Ndp >= MaxNdp");
             }
 
           SphP[p].ActiveArea = 0;
@@ -1115,7 +1115,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
       else
         {
           if(mode == 0)
-            terminate("mode == 0: how can this be?");
+            terminate_program("mode == 0: how can this be?");
 
           if(N_DP_Buffer >= MaxN_DP_Buffer)
             {
@@ -1128,7 +1128,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
               DP_Buffer = (point *)myrealloc_movable(DP_Buffer, MaxN_DP_Buffer * sizeof(point));
 
               if(N_DP_Buffer >= MaxN_DP_Buffer)
-                terminate("(N_DP_Buffer >= MaxN_DP_Buffer");
+                terminate_program("(N_DP_Buffer >= MaxN_DP_Buffer");
             }
 
           SphP[p].ActiveArea = 0;
@@ -1560,10 +1560,10 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
           else /* pseudo particle */
             {
               if(mode == 1)
-                terminate("mode == 1");
+                terminate_program("mode == 1");
 
               if(mode == MODE_IMPORTED_PARTICLES)
-                terminate("mode == MODE_IMPORTED_PARTICLES should not occur here");
+                terminate_program("mode == MODE_IMPORTED_PARTICLES should not occur here");
 
               if(target >= 0) /* if no target is given, export will not occur */
                 ngb_treefind_export_node_threads(no, target, thread_id, image_flag);
@@ -1613,7 +1613,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
                           ListExports = myrealloc_movable(ListExports, MaxNinlist * sizeof(struct list_export_data));
 
                           if(Ninlist >= MaxNinlist)
-                            terminate("Ninlist >= MaxNinlist");
+                            terminate_program("Ninlist >= MaxNinlist");
                         }
 
                       List_P[p].currentexport = Ninlist++;
@@ -1643,7 +1643,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
               ListExports = myrealloc_movable(ListExports, MaxNinlist * sizeof(struct list_export_data));
 
               if(Ninlist >= MaxNinlist)
-                terminate("Ninlist >= MaxNinlist");
+                terminate_program("Ninlist >= MaxNinlist");
             }
 
           List_InMesh[NumGasInMesh++] = p;
@@ -1656,19 +1656,19 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
         }
 
       if((ListExports[List_P[p].currentexport].image_bits & (1 << image_flag)))
-        terminate("this should not happen");
+        terminate_program("this should not happen");
 
       ListExports[List_P[p].currentexport].image_bits |= (1 << image_flag);
 
       /* add the particle to the ones that need to be exported */
 
       if(P[p].Ti_Current != All.Ti_Current)
-        terminate("surprise! we don't expect this here anymore");
+        terminate_program("surprise! we don't expect this here anymore");
 
       if(origin == ThisTask)
         {
           if(mode == 1)
-            terminate("mode==1: how can this be?");
+            terminate_program("mode==1: how can this be?");
 
           if(T->Ndp >= T->MaxNdp)
             {
@@ -1682,7 +1682,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
               T->DP += 5;
 
               if(T->Ndp >= T->MaxNdp)
-                terminate("Ndp >= MaxNdp");
+                terminate_program("Ndp >= MaxNdp");
             }
 
           SphP[p].ActiveArea = 0;
@@ -1711,7 +1711,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
       else
         {
           if(mode == 0)
-            terminate("mode == 0: how can this be?");
+            terminate_program("mode == 0: how can this be?");
 
           if(N_DP_Buffer >= MaxN_DP_Buffer)
             {
@@ -1724,7 +1724,7 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
               DP_Buffer = (point *)myrealloc_movable(DP_Buffer, MaxN_DP_Buffer * sizeof(point));
 
               if(N_DP_Buffer >= MaxN_DP_Buffer)
-                terminate("(N_DP_Buffer >= MaxN_DP_Buffer");
+                terminate_program("(N_DP_Buffer >= MaxN_DP_Buffer");
             }
 
           SphP[p].ActiveArea = 0;

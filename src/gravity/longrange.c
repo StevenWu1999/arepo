@@ -136,7 +136,7 @@ void long_range_force(void)
       i = pmforce_nonperiodic(1); /* try again */
     }
   if(i == 1)
-    terminate("despite we tried to increase the region, we still don't fit all particles in it");
+    terminate_program("despite we tried to increase the region, we still don't fit all particles in it");
 #endif /* #ifdef PLACEHIGHRESREGION */
 
 #else /* #ifndef GRAVITY_NOT_PERIODIC */
@@ -149,7 +149,7 @@ void long_range_force(void)
       i = pmforce_nonperiodic(0); /* try again */
     }
   if(i == 1)
-    terminate("despite we tried to increase the region, somehow we still don't fit all particles in it");
+    terminate_program("despite we tried to increase the region, somehow we still don't fit all particles in it");
 #ifdef PLACEHIGHRESREGION
   i = pmforce_nonperiodic(1);
 
@@ -166,7 +166,7 @@ void long_range_force(void)
       i = pmforce_nonperiodic(0) + pmforce_nonperiodic(1);
     }
   if(i != 0)
-    terminate("despite we tried to increase the region, somehow we still don't fit all particles in it");
+    terminate_program("despite we tried to increase the region, somehow we still don't fit all particles in it");
 #endif /* #ifdef PLACEHIGHRESREGION */
 #endif /* #ifndef GRAVITY_NOT_PERIODIC #else */
 

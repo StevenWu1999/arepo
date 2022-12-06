@@ -311,7 +311,7 @@ integertime get_timestep_gravity(int p)
           dt = sqrt(2 * All.ErrTolIntAccuracy * All.cf_atime * All.ForceSoftening[P[p].SofteningType] / 2.8 / ac);
           break;
         default:
-          terminate("Undefined timestep criterion");
+          terminate_program("Undefined timestep criterion");
           break;
       }
 
@@ -336,7 +336,7 @@ integertime get_timestep_gravity(int p)
       dt = All.MinSizeTimestep;
 #else  /* #ifdef NOSTOP_WHEN_BELOW_MINTIMESTEP */
       print_particle_info(p);
-      terminate("Timestep dt=%g below All.MinSizeTimestep=%g", dt, All.MinSizeTimestep);
+      terminate_program("Timestep dt=%g below All.MinSizeTimestep=%g", dt, All.MinSizeTimestep);
 #endif /* #ifdef NOSTOP_WHEN_BELOW_MINTIMESTEP #else */
     }
 
@@ -432,7 +432,7 @@ integertime get_timestep_hydro(int p)
       dt = All.MinSizeTimestep;
 #else  /* #ifdef NOSTOP_WHEN_BELOW_MINTIMESTEP */
       print_particle_info(p);
-      terminate("Timestep dt=%g below All.MinSizeTimestep=%g", dt, All.MinSizeTimestep);
+      terminate_program("Timestep dt=%g below All.MinSizeTimestep=%g", dt, All.MinSizeTimestep);
 #endif /* #ifdef NOSTOP_WHEN_BELOW_MINTIMESTEP #else */
     }
 
@@ -470,7 +470,7 @@ void validate_timestep(double dt, integertime ti_step, int p)
 
       print_particle_info(p);
       myflush(stdout);
-      terminate("integer timestep outside of allowed range");
+      terminate_program("integer timestep outside of allowed range");
     }
 
   if(ti_step == 1)
@@ -584,7 +584,7 @@ int get_timestep_bin(integertime ti_step)
     return 0;
 
   if(ti_step == 1)
-    terminate("time-step of integer size 1 not allowed\n");
+    terminate_program("time-step of integer size 1 not allowed\n");
 
   while(ti_step)
     {
@@ -737,7 +737,7 @@ void timebins_get_bin_and_do_validity_checks(integertime ti_step, int *bin_new, 
     bin = 0;
 
   if(ti_step == 1)
-    terminate("time-step of integer size 1 not allowed\n");
+    terminate_program("time-step of integer size 1 not allowed\n");
 
   while(ti_step)
     {
@@ -761,7 +761,7 @@ void timebins_get_bin_and_do_validity_checks(integertime ti_step, int *bin_new, 
 
   if((TIMEBASE - All.Ti_Current) < ti_step) /* check that we don't run beyond the end */
     {
-      terminate("we are beyond the end of the timeline"); /* should not happen */
+      terminate_program("we are beyond the end of the timeline"); /* should not happen */
     }
 
   *bin_new = bin;

@@ -162,7 +162,7 @@ void fof_save_groups(int num)
 #ifndef HAVE_HDF5
   if(All.SnapFormat == 3)
     {
-      mpi_terminate("Code wasn't compiled with HDF5 support enabled!\n");
+      mpi_terminate_program("Code wasn't compiled with HDF5 support enabled!\n");
     }
 #endif /* #ifndef  HAVE_HDF5 */
 
@@ -226,7 +226,7 @@ void fof_subfind_prepare_ID_list(void)
       if(PS[i].GrNr < TotNgroups)
         {
           if(nids >= Nids)
-            terminate("nids >= Nids");
+            terminate_program("nids >= Nids");
 
           ID_list[nids].GrNr = PS[i].GrNr;
           ID_list[nids].Type = P[i].Type;
@@ -244,7 +244,7 @@ void fof_subfind_prepare_ID_list(void)
     {
       char buf[1000];
       sprintf(buf, "Task=%d Nids=%d totNids=%lld TotNids=%lld\n", ThisTask, Nids, totNids, TotNids);
-      terminate(buf);
+      terminate_program(buf);
     }
 
     /* sort the particle IDs according to group-number, and optionally subhalo number and binding energy  */
@@ -377,7 +377,7 @@ void fof_subfind_write_file(char *fname, int writeTask, int lastTask)
           if(!(fd = fopen(fname, "w")))
             {
               printf("can't open file `%s' for writing snapshot.\n", fname);
-              terminate("file open error");
+              terminate_program("file open error");
             }
 
           mpi_printf("FOF/SUBFIND: writing group catalogue: '%s' (file 1 of %d)\n", fname, All.NumFilesPerSnapshot);
@@ -1275,7 +1275,7 @@ void fof_subfind_fill_write_buffer(enum fof_subfind_iofields blocknr, int *start
             break;
 
           case IO_FOF_LASTENTRY:
-            terminate("should not be reached");
+            terminate_program("should not be reached");
             break;
         }
     }
@@ -1664,7 +1664,7 @@ void fof_subfind_get_dataset_name(enum fof_subfind_iofields blocknr, char *label
         break;
 
       case IO_FOF_LASTENTRY:
-        terminate("should not be reached");
+        terminate_program("should not be reached");
         break;
     }
 }
@@ -1813,11 +1813,11 @@ int fof_subfind_get_dataset_group(enum fof_subfind_iofields blocknr)
         return 2;
 
       case IO_FOF_LASTENTRY:
-        terminate("reached last entry in switch - strange.");
+        terminate_program("reached last entry in switch - strange.");
         break;
     }
 
-  terminate("reached end of function - this should not happen");
+  terminate_program("reached end of function - this should not happen");
   return 0;
 }
 
@@ -1977,11 +1977,11 @@ int fof_subfind_get_particles_in_block(enum fof_subfind_iofields blocknr)
         return catalogue_header.Nids;
 
       case IO_FOF_LASTENTRY:
-        terminate("reached last entry in switch - strange.");
+        terminate_program("reached last entry in switch - strange.");
         break;
     }
 
-  terminate("reached end of function - this should not happen");
+  terminate_program("reached end of function - this should not happen");
   return 0;
 }
 
@@ -2135,7 +2135,7 @@ int fof_subfind_get_values_per_blockelement(enum fof_subfind_iofields blocknr)
         break;
 
       case IO_FOF_LASTENTRY:
-        terminate("reached last entry in switch - should not get here");
+        terminate_program("reached last entry in switch - should not get here");
         break;
     }
   return values;
@@ -2305,7 +2305,7 @@ int fof_subfind_get_bytes_per_blockelement(enum fof_subfind_iofields blocknr)
         break;
 
       case IO_FOF_LASTENTRY:
-        terminate("reached last entry in switch - should not get here");
+        terminate_program("reached last entry in switch - should not get here");
         break;
     }
   return bytes_per_blockelement;
@@ -2466,7 +2466,7 @@ int fof_subfind_get_datatype(enum fof_subfind_iofields blocknr)
         break;
 
       case IO_FOF_LASTENTRY:
-        terminate("should not be reached");
+        terminate_program("should not be reached");
         break;
     }
 
@@ -2639,7 +2639,7 @@ int fof_subfind_blockpresent(enum fof_subfind_iofields blocknr)
         break;
 
       case IO_FOF_LASTENTRY:
-        terminate("should not be reached");
+        terminate_program("should not be reached");
         break;
     }
   return present;
@@ -3030,7 +3030,7 @@ void fof_subfind_get_Tab_IO_Label(enum fof_subfind_iofields blocknr, char *label
 #endif /* #ifdef SUBFIND_EXTENDED_PROPERTIES */
 
       case IO_FOF_LASTENTRY:
-        terminate("should not be reached");
+        terminate_program("should not be reached");
         break;
     }
 }

@@ -121,7 +121,7 @@ void myIBarrierTest(struct sMyIBarrier *barrier, int *flag, MPI_Status *unused)
           if(level == barrier->nLevels)
             {
               if(barrier->rank != 0)
-                terminate("fail");
+                terminate_program("fail");
               /* ok, the barrier resolved, tell everyone */
 
               for(level = 0; level < barrier->nLevels; level++)

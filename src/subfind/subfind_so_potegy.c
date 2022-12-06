@@ -313,7 +313,7 @@ static int subfind_so_potegy_loctree_treebuild(int npart, int start)
 
                       sprintf(buf, "maximum number %d of tree-nodes reached., for particle %d  %g %g %g", MaxNodes, i,
                               LocPaux[i].Pos[0], LocPaux[i].Pos[1], LocPaux[i].Pos[2]);
-                      terminate(buf);
+                      terminate_program(buf);
                     }
                 }
             }
@@ -671,7 +671,7 @@ static size_t subfind_so_potegy_loctree_treeallocate(int maxnodes, int maxpart)
   size_t bytes, allbytes = 0;
 
   if(LocNextNode)
-    terminate("loctree already allocated");
+    terminate_program("loctree already allocated");
 
   MaxNodes   = maxnodes;
   LocMaxPart = maxpart;
@@ -791,7 +791,7 @@ double subfind_so_potegy(double *egypot)
     {
       int j = LocPaux[i].LocGrIndex;
       if(j < 0 || j >= Ngroups)
-        terminate("j=%d Ngroups=%d", j, Ngroups);
+        terminate_program("j=%d Ngroups=%d", j, Ngroups);
 
       group_len[j]++;
     }

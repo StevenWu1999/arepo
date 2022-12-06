@@ -102,7 +102,7 @@ void cooling_and_starformation(void)
       unew = dmax(All.MinEgySpec, SphP[i].Utherm);
 
       if(unew < 0)
-        terminate("Invalid Temperature: Task=%d i=%d unew=%g\n", ThisTask, i, unew);
+        terminate_program("Invalid Temperature: Task=%d i=%d unew=%g\n", ThisTask, i, unew);
 
       du = unew - SphP[i].Utherm;
       SphP[i].Utherm += du;

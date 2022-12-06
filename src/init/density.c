@@ -342,7 +342,7 @@ void density(void)
                   else
                     {
                       if(Right[i] == 0 && Left[i] == 0)
-                        terminate("should not occur");
+                        terminate_program("should not occur");
 
                       if(Right[i] == 0 && Left[i] > 0)
                         {
@@ -373,7 +373,7 @@ void density(void)
                        timediff(t0, t1));
 
           if(iter > MAXITER)
-            terminate("failed to converge in neighbour iteration in density()\n");
+            terminate_program("failed to converge in neighbour iteration in density()\n");
         }
     }
   while(ntot > 0);

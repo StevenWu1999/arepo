@@ -278,7 +278,7 @@ void determine_compute_nodes(void)
     {
       FILE *fd;
       if(!(fd = fopen("uses-machines.txt", "w")))
-        terminate("can't write file with used machines");
+        terminate_program("can't write file with used machines");
       for(i = 0; i < NTask; i++)
         fprintf(fd, "%5d  %s\n", list_of_nodes[i].task, list_of_nodes[i].name);
       fclose(fd);
@@ -458,7 +458,7 @@ void allreduce_sparse_double_sum(double *loc, double *glob, int N)
       int j = import_data[i].n - loc_first_n;
 
       if(j < 0 || j >= blocksize[ThisTask])
-        terminate("j=%d < 0 || j>= blocksize[ThisTask]=%d", j, blocksize[ThisTask]);
+        terminate_program("j=%d < 0 || j>= blocksize[ThisTask]=%d", j, blocksize[ThisTask]);
 
       loc_data[j] += import_data[i].val;
     }
@@ -604,7 +604,7 @@ void allreduce_sparse_imin(int *loc, int *glob, int N)
       int j = import_data[i].n - loc_first_n;
 
       if(j < 0 || j >= blocksize[ThisTask])
-        terminate("j=%d < 0 || j>= blocksize[ThisTask]=%d", j, blocksize[ThisTask]);
+        terminate_program("j=%d < 0 || j>= blocksize[ThisTask]=%d", j, blocksize[ThisTask]);
 
       loc_data[j] = imin(loc_data[j], import_data[i].val);
     }
@@ -880,7 +880,7 @@ void enable_core_dumps_and_fpu_exceptions(void)
  */
 void my_gsl_error_handler(const char *reason, const char *file, int line, int gsl_errno)
 {
-  terminate("GSL has reported an error: reason='%s', error handler called from file '%s', line %d, with error code %d", reason, file,
+  terminate_program("GSL has reported an error: reason='%s', error handler called from file '%s', line %d, with error code %d", reason, file,
             line, gsl_errno);
 }
 
@@ -1134,7 +1134,7 @@ void check_maxmemsize_setting(void)
   MPI_Allreduce(&errflag, &errflag_tot, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 #ifndef __OSX__
   if(errflag_tot)
-    mpi_terminate("Not enough memory error!");
+    mpi_terminate_program("Not enough memory error!");
 #endif /* #ifndef __OSX__ */
 }
 

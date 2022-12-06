@@ -165,7 +165,7 @@ void do_validity_checks(struct particle_data *localP, struct sph_particle_data *
       printf("very bad...i=%d ID=%d mass=%g oldMass=%g utherm=%g pos=%g|%g|%g\n", i, (int)localP[i].ID, localP[i].Mass,
              localSphP[i].OldMass, localSphP[i].Utherm, localP[i].Pos[0], localP[i].Pos[1], localP[i].Pos[2]);
 
-      terminate("stop");
+      terminate_program("stop");
     }
 }
 
@@ -298,7 +298,7 @@ void update_internal_energy(struct particle_data *localP, struct sph_particle_da
   if(localSphP[i].Utherm < 0)
     {
       printf("negative utherm %g\n", localSphP[i].Utherm);
-      terminate("stop");
+      terminate_program("stop");
     }
 
 #endif /* #ifndef ISOTHERM_EQS */

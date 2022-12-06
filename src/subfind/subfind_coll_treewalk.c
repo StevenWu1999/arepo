@@ -384,12 +384,12 @@ static int subfind_force_treeevaluate_potential(int target, int mode, int thread
             }
           else if(no >= SubTree_ImportedNodeOffset) /* point from imported nodelist */
             {
-              terminate("this is not expected here");
+              terminate_program("this is not expected here");
             }
           else
             {
               if(mode == MODE_IMPORTED_PARTICLES)
-                terminate("mode == MODE_IMPORTED_PARTICLES");
+                terminate_program("mode == MODE_IMPORTED_PARTICLES");
 
               subfind_treefind_collective_export_node_threads(no, target, threadid);
 

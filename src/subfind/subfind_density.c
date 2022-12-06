@@ -336,7 +336,7 @@ double subfind_density(int mode)
                   else
                     {
                       if(Right[i] == 0 && Left[i] == 0)
-                        terminate("can't occur");
+                        terminate_program("can't occur");
 
                       if(Right[i] == 0 && Left[i] > 0)
                         PS[i].Hsml *= 1.26;
@@ -363,7 +363,7 @@ double subfind_density(int mode)
                        timediff(t0, t1));
 
           if(iter > MAXITER)
-            terminate("failed to converge in neighbour iteration in density()\n");
+            terminate_program("failed to converge in neighbour iteration in density()\n");
         }
     }
   while(ntot > 0);
@@ -546,7 +546,7 @@ static int subfind_density_evaluate(int target, int mode, int threadid)
           else /* pseudo particle */
             {
               if(mode == MODE_IMPORTED_PARTICLES)
-                terminate("can't be");
+                terminate_program("can't be");
 
               if(target >= 0) /* if no target is given, export will not occur */
                 tree_treefind_export_node_threads(no, target, threadid);
@@ -561,7 +561,7 @@ static int subfind_density_evaluate(int target, int mode, int threadid)
 
 #ifdef SUBFIND_CALC_MORE
               if(p < 0)
-                terminate("this should not occur");
+                terminate_program("this should not occur");
 
               vxsum += P[p].Vel[0];
               vysum += P[p].Vel[1];
@@ -646,7 +646,7 @@ void subfind_density_hsml_guess(void)
               printf("Hsml=0 task=%d i=%d no=%d Nodes[no].len=%g Nodes[no].u.d.mass=%g P[i].Mass=%g type=%d ID=%llu  pos=(%g|%g|%g)\n",
                      ThisTask, i, no, Nodes[no].len, Nodes[no].u.d.mass, P[i].Mass, P[i].Type, (long long)P[i].ID, P[i].Pos[0],
                      P[i].Pos[1], P[i].Pos[2]);
-              terminate("zero hsml guess\n");
+              terminate_program("zero hsml guess\n");
             }
         }
       else

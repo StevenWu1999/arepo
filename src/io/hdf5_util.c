@@ -61,7 +61,7 @@ hid_t my_H5Fcreate(const char *fname, unsigned int flags, hid_t fcpl_id, hid_t f
   if(file_id < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to create file %s\n", ThisTask, fname);
+      terminate_program("On Task %d, error detected in HDF5: unable to create file %s\n", ThisTask, fname);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -92,7 +92,7 @@ hid_t my_H5Gcreate(hid_t loc_id, const char *groupname, size_t size_hint)
   if(group_id < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to create group %s\n", ThisTask, groupname);
+      terminate_program("On Task %d, error detected in HDF5: unable to create group %s\n", ThisTask, groupname);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -122,7 +122,7 @@ hid_t my_H5Dcreate(hid_t loc_id, const char *datasetname, hid_t type_id, hid_t s
   if(dataset_id < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, Error detected in HDF5: unable to create dataset %s\n", ThisTask, datasetname);
+      terminate_program("On Task %d, Error detected in HDF5: unable to create dataset %s\n", ThisTask, datasetname);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -158,7 +158,7 @@ herr_t my_H5Dwrite(hid_t dataset_id, hid_t mem_type_id, hid_t mem_space_id, hid_
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to write dataset %s\n", ThisTask, datasetname);
+      terminate_program("On Task %d, error detected in HDF5: unable to write dataset %s\n", ThisTask, datasetname);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -188,7 +188,7 @@ hid_t my_H5Acreate(hid_t loc_id, const char *attr_name, hid_t type_id, hid_t spa
   if(attribute_id < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to create attribute %s\n", ThisTask, attr_name);
+      terminate_program("On Task %d, error detected in HDF5: unable to create attribute %s\n", ThisTask, attr_name);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -217,7 +217,7 @@ herr_t my_H5Awrite(hid_t attr_id, hid_t mem_type_id, const void *buf, const char
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to write attribute %s\n", ThisTask, attr_name);
+      terminate_program("On Task %d, error detected in HDF5: unable to write attribute %s\n", ThisTask, attr_name);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -241,13 +241,13 @@ hid_t my_H5Screate(H5S_class_t type)
       switch(type)
         {
           case H5S_SCALAR:
-            terminate("On Task %d, error detected in HDF5: unable to create a scalar dataspace\n", ThisTask);
+            terminate_program("On Task %d, error detected in HDF5: unable to create a scalar dataspace\n", ThisTask);
             break;
           case H5S_SIMPLE:
-            terminate("On Task %d, error detected in HDF5: unable to create a simple dataspace\n", ThisTask);
+            terminate_program("On Task %d, error detected in HDF5: unable to create a simple dataspace\n", ThisTask);
             break;
           default:
-            terminate("On Task %d, error detected in HDF5: unknown dataspace type\n", ThisTask);
+            terminate_program("On Task %d, error detected in HDF5: unknown dataspace type\n", ThisTask);
             break;
         }
     }
@@ -273,7 +273,7 @@ hid_t my_H5Screate_simple(int rank, const hsize_t *current_dims, const hsize_t *
   if(dataspace_id < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to create a simple dataspace\n", ThisTask);
+      terminate_program("On Task %d, error detected in HDF5: unable to create a simple dataspace\n", ThisTask);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -300,7 +300,7 @@ hid_t my_H5Fopen(const char *fname, unsigned int flags, hid_t fapl_id)
   if(file_id < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to open file %s\n", ThisTask, fname);
+      terminate_program("On Task %d, error detected in HDF5: unable to open file %s\n", ThisTask, fname);
     }
 
   return file_id;
@@ -322,7 +322,7 @@ hid_t my_H5Gopen(hid_t loc_id, const char *groupname)
   if(group < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to open group %s\n", ThisTask, groupname);
+      terminate_program("On Task %d, error detected in HDF5: unable to open group %s\n", ThisTask, groupname);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -345,7 +345,7 @@ hid_t my_H5Dopen(hid_t file_id, const char *datasetname)
   if(dataset < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to open dataset %s\n", ThisTask, datasetname);
+      terminate_program("On Task %d, error detected in HDF5: unable to open dataset %s\n", ThisTask, datasetname);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -397,7 +397,7 @@ hid_t my_H5Aopen_name(hid_t loc_id, const char *attr_name)
   if(attribute_id < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to open attribute %s\n", ThisTask, attr_name);
+      terminate_program("On Task %d, error detected in HDF5: unable to open attribute %s\n", ThisTask, attr_name);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -424,7 +424,7 @@ herr_t my_H5Dread(hid_t dataset_id, hid_t mem_type_id, hid_t mem_space_id, hid_t
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to read dataset %s\n", ThisTask, datasetname);
+      terminate_program("On Task %d, error detected in HDF5: unable to read dataset %s\n", ThisTask, datasetname);
     }
   return status;
 }
@@ -444,7 +444,7 @@ hid_t my_H5Dget_space(hid_t dataset_id, const char *datasetname)
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to determine space for dataset %s\n", ThisTask, datasetname);
+      terminate_program("On Task %d, error detected in HDF5: unable to determine space for dataset %s\n", ThisTask, datasetname);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -470,7 +470,7 @@ herr_t my_H5Aread(hid_t attr_id, hid_t mem_type_id, void *buf, const char *attr_
   if(attr_size != size)
     {
       H5Eset_auto(NULL, NULL);
-      terminate(
+      terminate_program(
           "On Task %d, error detected in HDF5: mismatch in size for attribute %s, expected size = %lld, actual attribute size = "
           "%lld\n",
           ThisTask, attr_name, size, attr_size);
@@ -480,7 +480,7 @@ herr_t my_H5Aread(hid_t attr_id, hid_t mem_type_id, void *buf, const char *attr_
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to read attribute %s\n", ThisTask, attr_name);
+      terminate_program("On Task %d, error detected in HDF5: unable to read attribute %s\n", ThisTask, attr_name);
     }
   return status;
 }
@@ -505,7 +505,7 @@ herr_t my_H5Sset_extent_simple(hid_t space_id, int rank, const hsize_t *current_
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to set extent for attribute %s\n", ThisTask, attr_name);
+      terminate_program("On Task %d, error detected in HDF5: unable to set extent for attribute %s\n", ThisTask, attr_name);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -527,7 +527,7 @@ herr_t my_H5Aclose(hid_t attr_id, const char *attr_name)
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to close attribute %s\n", ThisTask, attr_name);
+      terminate_program("On Task %d, error detected in HDF5: unable to close attribute %s\n", ThisTask, attr_name);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -549,7 +549,7 @@ herr_t my_H5Dclose(hid_t dataset_id, const char *datasetname)
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to close dataset %s\n", ThisTask, datasetname);
+      terminate_program("On Task %d, error detected in HDF5: unable to close dataset %s\n", ThisTask, datasetname);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -571,7 +571,7 @@ herr_t my_H5Gclose(hid_t group_id, const char *groupname)
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to close group %s\n", ThisTask, groupname);
+      terminate_program("On Task %d, error detected in HDF5: unable to close group %s\n", ThisTask, groupname);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -593,7 +593,7 @@ herr_t my_H5Fclose(hid_t file_id, const char *fname)
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to close file %s\n", ThisTask, fname);
+      terminate_program("On Task %d, error detected in HDF5: unable to close file %s\n", ThisTask, fname);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
   return status;
@@ -618,13 +618,13 @@ herr_t my_H5Sclose(hid_t dataspace_id, H5S_class_t type)
       switch(type)
         {
           case H5S_SCALAR:
-            terminate("On Task %d, error detected in HDF5: unable to close a scalar dataspace\n", ThisTask);
+            terminate_program("On Task %d, error detected in HDF5: unable to close a scalar dataspace\n", ThisTask);
             break;
           case H5S_SIMPLE:
-            terminate("On Task %d, error detected in HDF5: unable to close a simple dataspace\n", ThisTask);
+            terminate_program("On Task %d, error detected in HDF5: unable to close a simple dataspace\n", ThisTask);
             break;
           default:
-            terminate("On Task %d, error detected in HDF5: unknown dataspace type\n", ThisTask);
+            terminate_program("On Task %d, error detected in HDF5: unknown dataspace type\n", ThisTask);
             break;
         }
     }
@@ -648,7 +648,7 @@ hid_t my_H5Tcopy(hid_t type_id)
   if(datatype_id < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: could not properly copy datatype\n", ThisTask);
+      terminate_program("On Task %d, error detected in HDF5: could not properly copy datatype\n", ThisTask);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
   return datatype_id;
@@ -667,7 +667,7 @@ herr_t my_H5Tclose(hid_t type_id)
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: could not properly close datatype\n", ThisTask);
+      terminate_program("On Task %d, error detected in HDF5: could not properly close datatype\n", ThisTask);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
   return status;
@@ -693,7 +693,7 @@ herr_t my_H5Sselect_hyperslab(hid_t space_id, H5S_seloper_t op, const hsize_t *s
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: could not properly select the chosen hyperslab\n", ThisTask);
+      terminate_program("On Task %d, error detected in HDF5: could not properly select the chosen hyperslab\n", ThisTask);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
   return status;
@@ -714,7 +714,7 @@ size_t my_H5Tget_size(hid_t datatype_id)
   if(size == 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: unable to determine the size of the given datatype\n", ThisTask);
+      terminate_program("On Task %d, error detected in HDF5: unable to determine the size of the given datatype\n", ThisTask);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
   return size;
@@ -737,7 +737,7 @@ herr_t my_H5Tset_size(hid_t datatype_id, size_t size)
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: could not properly set the size of the given datatype\n", ThisTask);
+      terminate_program("On Task %d, error detected in HDF5: could not properly set the size of the given datatype\n", ThisTask);
     }
 #endif /* #ifndef TOLERATE_WRITE_ERROR */
 
@@ -759,7 +759,7 @@ htri_t my_H5Pall_filters_avail(hid_t plist_id)
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: could not properly verify the availability of all filters\n", ThisTask);
+      terminate_program("On Task %d, error detected in HDF5: could not properly verify the availability of all filters\n", ThisTask);
     }
   return status;
 }
@@ -777,7 +777,7 @@ hid_t my_H5Pcreate(hid_t class_id)
   if(plist_id < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: could not create the property list associated to the given property class\n",
+      terminate_program("On Task %d, error detected in HDF5: could not create the property list associated to the given property class\n",
                 ThisTask);
     }
   return plist_id;
@@ -795,7 +795,7 @@ herr_t my_H5Pclose(hid_t plist)
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: could not close the input property list\n", ThisTask);
+      terminate_program("On Task %d, error detected in HDF5: could not close the input property list\n", ThisTask);
     }
   return status;
 }
@@ -816,7 +816,7 @@ herr_t my_H5Pset_chunk(hid_t plist, int ndims, const hsize_t *dim)
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: could not set chunk size for the dataset\n", ThisTask);
+      terminate_program("On Task %d, error detected in HDF5: could not set chunk size for the dataset\n", ThisTask);
     }
   return status;
 }
@@ -834,7 +834,7 @@ herr_t my_H5Pset_shuffle(hid_t plist_id)
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: could not set the shuffle filter in the properties list\n", ThisTask);
+      terminate_program("On Task %d, error detected in HDF5: could not set the shuffle filter in the properties list\n", ThisTask);
     }
   return status;
 }
@@ -853,7 +853,7 @@ herr_t my_H5Pset_deflate(hid_t plist_id, unsigned int level)
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: could not set the deflate compression in the properties list\n", ThisTask);
+      terminate_program("On Task %d, error detected in HDF5: could not set the deflate compression in the properties list\n", ThisTask);
     }
   return status;
 }
@@ -871,7 +871,7 @@ herr_t my_H5Pset_fletcher32(hid_t plist_id)
   if(status < 0)
     {
       H5Eset_auto(NULL, NULL);
-      terminate("On Task %d, error detected in HDF5: could not set the Fletcher32 checksum in the properties list\n", ThisTask);
+      terminate_program("On Task %d, error detected in HDF5: could not set the Fletcher32 checksum in the properties list\n", ThisTask);
     }
   return status;
 }

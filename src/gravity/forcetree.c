@@ -137,7 +137,7 @@ int construct_forcetree(int mode, int optimized_domain_mapping, int insert_only_
             }
           default:
             {
-              mpi_terminate("FORCETREE: construct_forcetree: invalid mode!\n");
+              mpi_terminate_program("FORCETREE: construct_forcetree: invalid mode!\n");
             }
         }
 
@@ -219,7 +219,7 @@ int force_treebuild(int npart, int optimized_domain_mapping, int insert_only_pri
                       "Tree_MaxNodes=%d  Tree_NumPartImported=%d NumPart=%d\n",
                       ThisTask, Tree_NumNodes, Tree_MaxNodes, Tree_NumPartImported, NumPart);
               dump_particles();
-              terminate(buf);
+              terminate_program(buf);
             }
         }
 
@@ -378,7 +378,7 @@ int force_treebuild_construct(int npart, int optimized_domain_mapping, int inser
 
   if(NumPart < NTreeInsert)
     {
-      terminate("ERROR: NumPart %d, NTreeInsert %d! This should not happen!", NumPart, NTreeInsert);
+      terminate_program("ERROR: NumPart %d, NTreeInsert %d! This should not happen!", NumPart, NTreeInsert);
     }
 
   /* first check whether particles are still in domain box */
@@ -434,7 +434,7 @@ int force_treebuild_construct(int npart, int optimized_domain_mapping, int inser
       char buf[1000];
       sprintf(buf, "i=%d ID=%lld type=%d moved out of box. Pos[j=%d]=%g DomainCorner[%d]=%g DomainLen=%g", i, (long long)P[i].ID,
               P[i].Type, j, P[i].Pos[j], j, DomainCorner[j], DomainLen);
-      terminate(buf);
+      terminate_program(buf);
     }
 #endif /* #if defined(GRAVITY_NOT_PERIODIC) #else */
 
@@ -1144,7 +1144,7 @@ int force_create_empty_nodes(int no, int topnode, int bits, int x, int y, int z)
                       sprintf(buf, "task %d: looks like a serious problem (NTopnodes=%d), stopping with particle dump.\n", ThisTask,
                               NTopnodes);
                       dump_particles();
-                      terminate(buf);
+                      terminate_program(buf);
                     }
                   return -1;
                 }
@@ -1342,7 +1342,7 @@ void force_update_node_recursive(int no, int sib, int father, int *last)
                   int n = p - (Tree_MaxPart + Tree_MaxNodes + NTopleaves);
 
                   if(n >= Tree_NumPartImported)
-                    terminate("n >= Tree_NumPartImported");
+                    terminate_program("n >= Tree_NumPartImported");
 
                   mass += Tree_Points[n].Mass;
                   s[0] += Tree_Points[n].Mass * Tree_Points[n].Pos[0];
@@ -1629,7 +1629,7 @@ void force_treeupdate_toplevel(int no, int topnode, int bits, int x, int y, int 
 #endif /* #ifdef MULTIPLE_NODE_SOFTENING */
             }
           else
-            terminate("may not happen");
+            terminate_program("may not happen");
 
           p = Nodes[p].u.d.sibling;
         }
@@ -1677,7 +1677,7 @@ void force_treeupdate_toplevel(int no, int topnode, int bits, int x, int y, int 
 void force_treeallocate(int maxpart, int maxindex)
 {
   if(Nodes)
-    terminate("already allocated");
+    terminate_program("already allocated");
 
   Tree_MaxPart  = maxindex;
   Tree_MaxNodes = (int)(All.TreeAllocFactor * maxpart) + NTopnodes;
@@ -1723,7 +1723,7 @@ void force_treefree(void)
       Father          = NULL;
     }
   else
-    terminate("trying to free the tree even though it's not allocated");
+    terminate_program("trying to free the tree even though it's not allocated");
 }
 
 /*! \brief Dump particle data into file.
@@ -1812,7 +1812,7 @@ int force_add_empty_nodes(void)
                             "task %d: looks like a serious problem, stopping with particle dump. Tree_NumNodes=%d Tree_MaxNodes=%d\n",
                             ThisTask, Tree_NumNodes, Tree_MaxNodes);
                         dump_particles();
-                        terminate(buf);
+                        terminate_program(buf);
                       }
                     return 1;
                   }

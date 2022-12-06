@@ -165,7 +165,7 @@ void intersections_plane_cell(int sphp_index, int dp_index, double *center, doub
         {
           if(p == max_phi_elms)
             {
-              terminate("termination in voronoi_utils.c: intersections_plane_cell: not enough memory!\n");
+              terminate_program("termination in voronoi_utils.c: intersections_plane_cell: not enough memory!\n");
             }
 
           polygon[2 * p]     = ls[i] + lambda * (ls[i + 3] - ls[i]);          // x coordinate of the intersection
@@ -245,7 +245,7 @@ void intersection_plane_grid(double *center, double *n, const char *filename)
 {
   if(NTask != 1)
     {
-      terminate("termination in voronoi_utils.c: intersection_plane_grid: not yet parallelized!\n");
+      terminate_program("termination in voronoi_utils.c: intersection_plane_grid: not yet parallelized!\n");
     }
 
   double phi;
@@ -309,7 +309,7 @@ void intersection_plane_grid(double *center, double *n, const char *filename)
 
           if(j > polygons_max_elms - 100)
             {
-              terminate("termination in voronoi_utils.c: intersection_plane_grid: not enough memory for the polygons!\n");
+              terminate_program("termination in voronoi_utils.c: intersection_plane_grid: not enough memory for the polygons!\n");
             }
         }
     }

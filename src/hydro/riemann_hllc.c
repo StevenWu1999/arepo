@@ -203,7 +203,7 @@ double godunov_flux_3d_hllc(struct state *st_L, struct state *st_R, struct state
     {
       printf("Left:  st_L->press=%g st_L->rho=%g  st_L->velx=%g\n", st_L->press, st_L->rho, st_L->velx);
       printf("Right: st_R->press=%g st_R->rho=%g  st_R->velx=%g\n", st_R->press, st_R->rho, st_R->velx);
-      terminate("density is zero\n");
+      terminate_program("density is zero\n");
       return 0;
     }
 

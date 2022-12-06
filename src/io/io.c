@@ -189,20 +189,20 @@ void init_field(enum iofields field, const char *label, const char *datasetname,
   if(type_in_memory == MEM_INT &&
      ((type_in_file_input != FILE_NONE && type_in_file_input != FILE_INT) || type_in_file_output != FILE_INT))
     {
-      terminate("combination of datatypes not supported (field %s)", datasetname);
+      terminate_program("combination of datatypes not supported (field %s)", datasetname);
     }
 
   if(type_in_memory == MEM_MY_ID_TYPE &&
      ((type_in_file_input != FILE_NONE && type_in_file_input != FILE_MY_ID_TYPE) || type_in_file_output != FILE_MY_ID_TYPE))
     {
-      terminate("combination of datatypes not supported (field %s)", datasetname);
+      terminate_program("combination of datatypes not supported (field %s)", datasetname);
     }
 
   if((type_in_memory == MEM_FLOAT || type_in_memory == MEM_MY_SINGLE || type_in_memory == MEM_DOUBLE) &&
      ((type_in_file_input != FILE_NONE && (type_in_file_input == FILE_MY_ID_TYPE || type_in_file_input == FILE_INT)) ||
       type_in_file_output == FILE_INT || type_in_file_output == FILE_MY_ID_TYPE))
     {
-      terminate("combination of datatypes not supported (field %s)", datasetname);
+      terminate_program("combination of datatypes not supported (field %s)", datasetname);
     }
 
   IO_Fields[N_IO_Fields].a       = 0.;
@@ -406,12 +406,12 @@ void savepositions(int num, int subbox_flag)
             }
 
           if(All.SnapFormat < 1 || All.SnapFormat > 3)
-            terminate("Unsupported File-Format.  All.SnapFormat=%d\n", All.SnapFormat);
+            terminate_program("Unsupported File-Format.  All.SnapFormat=%d\n", All.SnapFormat);
 
 #ifndef HAVE_HDF5
           if(All.SnapFormat == 3)
             {
-              mpi_terminate("Code wasn't compiled with HDF5 support enabled!\n");
+              mpi_terminate_program("Code wasn't compiled with HDF5 support enabled!\n");
             }
 #endif /* #ifndef  HAVE_HDF5 */
 
@@ -589,7 +589,7 @@ void fill_write_buffer(void *buffer, enum iofields blocknr, int *startindex, int
     }
 
   if(field < 0)
-    terminate("IO field=%d not registered with init_field()", (int)blocknr);
+    terminate_program("IO field=%d not registered with init_field()", (int)blocknr);
 
   set_cosmo_factors_for_current_time();
 
@@ -619,17 +619,17 @@ void fill_write_buffer(void *buffer, enum iofields blocknr, int *startindex, int
                     particle = pindex;
                     break;
                   case A_PS:
-                    terminate("Not good, trying to read into PS[]?\n");
+                    terminate_program("Not good, trying to read into PS[]?\n");
                     break;
                   default:
-                    terminate("ERROR in fill_write_buffer: Array not found!\n");
+                    terminate_program("ERROR in fill_write_buffer: Array not found!\n");
                     break;
                 }
 
               switch(IO_Fields[field].type_in_file_output)
                 {
                   case FILE_NONE:
-                    terminate("error");
+                    terminate_program("error");
                     break;
                   case FILE_INT:
                     IO_Fields[field].io_func(particle, IO_Fields[field].values_per_block, intp, 0);
@@ -680,7 +680,7 @@ void fill_write_buffer(void *buffer, enum iofields blocknr, int *startindex, int
                     break;
 
                   default:
-                    terminate("ERROR in fill_write_buffer: Array not found!\n");
+                    terminate_program("ERROR in fill_write_buffer: Array not found!\n");
                     break;
                 }
 
@@ -721,11 +721,11 @@ void fill_write_buffer(void *buffer, enum iofields blocknr, int *startindex, int
                         break;
 
                       case MEM_NONE:
-                        terminate("ERROR in fill_write_buffer: reached MEM_NONE with no io_func specified!\n");
+                        terminate_program("ERROR in fill_write_buffer: reached MEM_NONE with no io_func specified!\n");
                         break;
 
                       default:
-                        terminate("ERROR in fill_write_buffer: Type not found!\n");
+                        terminate_program("ERROR in fill_write_buffer: Type not found!\n");
                         break;
                     }
 
@@ -783,7 +783,7 @@ int get_bytes_per_blockelement(enum iofields blocknr, int mode)
               switch(IO_Fields[f].type_in_file_input)
                 {
                   case FILE_NONE:
-                    terminate("error");
+                    terminate_program("error");
                     break;
                   case FILE_INT:
                     bytes_per_blockelement = IO_Fields[f].values_per_block * sizeof(int);
@@ -807,7 +807,7 @@ int get_bytes_per_blockelement(enum iofields blocknr, int mode)
               switch(IO_Fields[f].type_in_file_output)
                 {
                   case FILE_NONE:
-                    terminate("error");
+                    terminate_program("error");
                     break;
                   case FILE_INT:
                     bytes_per_blockelement = IO_Fields[f].values_per_block * sizeof(int);
@@ -860,7 +860,7 @@ int get_datatype_in_block(enum iofields blocknr, int mode)
         }
     }
 
-  terminate("error invalid field");
+  terminate_program("error invalid field");
   return typekey;
 }
 
@@ -887,7 +887,7 @@ int get_values_per_blockelement(enum iofields blocknr)
         }
     }
 
-  terminate("reached last entry in switch - strange.");
+  terminate_program("reached last entry in switch - strange.");
   return values;
 }
 
@@ -925,7 +925,7 @@ int get_particles_in_block(enum iofields blocknr, int *typelist)
         break;
 
       case IO_LASTENTRY:
-        terminate("reached last entry in switch - strange.");
+        terminate_program("reached last entry in switch - strange.");
         break;
 
       default:
@@ -951,7 +951,7 @@ int get_particles_in_block(enum iofields blocknr, int *typelist)
 
     }  // end switch
 
-  terminate("reached end of function - this should not happen");
+  terminate_program("reached end of function - this should not happen");
   return 0;
 }
 
@@ -1066,7 +1066,7 @@ void get_Tab_IO_Label(enum iofields blocknr, char *label)
         }
     }
 
-  terminate("error invalid field");
+  terminate_program("error invalid field");
 }
 
 /*! \brief This function associates a dataset name with each block number.
@@ -1091,7 +1091,7 @@ void get_dataset_name(enum iofields blocknr, char *buf)
         }
     }
 
-  terminate("error invalid field");
+  terminate_program("error invalid field");
 }
 
 /*! \brief Actually write the snapshot file to the disk.
@@ -1255,7 +1255,7 @@ void write_file(char *fname, int writeTask, int lastTask, int subbox_flag)
               if(!(fd = fopen(fname, "w")))
                 {
                   printf("can't open file `%s' for writing snapshot.\n", fname);
-                  terminate("file open error");
+                  terminate_program("file open error");
                 }
 
               if(All.SnapFormat == 2)
@@ -1587,7 +1587,7 @@ void write_file(char *fname, int writeTask, int lastTask, int subbox_flag)
         }
       else
         {
-          terminate("TOLERATE_WRITE_ERROR: Second try with alternative file failed too.\n");
+          terminate_program("TOLERATE_WRITE_ERROR: Second try with alternative file failed too.\n");
         }
     }
 #endif /* #ifdef TOLERATE_WRITE_ERROR */
@@ -2067,7 +2067,7 @@ size_t my_fwrite(void *ptr, size_t size, size_t nmemb, FILE *stream)
 #else  /* #ifdef TOLERATE_WRITE_ERROR */
           printf("I/O error (fwrite) on task=%d has occured: %s\n", ThisTask, strerror(errno));
           myflush(stdout);
-          terminate("write error");
+          terminate_program("write error");
 #endif /* #ifdef TOLERATE_WRITE_ERROR #else */
         }
     }
@@ -2111,7 +2111,7 @@ size_t my_fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
           else
             printf("I/O error (fread) on task=%d has occured: %s\n", ThisTask, strerror(errno));
           myflush(stdout);
-          terminate("read error");
+          terminate_program("read error");
         }
     }
   else

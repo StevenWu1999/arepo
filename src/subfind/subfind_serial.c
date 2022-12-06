@@ -74,7 +74,7 @@ int subfind_process_group_serial(int gr, int Offs, int nsubgroups_cat)
           for(int i = 0; i < NumPart; i++)
             printf("task=%d i=%d PS[i].GrNr=%d\n", ThisTask, i, PS[i].GrNr);
 
-          terminate(buf);
+          terminate_program(buf);
         }
     }
 
@@ -85,7 +85,7 @@ int subfind_process_group_serial(int gr, int Offs, int nsubgroups_cat)
 
   for(int i = 0; i < N; i++)
     if(PS[Offs + i].GrNr != Group[gr].GrNr)
-      terminate("task=%d, gr=%d: don't have the number of particles for GrNr=%d i=%d group-len:N=%d found=%d before=%d\n", ThisTask,
+      terminate_program("task=%d, gr=%d: don't have the number of particles for GrNr=%d i=%d group-len:N=%d found=%d before=%d\n", ThisTask,
                 gr, Group[gr].GrNr, i, N, PS[Offs + i].GrNr, PS[Offs - 1].GrNr);
 
   candidates = (struct cand_dat *)mymalloc_movable(&candidates, "candidates", N * sizeof(struct cand_dat));
@@ -174,7 +174,7 @@ int subfind_process_group_serial(int gr, int Offs, int nsubgroups_cat)
                       listofdifferent[ndiff++] = Head[ngb_index];
                     }
                   else
-                    terminate(
+                    terminate_program(
                         "this may not occur: ThisTask=%d gr=%d k=%d i=%d part_index=%d ngb_index = %d  head[ngb_index]=%d "
                         "P[part_index].DM_Density=%g %g GrNrs= %d %d \n",
                         ThisTask, gr, k, i, part_index, ngb_index, Head[ngb_index], PS[part_index].Density, PS[ngb_index].Density,
@@ -243,7 +243,7 @@ int subfind_process_group_serial(int gr, int Offs, int nsubgroups_cat)
             break;
 
           default:
-            terminate("can't be!");
+            terminate_program("can't be!");
             break;
         }
     }
@@ -342,7 +342,7 @@ int subfind_process_group_serial(int gr, int Offs, int nsubgroups_cat)
               sprintf(buf, "k=%d|%d has rank=%d and len=%d.  j=%d has rank=%d and len=%d bound=%d\n", k, count_cand,
                       (int)candidates[k].rank, candidates[k].len, (int)candidates[k].bound_length, candidates[j].rank,
                       (int)candidates[j].len, candidates[j].bound_length);
-              terminate(buf);
+              terminate_program(buf);
             }
         }
     }
@@ -374,10 +374,10 @@ int subfind_process_group_serial(int gr, int Offs, int nsubgroups_cat)
         }
 
       if(count != len)
-        terminate("count=%d != len=%d  k=%d subnr=%d  nsubs=%d", count, len, k, subnr, nsubs);
+        terminate_program("count=%d != len=%d  k=%d subnr=%d  nsubs=%d", count, len, k, subnr, nsubs);
 
       if(Nsubgroups > MaxNsubgroups)
-        terminate("Nsubgroups = %d >= MaxNsubgroups = %d", Nsubgroups, MaxNsubgroups);
+        terminate_program("Nsubgroups = %d >= MaxNsubgroups = %d", Nsubgroups, MaxNsubgroups);
 
       subfind_determine_sub_halo_properties(ud, len, &SubGroup[Nsubgroups], GrNr, subnr, 0, nsubgroups_cat);
 
@@ -618,7 +618,7 @@ int subfind_unbind(struct unbind_data *ud, int len, int *len_non_gas)
         }
 
       if(iter++ > MAXITER)
-        terminate("iter > MAXITER = %d", MAXITER);
+        terminate_program("iter > MAXITER = %d", MAXITER);
     }
   while(unbound > 0);
 
@@ -656,7 +656,7 @@ int subfind_fof_calc_am_serial(int gr, int Offs, int snapnr, int ngroups_cat)
           for(i = 0; i < NumPart; i++)
             printf("task=%d i=%d PS[i].GrNr=%d\n", ThisTask, i, PS[i].GrNr);
 
-          terminate(buf);
+          terminate_program(buf);
         }
     }
 

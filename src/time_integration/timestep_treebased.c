@@ -418,7 +418,7 @@ int timestep_evaluate(int target, int mode, int threadid)
           else /* pseudo particle */
             {
               if(mode == MODE_IMPORTED_PARTICLES)
-                terminate("mode == 1");
+                terminate_program("mode == 1");
 
               if(target >= 0) /* if no target is given, export will not occur */
                 ngb_treefind_export_node_threads(no, target, threadid, 0);

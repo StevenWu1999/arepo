@@ -106,7 +106,7 @@ int derefine_should_this_cell_be_merged(int i, int flag)
         break;
 
       default:
-        terminate("invalid derefinement criterion specified");
+        terminate_program("invalid derefinement criterion specified");
         break;
     }
 

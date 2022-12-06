@@ -313,7 +313,7 @@ int find_cells_evaluate(int target, int mode, int thread_id)
   if(wsum > 1.01)
     {
       printf("wsum=%g, Weight=%g, target=%d\n", wsum, target_data->Weight, target);
-      terminate("bla");
+      terminate_program("bla");
     }
 
   /* Now collect the result at the right place */

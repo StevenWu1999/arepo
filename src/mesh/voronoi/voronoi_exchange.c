@@ -191,7 +191,7 @@ void mesh_setup_exchange(void)
         j++;
 
       if(j >= Mesh_nimport)
-        terminate("j >= Mesh_nimport");
+        terminate_program("j >= Mesh_nimport");
 
       Mesh.DP[SortPrimExch2[i].rank].index =
           SortPrimExch[j].rank; /* note: this change is now permanent and available for next exchange */

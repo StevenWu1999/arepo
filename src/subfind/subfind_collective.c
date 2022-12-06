@@ -141,12 +141,12 @@ void subfind_process_group_collectively(int nsubgroups_cat)
   if(SubThisTask == 0)
     {
       if(Ngroups != 1)
-        terminate("Ngroups=%d != 1  SubNTask=%d SubThisTask=%d", Ngroups, SubNTask, SubThisTask);
+        terminate_program("Ngroups=%d != 1  SubNTask=%d SubThisTask=%d", Ngroups, SubNTask, SubThisTask);
     }
   else
     {
       if(Ngroups != 0)
-        terminate("Ngroups=%d != 0  SubNTask=%d SubThisTask=%d", Ngroups, SubNTask, SubThisTask);
+        terminate_program("Ngroups=%d != 0  SubNTask=%d SubThisTask=%d", Ngroups, SubNTask, SubThisTask);
     }
 
   if(SubThisTask == 0)
@@ -174,7 +174,7 @@ void subfind_process_group_collectively(int nsubgroups_cat)
 
   /* sanity check that we actually have all the right particles on the processor subset */
   if(totgrouplen1 != totgrouplen2)
-    terminate("totgrouplen1=%d != totgrouplen2=%d", totgrouplen1, totgrouplen2); /* inconsistency */
+    terminate_program("totgrouplen1=%d != totgrouplen2=%d", totgrouplen1, totgrouplen2); /* inconsistency */
 
   /* do a domain decomposition just for this halo */
   subfind_coll_domain_decomposition();
@@ -370,7 +370,7 @@ void subfind_process_group_collectively(int nsubgroups_cat)
                         }
                       else
                         {
-                          terminate("k=%d|%d has rank=%d and len=%d.  j=%d has rank=%d and len=%d\n", k, totcand,
+                          terminate_program("k=%d|%d has rank=%d and len=%d.  j=%d has rank=%d and len=%d\n", k, totcand,
                                     (int)tmp_coll_candidates[k].rank, (int)tmp_coll_candidates[k].len, j,
                                     (int)tmp_coll_candidates[j].rank, (int)tmp_coll_candidates[j].len);
                         }
@@ -466,7 +466,7 @@ void subfind_process_group_collectively(int nsubgroups_cat)
                           subfind_distlinklist_mark_particle(p, master, nsubs);
 
                           if(p < 0)
-                            terminate("Bummer i=%d \n", i);
+                            terminate_program("Bummer i=%d \n", i);
 
                           p = subfind_distlinklist_get_next(p);
                         }
@@ -592,7 +592,7 @@ void subfind_process_group_collectively(int nsubgroups_cat)
                     {
                       subfind_distlinklist_add_particle(p);
                       if(p < 0)
-                        terminate("Bummer i=%d \n", i);
+                        terminate_program("Bummer i=%d \n", i);
 
                       p = subfind_distlinklist_get_next(p);
                     }
@@ -651,7 +651,7 @@ void subfind_process_group_collectively(int nsubgroups_cat)
     if(coll_candidates[k].bound_length >= All.DesLinkNgb)
       {
         if(coll_candidates[k].len < All.DesLinkNgb)
-          terminate("coll_candidates[k=%d].len=%d bound=%d\n", k, coll_candidates[k].len, coll_candidates[k].bound_length);
+          terminate_program("coll_candidates[k=%d].len=%d bound=%d\n", k, coll_candidates[k].len, coll_candidates[k].bound_length);
 
         count++;
       }
@@ -709,7 +709,7 @@ void subfind_process_group_collectively(int nsubgroups_cat)
                 }
               else
                 {
-                  terminate("k=%d|%d has rank=%d and len=%d.  j=%d has rank=%d and len=%d bound=%d\n", k, countall,
+                  terminate_program("k=%d|%d has rank=%d and len=%d.  j=%d has rank=%d and len=%d bound=%d\n", k, countall,
                             (int)tmp_coll_candidates[k].rank, (int)tmp_coll_candidates[k].len,
                             (int)tmp_coll_candidates[k].bound_length, (int)tmp_coll_candidates[j].rank,
                             (int)tmp_coll_candidates[j].len, (int)tmp_coll_candidates[j].bound_length);
@@ -786,7 +786,7 @@ void subfind_process_group_collectively(int nsubgroups_cat)
               if(SubThisTask == 0)
                 {
                   if(Nsubgroups >= MaxNsubgroups)
-                    terminate("Nsubgroups=%d >= MaxNsubgroups=%d", Nsubgroups, MaxNsubgroups);
+                    terminate_program("Nsubgroups=%d >= MaxNsubgroups=%d", Nsubgroups, MaxNsubgroups);
                 }
 
               tt0 = second();
@@ -798,7 +798,7 @@ void subfind_process_group_collectively(int nsubgroups_cat)
               if(SubThisTask == 0)
                 {
                   if(Nsubgroups >= MaxNsubgroups)
-                    terminate("Nsubgroups >= MaxNsubgroups");
+                    terminate_program("Nsubgroups >= MaxNsubgroups");
 
                   if(subnr == 0)
                     {
@@ -879,12 +879,12 @@ void subfind_fof_calc_am_collective(int snapnr, int ngroups_cat)
   if(SubThisTask == 0)
     {
       if(Ngroups != 1)
-        terminate("Ngroups=%d != 1  SubNTask=%d SubThisTask=%d", Ngroups, SubNTask, SubThisTask);
+        terminate_program("Ngroups=%d != 1  SubNTask=%d SubThisTask=%d", Ngroups, SubNTask, SubThisTask);
     }
   else
     {
       if(Ngroups != 0)
-        terminate("Ngroups=%d != 0  SubNTask=%d SubThisTask=%d", Ngroups, SubNTask, SubThisTask);
+        terminate_program("Ngroups=%d != 0  SubNTask=%d SubThisTask=%d", Ngroups, SubNTask, SubThisTask);
     }
 
   if(SubThisTask == 0)
@@ -907,7 +907,7 @@ void subfind_fof_calc_am_collective(int snapnr, int ngroups_cat)
 
   /* sanity check that we actually have all the right particles on the processor subset */
   if(totgrouplen1 != totgrouplen2)
-    terminate("totgrouplen1 != totgrouplen2"); /* inconsistency */
+    terminate_program("totgrouplen1 != totgrouplen2"); /* inconsistency */
 
   /* do a domain decomposition just for this halo */
   subfind_coll_domain_decomposition();
@@ -1173,7 +1173,7 @@ void subfind_col_find_coll_candidates(int totgrouplen)
                     head = subfind_distlinklist_get_head(ngb_index1);
 
                     if(head == -1)
-                      terminate("We have a problem!  head=%d/%d for k=%d on task=%d\n", (int)(head >> 32), (int)head, k, SubThisTask);
+                      terminate_program("We have a problem!  head=%d/%d for k=%d on task=%d\n", (int)(head >> 32), (int)head, k, SubThisTask);
 
                     retcode = subfind_distlinklist_get_tail_set_tail_increaselen(head, &tail, sd[k].index);
 
@@ -1195,7 +1195,7 @@ void subfind_col_find_coll_candidates(int totgrouplen)
                       }
 
                     if(head == -1 || head_attach == -1)
-                      terminate("We have a problem!  head=%d/%d head_attach=%d/%d for k=%d on task=%d\n", (int)(head >> 32), (int)head,
+                      terminate_program("We have a problem!  head=%d/%d head_attach=%d/%d for k=%d on task=%d\n", (int)(head >> 32), (int)head,
                                 (int)(head_attach >> 32), (int)head_attach, k, SubThisTask);
 
                     if(head != head_attach)
@@ -1230,7 +1230,7 @@ void subfind_col_find_coll_candidates(int totgrouplen)
                                 count_cand++;
                               }
                             else
-                              terminate("Task %d: count=%d, max=%d, npartgroup=%d\n", SubThisTask, count_cand, max_coll_candidates,
+                              terminate_program("Task %d: count=%d, max=%d, npartgroup=%d\n", SubThisTask, count_cand, max_coll_candidates,
                                         NumPartGroup);
                           }
 
@@ -1326,7 +1326,7 @@ void subfind_col_find_coll_candidates(int totgrouplen)
           count_cand++;
         }
       else
-        terminate("count_cand=%d >= max_coll_candidates=%d", count_cand, max_coll_candidates);
+        terminate_program("count_cand=%d >= max_coll_candidates=%d", count_cand, max_coll_candidates);
     }
   t1 = second();
   if(SubThisTask == 0)
@@ -1382,7 +1382,7 @@ void subfind_col_find_coll_candidates(int totgrouplen)
            ThisTask, timediff(t0, t1), (int)rank, totgrouplen, AllocatedBytes / (1024.0 * 1024.0));
 
   if(((int)rank) != totgrouplen)
-    terminate("mismatch\n");
+    terminate_program("mismatch\n");
 }
 
 /*! \brief Unbinding for independent subgroups.
@@ -1408,7 +1408,7 @@ void subfind_unbind_independent_ones(int count_cand)
           {
             i++;
             if(i >= NumPart)
-              terminate("i >= NumPart");
+              terminate_program("i >= NumPart");
           }
 
         if(PS[i].submark >= 0 && PS[i].submark < HIGHBIT)
@@ -1418,7 +1418,7 @@ void subfind_unbind_independent_ones(int count_cand)
 
             if(nsubs != coll_candidates[k].nsub)
               {
-                terminate("TASK=%d i=%d k=%d nsubs=%d coll_candidates[k].nsub=%d\n", SubThisTask, i, k, nsubs,
+                terminate_program("TASK=%d i=%d k=%d nsubs=%d coll_candidates[k].nsub=%d\n", SubThisTask, i, k, nsubs,
                           coll_candidates[k].nsub);
               }
 
@@ -1508,7 +1508,7 @@ int subfind_col_unbind(struct unbind_data *d, int num, int *num_non_gas)
           for(i = 0, minindex = -1, minpot = 1.0e30; i < num; i++)
             {
               if(gsl_isnan(PS[d[i].index].Potential))
-                terminate("pot is nan");
+                terminate_program("pot is nan");
 
               if(PS[d[i].index].Potential < minpot || minindex == -1)
                 {
@@ -1527,7 +1527,7 @@ int subfind_col_unbind(struct unbind_data *d, int num, int *num_non_gas)
               }
 
           if(mincpu < 0)
-            terminate("mincpu < 0");
+            terminate_program("mincpu < 0");
 
           myfree(potlist);
 
@@ -1841,7 +1841,7 @@ void subfind_poll_for_requests(void)
                 if(index >= NumPartGroup)
                   {
                     sprintf(msg, "What: index=%d NumPartGroup=%d\n", index, NumPartGroup);
-                    terminate(msg);
+                    terminate_program(msg);
                   }
                 LocalLen++;
               }
@@ -1853,7 +1853,7 @@ void subfind_poll_for_requests(void)
             submark = ibuf[2];
 
             if(PS[index].submark != HIGHBIT)
-              terminate("TasK=%d i=%d P[i].submark=%d?\n", SubThisTask, index, PS[index].submark);
+              terminate_program("TasK=%d i=%d P[i].submark=%d?\n", SubThisTask, index, PS[index].submark);
 
             PS[index].TargetTask = target;
             PS[index].submark    = submark;
@@ -1896,7 +1896,7 @@ void subfind_poll_for_requests(void)
             break;
 
           default:
-            terminate("tag not present in the switch");
+            terminate_program("tag not present in the switch");
             break;
         }
     }
@@ -2019,7 +2019,7 @@ void subfind_distlinklist_add_particle(long long index)
           if(i >= NumPartGroup)
             {
               sprintf(msg, "What: index=%d NumPartGroup=%d\n", i, NumPartGroup);
-              terminate(msg);
+              terminate_program(msg);
             }
 
           LocalLen++;
@@ -2049,7 +2049,7 @@ void subfind_distlinklist_mark_particle(long long index, int target, int submark
   if(SubThisTask == task)
     {
       if(PS[i].submark != HIGHBIT)
-        terminate("Tas=%d i=%d P[i].submark=%d?\n", SubThisTask, i, PS[i].submark);
+        terminate_program("Tas=%d i=%d P[i].submark=%d?\n", SubThisTask, i, PS[i].submark);
 
       PS[i].TargetTask = target;
       PS[i].submark    = submark;

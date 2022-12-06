@@ -75,7 +75,7 @@ int myMPI_Sendrecv(void *sendb, size_t sendcount, MPI_Datatype sendtype, int des
   char *recvbuf = (char *)recvb;
 
   if(dest != source)
-    terminate("dest != source");
+    terminate_program("dest != source");
 
   MPI_Type_size(sendtype, &size_sendtype);
   MPI_Type_size(recvtype, &size_recvtype);

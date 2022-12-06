@@ -157,7 +157,7 @@ double godunov_flux_3d(struct state *st_L, struct state *st_R, struct state_face
           }
         else
           {
-            terminate("one of the densities is negative\n");
+            terminate_program("one of the densities is negative\n");
           }
         return 0;
       }
@@ -711,7 +711,7 @@ double guess_for_pressure(struct state *st_L, struct state *st_R)
           if(pv < 0)
             {
               printf("pv=%g\n", pv);
-              terminate("negative pv");
+              terminate_program("negative pv");
             }
 
           return pv;
@@ -771,7 +771,7 @@ void riemann_isotherm(struct state *st_L, struct state *st_R, double *Rho, doubl
   int iter = 0;
 
   if(st_L->rho <= 0 || st_R->rho <= 0)
-    terminate("isothermal Riemann solver was called with zero or negative density\n");
+    terminate_program("isothermal Riemann solver was called with zero or negative density\n");
 
   do /* newton-raphson scheme */
     {
@@ -799,7 +799,7 @@ void riemann_isotherm(struct state *st_L, struct state *st_R, double *Rho, doubl
       printf("ID_L=%llu ID_R=%llu  Rho_L=%g Rho_R=%g  Vel_L=%g Vel_R=%g\n", st_L->ID, st_R->ID, st_L->rho, st_R->rho, st_L->velx,
              st_R->velx);
 #endif /* #ifndef LONGIDS #else */
-      terminate("ICs for isothermal riemann solver lead to divergence. stopping.");
+      terminate_program("ICs for isothermal riemann solver lead to divergence. stopping.");
       /*
        *Rho = 0.5 * (Rho_L + Rho_R);
        *Vel = 0.5 * (Vel_L + Vel_R);

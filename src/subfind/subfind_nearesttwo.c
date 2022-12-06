@@ -181,7 +181,7 @@ static void out2particle(data_out *out, int i, int mode)
 
           if(NgbLoc[i].count == 2)
             if(NgbLoc[i].index[0] == NgbLoc[i].index[1])
-              terminate("this is not supposed to happen");
+              terminate_program("this is not supposed to happen");
         }
     }
 }
@@ -329,7 +329,7 @@ static int subfind_nearesttwo_evaluate(int target, int mode, int threadid)
   if(count == 2)
     if(index[0] == index[1])
       {
-        terminate("task=%d/%d target=%d mode=%d  index_0=%lld  index_1=%lld\n", SubThisTask, ThisTask, target, mode, index[0],
+        terminate_program("task=%d/%d target=%d mode=%d  index_0=%lld  index_1=%lld\n", SubThisTask, ThisTask, target, mode, index[0],
                   index[1]);
       }
 
@@ -409,12 +409,12 @@ static int subfind_nearesttwo_evaluate(int target, int mode, int threadid)
             }
           else if(no >= SubTree_ImportedNodeOffset) /* point from imported nodelist */
             {
-              terminate("do not expect imported points here");
+              terminate_program("do not expect imported points here");
             }
           else /* pseudo particle */
             {
               if(mode == MODE_IMPORTED_PARTICLES)
-                terminate("mode == MODE_IMPORTED_PARTICLES");
+                terminate_program("mode == MODE_IMPORTED_PARTICLES");
 
               if(target >= 0) /* note: if no target is given, export will not occur */
                 subfind_treefind_collective_export_node_threads(no, target, threadid);

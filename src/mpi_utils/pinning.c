@@ -138,7 +138,7 @@ void pin_to_core_set(void)
   hyperthreads_per_core = pus / cores;
 
   if(hyperthreads_per_core < 1)
-    terminate("Need at least one logical thread per physical core\n");
+    terminate_program("Need at least one logical thread per physical core\n");
 
   if(pus > cores)
     mpi_printf("PINNING: Looks like %d hyperthreads per physical core are in principle possible.\n", hyperthreads_per_core);
@@ -191,7 +191,7 @@ void pin_to_core_set(void)
   mpi_printf("PINNING: %d logical cores are available per MPI Task.\n", pus_per_task);
 
   if(pus_per_task <= 0)
-    terminate("Need at least one logical core per MPI task for pinning to make sense.  available_pus=%d TasksInThisNode=%d\n",
+    terminate_program("Need at least one logical core per MPI task for pinning to make sense.  available_pus=%d TasksInThisNode=%d\n",
               available_pus, TasksInThisNode);
 
   int depth, cid, cores_before, id_this, id_found, count;
@@ -249,7 +249,7 @@ void pin_to_core_set(void)
                 {
                   id_this++;
                   if(id_this >= pus)
-                    terminate("id_this >= pus");
+                    terminate_program("id_this >= pus");
                 }
               hwloc_bitmap_free(cpuset_core);
             }

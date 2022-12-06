@@ -102,7 +102,7 @@ void gradient_init(MyFloat *addr, MyFloat *addr_exch, MySingle *addr_grad, int t
   if(N_Grad == MAXGRADIENTS)
     {
       mpi_printf("Failed to register gradient, maximum of %d already reached\n", MAXGRADIENTS);
-      terminate("MAXGRADIENTS reached");
+      terminate_program("MAXGRADIENTS reached");
     }
 
   grad_elements[N_Grad].type = type;

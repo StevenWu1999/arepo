@@ -257,7 +257,7 @@ void calculate_gradients(void)
                 {
 #ifndef VORONOI_STATIC_MESH
                   if(P[particle].Ti_Current != All.Ti_Current)
-                    terminate("surprise! we don't expect this here anymore");
+                    terminate_program("surprise! we don't expect this here anymore");
 #endif /* #ifndef VORONOI_STATIC_MESH */
 
                   if(P[particle].ID == P[i].ID)
@@ -856,7 +856,7 @@ void limit_gradient(double *d, double phi, double min_phi, double max_phi, MySin
           else
             fac = 0;
           if(fac < 0 || fac > 1)
-            terminate("fac=%g\ndp=%g max_phi=%g phi=%g", fac, dp, max_phi, phi);
+            terminate_program("fac=%g\ndp=%g max_phi=%g phi=%g", fac, dp, max_phi, phi);
           dphi[0] *= fac;
           dphi[1] *= fac;
           dphi[2] *= fac;
@@ -873,7 +873,7 @@ void limit_gradient(double *d, double phi, double min_phi, double max_phi, MySin
           else
             fac = 0;
           if(fac < 0 || fac > 1)
-            terminate("fac=%g\ndp=%g max_phi=%g phi=%g", fac, dp, max_phi, phi);
+            terminate_program("fac=%g\ndp=%g max_phi=%g phi=%g", fac, dp, max_phi, phi);
           dphi[0] *= fac;
           dphi[1] *= fac;
           dphi[2] *= fac;

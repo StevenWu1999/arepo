@@ -1165,7 +1165,7 @@ static void my_fft_column_remap(fft_complex *data, int Ndims[3], int in_firstcol
         perm_rev[j] = perm[perm[j]];
 
       if(!(perm_rev[perm[0]] == 0 && perm_rev[perm[1]] == 1 && perm_rev[perm[2]] == 2))
-        terminate("bummer");
+        terminate_program("bummer");
     }
 
   int in_colums          = Ndims[0] * Ndims[1];
@@ -1242,7 +1242,7 @@ static void my_fft_column_remap(fft_complex *data, int Ndims[3], int in_firstcol
         }
 
       if(nexport != ncells)
-        terminate("nexport=%lld != ncells=%lld", (long long)nexport, (long long)ncells);
+        terminate_program("nexport=%lld != ncells=%lld", (long long)nexport, (long long)ncells);
     }
   else
     {
@@ -1334,7 +1334,7 @@ static void my_fft_column_remap(fft_complex *data, int Ndims[3], int in_firstcol
           int fi = out_firstcol % Ndims[perm[1]];
           int la = (out_firstcol + out_ncol - 1) % Ndims[perm[1]];
 
-          terminate("count=%lld nimport=%lld   ncol=%d fi=%d la=%d first=%d last=%d\n", (long long)count, (long long)nimport, out_ncol,
+          terminate_program("count=%lld nimport=%lld   ncol=%d fi=%d la=%d first=%d last=%d\n", (long long)count, (long long)nimport, out_ncol,
                     fi, la, first[1], last[1]);
         }
     }
@@ -1379,7 +1379,7 @@ static void my_fft_column_transpose(fft_real *data, int Ndims[3], int in_firstco
         perm_rev[j] = perm[perm[j]];
 
       if(!(perm_rev[perm[0]] == 0 && perm_rev[perm[1]] == 1 && perm_rev[perm[2]] == 2))
-        terminate("bummer");
+        terminate_program("bummer");
     }
 
   int in_colums          = Ndims[0] * Ndims[1];
@@ -1455,7 +1455,7 @@ static void my_fft_column_transpose(fft_real *data, int Ndims[3], int in_firstco
         }
 
       if(nexport != ncells)
-        terminate("nexport=%lld != ncells=%lld", (long long)nexport, (long long)ncells);
+        terminate_program("nexport=%lld != ncells=%lld", (long long)nexport, (long long)ncells);
     }
   else
     {
@@ -1546,7 +1546,7 @@ static void my_fft_column_transpose(fft_real *data, int Ndims[3], int in_firstco
           int fi = out_firstcol % Ndims[perm[1]];
           int la = (out_firstcol + out_ncol - 1) % Ndims[perm[1]];
 
-          terminate("count=%lld nimport=%lld   ncol=%d fi=%d la=%d first=%d last=%d\n", (long long)count, (long long)nimport, out_ncol,
+          terminate_program("count=%lld nimport=%lld   ncol=%d fi=%d la=%d first=%d last=%d\n", (long long)count, (long long)nimport, out_ncol,
                     fi, la, first[1], last[1]);
         }
     }
@@ -1591,7 +1591,7 @@ static void my_fft_column_transpose_c(fft_complex *data, int Ndims[3], int in_fi
         perm_rev[j] = perm[perm[j]];
 
       if(!(perm_rev[perm[0]] == 0 && perm_rev[perm[1]] == 1 && perm_rev[perm[2]] == 2))
-        terminate("bummer");
+        terminate_program("bummer");
     }
 
   int in_colums          = Ndims[0] * Ndims[1];
@@ -1668,7 +1668,7 @@ static void my_fft_column_transpose_c(fft_complex *data, int Ndims[3], int in_fi
         }
 
       if(nexport != ncells)
-        terminate("nexport=%lld != ncells=%lld", (long long)nexport, (long long)ncells);
+        terminate_program("nexport=%lld != ncells=%lld", (long long)nexport, (long long)ncells);
     }
   else
     {
@@ -1760,7 +1760,7 @@ static void my_fft_column_transpose_c(fft_complex *data, int Ndims[3], int in_fi
           int fi = out_firstcol % Ndims[perm[1]];
           int la = (out_firstcol + out_ncol - 1) % Ndims[perm[1]];
 
-          terminate("count=%lld nimport=%lld   ncol=%d fi=%d la=%d first=%d last=%d\n", (long long)count, (long long)nimport, out_ncol,
+          terminate_program("count=%lld nimport=%lld   ncol=%d fi=%d la=%d first=%d last=%d\n", (long long)count, (long long)nimport, out_ncol,
                     fi, la, first[1], last[1]);
         }
     }

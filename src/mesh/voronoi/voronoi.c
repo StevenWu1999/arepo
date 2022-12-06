@@ -147,7 +147,7 @@ void create_mesh(void)
 
       if(P[i].Ti_Current != All.Ti_Current)
         {
-          terminate("surprise! we don't expect this here anymore");
+          terminate_program("surprise! we don't expect this here anymore");
           drift_particle(i, All.Ti_Current);
         }
 
@@ -269,7 +269,7 @@ void create_mesh(void)
       TIMER_STOPSTART(CPU_MESH_CELLCHECK, CPU_MESH);
 
       if(iter > MAX_VORONOI_ITERATIONS)
-        terminate("too many iterations\n");
+        terminate_program("too many iterations\n");
 
       iter++;
     }
@@ -491,7 +491,7 @@ int voronoi_get_local_particles(void)
               ListExports = myrealloc_movable(ListExports, MaxNinlist * sizeof(struct list_export_data));
 
               if(Ninlist >= MaxNinlist)
-                terminate("Ninlist >= MaxNinlist");
+                terminate_program("Ninlist >= MaxNinlist");
             }
 
           List_InMesh[NumGasInMesh++] = p;
@@ -515,7 +515,7 @@ int voronoi_get_local_particles(void)
               Mesh.DP += 5;
 
               if(Mesh.Ndp >= Mesh.MaxNdp)
-                terminate("Ndp >= MaxNdp");
+                terminate_program("Ndp >= MaxNdp");
             }
 
           SphP[p].ActiveArea = 0;
@@ -620,7 +620,7 @@ void free_mesh(void)
     if(Mesh.DP[i].first_connection >= 0)
       {
         if(Mesh.DP[i].flag_primary_triangle == 0)
-          terminate("Mesh.DP[i].flag_primary_triangle");
+          terminate_program("Mesh.DP[i].flag_primary_triangle");
 
         int q = Mesh.DP[i].first_connection;
 

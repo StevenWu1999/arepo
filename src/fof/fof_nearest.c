@@ -297,7 +297,7 @@ double fof_find_nearest_dmparticle(MyIDType *vMinID, int *vHead, int *vLen, int 
                        timediff(t0, t1));
 
           if(iter > MAXITER)
-            terminate("FOF: failed to converge in fof-nearest\n");
+            terminate_program("FOF: failed to converge in fof-nearest\n");
         }
     }
   while(ntot > 0);
@@ -427,12 +427,12 @@ static int fof_find_nearest_dmparticle_evaluate(int target, int mode, int thread
             }
           else if(no >= Tree_ImportedNodeOffset) /* point from imported nodelist */
             {
-              terminate("do not expect imported points here");
+              terminate_program("do not expect imported points here");
             }
           else /* pseudo particle */
             {
               if(mode == MODE_IMPORTED_PARTICLES)
-                terminate("mode == MODE_IMPORTED_PARTICLES");
+                terminate_program("mode == MODE_IMPORTED_PARTICLES");
 
               if(target >= 0)
                 tree_treefind_export_node_threads(no, target, threadid);

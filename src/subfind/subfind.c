@@ -226,7 +226,7 @@ void subfind(int num)
       if(Group[i].Len > MaxSerialGroupLen) /* we have a collective group */
         {
           if(Group[i].GrNr >= Ncollective || Group[i].GrNr < 0)
-            terminate("odd");
+            terminate_program("odd");
           Group[i].TargetTask = ProcAssign[Group[i].GrNr].FirstTask;
         }
       else
@@ -393,7 +393,7 @@ void subfind(int num)
           if(((Group[gr].GrNr - Ncollective) % (NTask - NprocsCollective)) + NprocsCollective == ThisTask)
             offset = subfind_process_group_serial(gr, offset, nsubgroups_cat);
           else
-            terminate("how come that we have this group number?");
+            terminate_program("how come that we have this group number?");
         }
 
       MPI_Barrier(SubComm);

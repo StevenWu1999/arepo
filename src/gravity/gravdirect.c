@@ -168,7 +168,7 @@ void gravity_direct(int timebin)
       while(send_first + send_count < Recv_offset[recvTask])
         {
           if(sendTask >= NTask - 1)
-            terminate("sendTask >= NTask  recvTask=%d sendTask=%d", recvTask, sendTask);
+            terminate_program("sendTask >= NTask  recvTask=%d sendTask=%d", recvTask, sendTask);
 
           sendTask++;
           subdivide_evenly(Nimport, NTask, sendTask, &send_first, &send_count);
@@ -177,7 +177,7 @@ void gravity_direct(int timebin)
       while(Recv_offset[recvTask] + Recv_count[recvTask] < send_first)
         {
           if(recvTask >= NTask - 1)
-            terminate("recvTask >= NTask  recvTask=%d sendTask=%d", recvTask, sendTask);
+            terminate_program("recvTask >= NTask  recvTask=%d sendTask=%d", recvTask, sendTask);
 
           recvTask++;
         }

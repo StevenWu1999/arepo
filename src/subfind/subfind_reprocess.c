@@ -71,7 +71,7 @@ void subfind_add_grp_props_calc_fof_angular_momentum(int num, int ngroups_cat)
   for(int i = 0; i < NumPart; i++)
     {
       if(PS[i].GrNr < 0)
-        terminate("PS[i].GrNr=%d", PS[i].GrNr);
+        terminate_program("PS[i].GrNr=%d", PS[i].GrNr);
 
       if(PS[i].GrNr < TotNgroups) /* particle is in a group */
         {
@@ -81,7 +81,7 @@ void subfind_add_grp_props_calc_fof_angular_momentum(int num, int ngroups_cat)
             PS[i].TargetTask = ((PS[i].GrNr - Ncollective) % (NTask - NprocsCollective)) + NprocsCollective;
 
           if(PS[i].TargetTask < 0 || PS[i].TargetTask >= NTask)
-            terminate("PS[i].TargetTask=%d PS[i].GrNr=%d", PS[i].TargetTask, PS[i].GrNr);
+            terminate_program("PS[i].TargetTask=%d PS[i].GrNr=%d", PS[i].TargetTask, PS[i].GrNr);
 
           count_loc_task[PS[i].TargetTask]++;
         }
@@ -199,7 +199,7 @@ void subfind_add_grp_props_calc_fof_angular_momentum(int num, int ngroups_cat)
           if(((Group[gr].GrNr - Ncollective) % (NTask - NprocsCollective)) + NprocsCollective == ThisTask)
             offset = subfind_fof_calc_am_serial(gr, offset, num, ngroups_cat);
           else
-            terminate("how come that we have this group number?");
+            terminate_program("how come that we have this group number?");
         }
 
       MPI_Barrier(SubComm);

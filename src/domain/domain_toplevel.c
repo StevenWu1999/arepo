@@ -157,7 +157,7 @@ int domain_determineTopTree(void)
       All.TopNodeAllocFactor *= 1.3;
       mpi_printf("new value=%g\n", All.TopNodeAllocFactor);
       if(All.TopNodeAllocFactor > 1000)
-        terminate("something seems to be going seriously wrong here. Stopping.\n");
+        terminate_program("something seems to be going seriously wrong here. Stopping.\n");
 
       MaxTopNodes = (int)(All.TopNodeAllocFactor * All.MaxPart + 1);
 
@@ -221,7 +221,7 @@ int domain_determineTopTree(void)
                     {
                       mpi_printf("DOMAIN: Note: we would like to refine top-tree, but PEANOGRID is not fine enough\n");
 #ifndef OVERRIDE_PEANOGRID_WARNING
-                      terminate(
+                      terminate_program(
                           "Consider setting BITS_PER_DIMENSION up to a value of 42 to get a fine enough PEANOGRID, or force a "
                           "continuation by activating OVERRIDE_PEANOGRID_WARNING");
 #endif /* #ifndef OVERRIDE_PEANOGRID_WARNING */

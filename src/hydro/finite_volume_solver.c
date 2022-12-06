@@ -172,7 +172,7 @@ void compute_interface_fluxes(tessellation *T)
 
   sprintf(buf, "%s/godunov_stats_%d.txt", All.OutputDir, ThisTask);
   if(!(fdstats = fopen(buf, "w")))
-    terminate("error in opening file '%s'", buf);
+    terminate_program("error in opening file '%s'", buf);
 #endif /* #ifdef GODUNOV_STATS */
 
 #ifdef VORONOI_BACKUP_RESTORE_FACE_AREAS
@@ -313,14 +313,14 @@ void compute_interface_fluxes(tessellation *T)
         {
           printf("i=%d press_L=%g press_R=%g rho_L=%g rho_R=%g\n", i, state_L.press, state_R.press, state_L.rho, state_R.rho);
           printf("area=%g lx=%g ly=%g   rx=%g ry=%g\n", VF[i].area, state_L.dx, state_L.dy, state_R.dx, state_R.dy);
-          terminate("found crazy values");
+          terminate_program("found crazy values");
         }
 #else  /* #ifndef ISOTHERM_EQS */
       if(state_L.press < 0 || state_R.press < 0 || state_L.rho < 0 || state_R.rho < 0)
         {
           printf("i=%d rho_L=%g rho_R=%g\n", i, state_L.rho, state_R.rho);
           printf("area=%g lx=%g ly=%g   rx=%g ry=%g\n", VF[i].area, state_L.dx, state_L.dy, state_R.dx, state_R.dy);
-          terminate("found crazy values");
+          terminate_program("found crazy values");
         }
 #endif /* #ifndef ISOTHERM_EQS #else */
 #endif /* #ifndef MESHRELAX */
@@ -355,7 +355,7 @@ void compute_interface_fluxes(tessellation *T)
 #endif /* #ifdef RIEMANN_HLLC #else */
 
       if(press < 0)
-        terminate("press < 0: ID_L: %d, ID_R: %d", VF[i].p1, VF[i].p2);
+        terminate_program("press < 0: ID_L: %d, ID_R: %d", VF[i].p1, VF[i].p2);
 
 #ifdef GODUNOV_STATS
       get_mach_numbers(&state_L, &state_R, press);
@@ -435,7 +435,7 @@ void compute_interface_fluxes(tessellation *T)
           printf("rho_R=%g velx_R=%g vely_R=%g velz_R=%g press_R=%g\n", state_R.rho, state_R.velx, state_R.vely, state_R.velz,
                  state_R.press);
           print_particle_info(i);
-          terminate("infinity encountered");
+          terminate_program("infinity encountered");
         }
 #endif /* #ifndef ISOTHERM_EQS */
 
@@ -568,7 +568,7 @@ void compute_interface_fluxes(tessellation *T)
                 {
                   /* here we have a foreign ghost point */
                   if(DP[q].originalindex < 0)
-                    terminate("should not happen");
+                    terminate_program("should not happen");
 
                   if(Nflux >= MaxNflux)
                     {
@@ -581,7 +581,7 @@ void compute_interface_fluxes(tessellation *T)
                       FluxList = myrealloc_movable(FluxList, MaxNflux * sizeof(struct flux_list_data));
 
                       if(Nflux >= MaxNflux)
-                        terminate("Nflux >= MaxNflux");
+                        terminate_program("Nflux >= MaxNflux");
                     }
 
                   FluxList[Nflux].task  = DP[q].task;
@@ -690,7 +690,7 @@ void compute_interface_fluxes(tessellation *T)
     {
       if(P[i].Mass < 0)
         {
-          terminate("negative mass reached for cell=%d mass=%g", P[i].ID, P[i].Mass);
+          terminate_program("negative mass reached for cell=%d mass=%g", P[i].ID, P[i].Mass);
 
           P[i].Mass           = 0;
           SphP[i].Energy      = 0;
@@ -1780,7 +1780,7 @@ void apply_flux_list(void)
     Send_count[FluxList[i].task]++;
 
   if(Send_count[ThisTask] > 0)
-    terminate("Send_count[ThisTask]");
+    terminate_program("Send_count[ThisTask]");
 
   MPI_Alltoall(Send_count, 1, MPI_INT, Recv_count, 1, MPI_INT, MPI_COMM_WORLD);
 

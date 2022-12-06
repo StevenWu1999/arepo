@@ -107,7 +107,7 @@ int should_this_cell_be_split(int i)
         break;
 
       default:
-        terminate("invalid refinement criterion specified");
+        terminate_program("invalid refinement criterion specified");
         break;
     }
 

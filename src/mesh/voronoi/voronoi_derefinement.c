@@ -167,7 +167,7 @@ static void derefine_add_ngb(int edge, int i, int j, double area, int t, int nr)
     {
       if(i >= Mesh.Ndp || j >= Mesh.Ndp)
         {
-          terminate("i>= Ndp || j>= Ndp");
+          terminate_program("i>= Ndp || j>= Ndp");
         }
 
       if(first_ngb[i] >= 0)
@@ -216,7 +216,7 @@ int do_derefinements(void)
 #endif /* #ifdef REFINEMENT_SPLIT_CELLS */
 
       if(i >= NumGas)
-        terminate("index of gas cell greater than NumGas");
+        terminate_program("index of gas cell greater than NumGas");
 
       deref_SphP[i].Flag     = 0;
       deref_SphP[i].dp_index = -1;
@@ -407,7 +407,7 @@ int do_derefinements(void)
             {
               j = deref_SphP[i].dp_index; /* this is the delaunay point of this cell */
               if(j < 0)
-                terminate("j < 0");
+                terminate_program("j < 0");
 
               k = first_ngb[j];
 
@@ -424,7 +424,7 @@ int do_derefinements(void)
                           int p = Mesh.DP[q].index;
 
                           if(p < 0)
-                            terminate("p < 0");
+                            terminate_program("p < 0");
 
                           if(p >= NumGas) /* this is a local ghost point */
                             p -= NumGas;
@@ -447,7 +447,7 @@ int do_derefinements(void)
                               ProbeList = myrealloc_movable(ProbeList, MaxNflux * sizeof(struct probe_list_data));
 
                               if(Nflux >= MaxNflux)
-                                terminate("Nflux >= MaxNflux");
+                                terminate_program("Nflux >= MaxNflux");
                             }
 
                           ProbeList[Nflux].task     = Mesh.DP[q].task;
@@ -509,7 +509,7 @@ int do_derefinements(void)
             {
               j = deref_SphP[i].dp_index; /* this is the delaunay point of this cell */
               if(j < 0)
-                terminate("j < 0");
+                terminate_program("j < 0");
 
               max_n_tri = 300000;
               n_tri     = 0;
@@ -564,7 +564,7 @@ int do_derefinements(void)
               for(k = 0; k < n_tri; k++)
                 {
                   if(trilist[k].owner < 0 || trilist[k].owner >= Mesh.Ndp)
-                    terminate("strange owner");
+                    terminate_program("strange owner");
 
                   volume[trilist[k].owner] += get_tri_volume(k, trilist);
                 }
@@ -597,7 +597,7 @@ int do_derefinements(void)
                         {
                           warn("strange: fac=%g\n", fac);
                           fac = 0;
-                          // terminate("strange");
+                          // terminate_program("strange");
                         }
                       facsum += fac;
 
@@ -606,7 +606,7 @@ int do_derefinements(void)
                           int p = Mesh.DP[q].index;
 
                           if(p < 0)
-                            terminate("p < 0");
+                            terminate_program("p < 0");
 
                           if(p >= NumGas) /* this is a local ghost point */
                             p -= NumGas;
@@ -642,7 +642,7 @@ int do_derefinements(void)
                             {
                               char buf[1000];
                               sprintf(buf, "---> task=%d  q=%d j=%d Ndp=%d\n", ThisTask, q, j, Mesh.Ndp);
-                              terminate(buf);
+                              terminate_program(buf);
                             }
 
                           if(Nflux >= MaxNflux)
@@ -656,7 +656,7 @@ int do_derefinements(void)
                               FluxList = myrealloc_movable(FluxList, MaxNflux * sizeof(struct flux_list_data));
 
                               if(Nflux >= MaxNflux)
-                                terminate("Nflux >= MaxNflux");
+                                terminate_program("Nflux >= MaxNflux");
                             }
 
                           FluxList[Nflux].task  = Mesh.DP[q].task;
@@ -691,7 +691,7 @@ int do_derefinements(void)
                 {
                   char buf[1000];
                   sprintf(buf, "facsum=%g\n", facsum);
-                  terminate(buf);
+                  terminate_program(buf);
                 }
 
               myfree(volume);
@@ -760,7 +760,7 @@ static void derefine_apply_probe_list(void)
     Send_count[ProbeList[i].task]++;
 
   if(Send_count[ThisTask] > 0)
-    terminate("Send_count[ThisTask]");
+    terminate_program("Send_count[ThisTask]");
 
   MPI_Alltoall(Send_count, 1, MPI_INT, Recv_count, 1, MPI_INT, MPI_COMM_WORLD);
 
@@ -847,7 +847,7 @@ static void derefine_apply_flux_list(void)
     Send_count[FluxList[i].task]++;
 
   if(Send_count[ThisTask] > 0)
-    terminate("Send_count[ThisTask]");
+    terminate_program("Send_count[ThisTask]");
 
   MPI_Alltoall(Send_count, 1, MPI_INT, Recv_count, 1, MPI_INT, MPI_COMM_WORLD);
 
@@ -895,7 +895,7 @@ static void derefine_apply_flux_list(void)
 #else  /* #ifndef LONGIDS */
           printf("On task=%d flux to ID=%llu, but this is already deleted (index p=%d)\n", ThisTask, P[p].ID, p);
 #endif /* #ifndef LONGIDS #else */
-          terminate(buf);
+          terminate_program(buf);
         }
 
       P[p].Mass += FluxListGet[i].dM;
@@ -1072,7 +1072,7 @@ static void derefine_exchange_flag(void)
               for(i = 0; i < Mesh_Recv_count[recvTask]; i++)
                 {
                   if(Mesh_Recv_offset[recvTask] + i >= Mesh_nimport)
-                    terminate("number of imported mesh points grater than Mesh_nimport");
+                    terminate_program("number of imported mesh points grater than Mesh_nimport");
                   FlagExch[Mesh_Recv_offset[recvTask] + i].Flag = tmpRecv[i].Flag;
                   FlagExch[Mesh_Recv_offset[recvTask] + i].ID   = tmpRecv[i].ID;
                 }

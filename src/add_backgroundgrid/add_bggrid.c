@@ -331,10 +331,10 @@ void prepare_domain_backgroundgrid(void)
 
   /* Checking GridSize limits */
   if(All.GridSize < 0)
-    terminate("GridSize = %d is less than zero. This is not allowed.", All.GridSize);
+    terminate_program("GridSize = %d is less than zero. This is not allowed.", All.GridSize);
 
   if(All.GridSize > ADDBACKGROUNDGRIDMAX)
-    terminate("GridSize = %d is exceeding the max grid size = %d", All.GridSize, ADDBACKGROUNDGRIDMAX);
+    terminate_program("GridSize = %d is exceeding the max grid size = %d", All.GridSize, ADDBACKGROUNDGRIDMAX);
 
   if(All.GridSize > 0)
     set_grid_size_flag = 1;
@@ -466,7 +466,7 @@ void prepare_domain_backgroundgrid(void)
               "min_topleave_num=%d < NTask=%d, MaxGridSize=%d. Try either to run with less task or to set the BoxSize to a smaller "
               "value\n",
               min_topleave_num, NTask, ADDBACKGROUNDGRIDMAX);
-      terminate(buf);
+      terminate_program(buf);
     }
 
   if(len_gas / All.BoxSize > All.GridSize)
@@ -474,7 +474,7 @@ void prepare_domain_backgroundgrid(void)
       char buf[500];
       sprintf(buf, "len_gas/BoxSize=%g > GridSize=%d, MaxGridSize=%d. GridSize should be increased if possible\n",
               len_gas / All.BoxSize, All.GridSize, ADDBACKGROUNDGRIDMAX);
-      terminate(buf);
+      terminate_program(buf);
     }
 
   if(shift_half_box)

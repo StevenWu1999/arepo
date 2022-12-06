@@ -359,7 +359,7 @@ void drift_particle(int i, integertime time1)
   int j;
 
   if(i < 0)
-    terminate("i=%d  NumPart=%d", i, NumPart);
+    terminate_program("i=%d  NumPart=%d", i, NumPart);
 
   integertime time0 = P[i].Ti_Current;
 
@@ -367,7 +367,7 @@ void drift_particle(int i, integertime time1)
     return;
 
   if(time1 < time0)
-    terminate("no prediction into past allowed: time0=%lld time1=%lld\n", (long long)time0, (long long)time1);
+    terminate_program("no prediction into past allowed: time0=%lld time1=%lld\n", (long long)time0, (long long)time1);
 
   double dt_drift;
 

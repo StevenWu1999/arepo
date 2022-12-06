@@ -364,7 +364,7 @@ void get_line_segments(int sphp_index, int dp_index, double *segments, unsigned 
 
           if(a > max_elements - 7)
             {
-              terminate("termination in voronoi_3d.c get_line_segments: not enough memory!");
+              terminate_program("termination in voronoi_3d.c get_line_segments: not enough memory!");
             }
 
           segments[a++] = prevc->cx;
@@ -385,7 +385,7 @@ void get_line_segments(int sphp_index, int dp_index, double *segments, unsigned 
             }
 
           if(ll < 0 || ii < 0 || jj < 0)
-            terminate("inconsistency");
+            terminate_program("inconsistency");
 
           kk = 6 - (ll + ii + jj);
 
@@ -446,7 +446,7 @@ void process_edge_faces_and_volumes(tessellation *T, int tt, int nr)
       T->VF = myrealloc_movable(T->VF, T->MaxNvf * sizeof(face));
 
       if(T->Nvf + 1 >= T->MaxNvf)
-        terminate("Nvf larger than MaxNvf");
+        terminate_program("Nvf larger than MaxNvf");
     }
 
   tetra *DT         = T->DT;
@@ -539,7 +539,7 @@ void process_edge_faces_and_volumes(tessellation *T, int tt, int nr)
         }
 
       if(ll < 0 || ii < 0 || jj < 0)
-        terminate("inconsistency");
+        terminate_program("inconsistency");
 
       kk = 6 - (ll + ii + jj);
 
@@ -549,7 +549,7 @@ void process_edge_faces_and_volumes(tessellation *T, int tt, int nr)
         if((edge_start[nr_next] == ii && edge_end[nr_next] == jj) || (edge_start[nr_next] == jj && edge_end[nr_next] == ii))
           {
             if((Edge_visited[nn] & (1 << nr_next)) && next != t)
-              terminate("inconsistency");
+              terminate_program("inconsistency");
 
             Edge_visited[nn] |= (1 << nr_next);
             break;
@@ -565,7 +565,7 @@ void process_edge_faces_and_volumes(tessellation *T, int tt, int nr)
       count++;
 
       if(count > 1000)
-        terminate("count is too large");
+        terminate_program("count is too large");
     }
   while(next != t);
 
@@ -709,7 +709,7 @@ void process_edge_faces_and_volumes(tessellation *T, int tt, int nr)
             {
               /* here we have a foreign ghost point */
               if(DP[q].originalindex < 0)
-                terminate("should not happen");
+                terminate_program("should not happen");
 
               if(Narea >= MaxNarea)
                 {
@@ -718,7 +718,7 @@ void process_edge_faces_and_volumes(tessellation *T, int tt, int nr)
                   AreaList = myrealloc_movable(AreaList, MaxNarea * sizeof(struct area_list_data));
 
                   if(Narea >= MaxNarea)
-                    terminate("Narea >= MaxNarea");
+                    terminate_program("Narea >= MaxNarea");
                 }
 
               AreaList[Narea].task  = DP[q].task;
@@ -776,7 +776,7 @@ int derefine_refine_get_triangles(tessellation *T, int tt, int nr, point *dtip, 
       if(prev != t && next != t)
         {
           if(ntri >= max_n_tri)
-            terminate("ntri >= max_n_tri");
+            terminate_program("ntri >= max_n_tri");
 
           trilist[ntri].p[0][0] = cx;
           trilist[ntri].p[0][1] = cy;
@@ -820,7 +820,7 @@ int derefine_refine_get_triangles(tessellation *T, int tt, int nr, point *dtip, 
         }
 
       if(ll < 0 || ii < 0 || jj < 0)
-        terminate("inconsistency");
+        terminate_program("inconsistency");
 
       kk = 6 - (ll + ii + jj);
 
@@ -834,7 +834,7 @@ int derefine_refine_get_triangles(tessellation *T, int tt, int nr, point *dtip, 
       count++;
 
       if(count > 1000)
-        terminate("count is too large");
+        terminate_program("count is too large");
     }
   while(next != t);
 
@@ -889,14 +889,14 @@ int derefine_add_point_and_split_tri(int q, triangle *trilist, int ntri, int max
         {
           char buf[1000];
           sprintf(buf, "q=%d\n", q);
-          terminate(buf);
+          terminate_program(buf);
         }
 
       if(trilist[i].owner < 0 || trilist[i].owner >= Mesh.Ndp)
         {
           char buf[1000];
           sprintf(buf, "trilist[i].owner=%d\n", trilist[i].owner);
-          terminate(buf);
+          terminate_program(buf);
         }
 
       /* midpoint */
@@ -909,7 +909,7 @@ int derefine_add_point_and_split_tri(int q, triangle *trilist, int ntri, int max
       n[2] = (Mesh.DP[q].z - Mesh.DP[trilist[i].owner].z);
 
       if(q == trilist[i].owner)
-        terminate("q == trilist[i].owner");
+        terminate_program("q == trilist[i].owner");
 
       for(k = 0, count = 0; k < 4; k++) /* determine the side of each point */
         {
@@ -944,7 +944,7 @@ int derefine_add_point_and_split_tri(int q, triangle *trilist, int ntri, int max
 
             if(nnew + 3 > max_ntri)
               {
-                terminate("nnew + 3 > max_ntri");
+                terminate_program("nnew + 3 > max_ntri");
               }
 
             trilist[nnew]     = trilist[i];
@@ -1070,7 +1070,7 @@ int derefine_add_point_and_split_tri(int q, triangle *trilist, int ntri, int max
             /* we have two points on either side */
 
             if(nnew + 5 > max_ntri)
-              terminate("nnew + 5 > max_ntri");
+              terminate_program("nnew + 5 > max_ntri");
 
             int kfirst, ksecond, jfirst, jsecond;
 
@@ -1117,7 +1117,7 @@ int derefine_add_point_and_split_tri(int q, triangle *trilist, int ntri, int max
                 jsecond = 2;
               }
             else
-              terminate("can't be");
+              terminate_program("can't be");
 
             int next = 0;
 
@@ -1413,7 +1413,7 @@ void derefine_refine_process_edge(tessellation *T, double *vol, int tt, int nr)
         }
 
       if(ll < 0 || ii < 0 || jj < 0)
-        terminate("inconsistency");
+        terminate_program("inconsistency");
 
       kk = 6 - (ll + ii + jj);
 
@@ -1423,7 +1423,7 @@ void derefine_refine_process_edge(tessellation *T, double *vol, int tt, int nr)
         if((edge_start[nr_next] == ii && edge_end[nr_next] == jj) || (edge_start[nr_next] == jj && edge_end[nr_next] == ii))
           {
             if((Edge_visited[nn] & (1 << nr_next)) && next != t)
-              terminate("inconsistency");
+              terminate_program("inconsistency");
 
             Edge_visited[nn] |= (1 << nr_next);
             break;
@@ -1439,7 +1439,7 @@ void derefine_refine_process_edge(tessellation *T, double *vol, int tt, int nr)
       count++;
 
       if(count > 1000)
-        terminate("count is too large");
+        terminate_program("count is too large");
     }
   while(next != t);
 
@@ -1489,7 +1489,7 @@ int insert_point(tessellation *T, int pp, int ttstart)
   if(flag == 1) /* that's the normal split of a tetrahedron into 4 */
     {
       if(n_faces_to_check >= STACKSIZE_TETRA - 4)
-        terminate("stacksize exceeded");
+        terminate_program("stacksize exceeded");
 
       /* we now need to split this tetrahedron into four  */
       if(nfree_on_stack)
@@ -1519,7 +1519,7 @@ int insert_point(tessellation *T, int pp, int ttstart)
           T->DTF = myrealloc_movable(T->DTF, T->MaxNdt * sizeof(char));
 
           if(T->Ndt > T->MaxNdt)
-            terminate("Ndt > MaxNdt");
+            terminate_program("Ndt > MaxNdt");
         }
 
       make_a_1_to_4_flip(T, pp, tt0, tt1, tt2, tt3);
@@ -1576,7 +1576,7 @@ int insert_point(tessellation *T, int pp, int ttstart)
           T->DTF = myrealloc_movable(T->DTF, T->MaxNdt * sizeof(char));
 
           if(T->Ndt > T->MaxNdt)
-            terminate("Ndt > MaxNdt");
+            terminate_program("Ndt > MaxNdt");
         }
 
       n_faces_to_check = 0;
@@ -1633,7 +1633,7 @@ int insert_point(tessellation *T, int pp, int ttstart)
             }
 
           if(ll < 0 || ii < 0 || jj < 0)
-            terminate("inconsistency");
+            terminate_program("inconsistency");
 
           kk = 6 - (ll + ii + jj);
 
@@ -1646,7 +1646,7 @@ int insert_point(tessellation *T, int pp, int ttstart)
           count++;
 
           if(count > 1000)
-            terminate("count exceeded");
+            terminate_program("count exceeded");
         }
       while(next != tt0);
 
@@ -1673,7 +1673,7 @@ int insert_point(tessellation *T, int pp, int ttstart)
                   T->DTF = myrealloc_movable(T->DTF, T->MaxNdt * sizeof(char));
 
                   if(T->Ndt > T->MaxNdt)
-                    terminate("Ndt > MaxNdt");
+                    terminate_program("Ndt > MaxNdt");
                 }
             }
 
@@ -1692,7 +1692,7 @@ int insert_point(tessellation *T, int pp, int ttstart)
     {
       iter++;
       if(iter > 200000)
-        terminate("too many iterations");
+        terminate_program("too many iterations");
 
       tt = to_check[--n_faces_to_check]; /* this is the current tetra to look at.
                                             The facet in question lies opposite to q */
@@ -1752,11 +1752,11 @@ int insert_point(tessellation *T, int pp, int ttstart)
                       T->DTF = myrealloc_movable(T->DTF, T->MaxNdt * sizeof(char));
 
                       if(T->Ndt > T->MaxNdt)
-                        terminate("Ndt > MaxNdt");
+                        terminate_program("Ndt > MaxNdt");
                     }
 
                   if(n_faces_to_check >= STACKSIZE_TETRA - 3)
-                    terminate("stacksize exceeded");
+                    terminate_program("stacksize exceeded");
 
                   make_a_2_to_3_flip(T, tt, tip_index, qq, T->DT[tt].s[tip_index], ppp, ww);
 
@@ -1782,7 +1782,7 @@ int insert_point(tessellation *T, int pp, int ttstart)
 
                   if(j >= 4)
                     {
-                      terminate("not found");
+                      terminate_program("not found");
                     }
 
                   if(DT[tt].t[i] == DT[qq].t[j]) /* this means there is exactly one tetrahedron between them, i.e. we have found the
@@ -1799,11 +1799,11 @@ int insert_point(tessellation *T, int pp, int ttstart)
                       if(nfree_on_stack < STACKSIZE_TETRA)
                         freestack[nfree_on_stack++] = ww;
                       else
-                        terminate("stack full");
+                        terminate_program("stack full");
 
                       tetra_with_p = tt;
                       if(n_faces_to_check >= STACKSIZE_TETRA - 2)
-                        terminate("stack too full");
+                        terminate_program("stack too full");
 
                       to_check[n_faces_to_check++] = tt;
                       to_check[n_faces_to_check++] = qq;
@@ -1818,7 +1818,7 @@ int insert_point(tessellation *T, int pp, int ttstart)
                                  (int)(DT[tt].p[access_triangles[tip_index][convex_edge]]),
                                  (int)(DT[tt].p[access_triangles[tip_index][convex_edge < 2 ? convex_edge + 1 : 0]]));
 
-                          terminate("inconsistency"); /* this should not occur since we have embedded the points into a convex big
+                          terminate_program("inconsistency"); /* this should not occur since we have embedded the points into a convex big
                                                          triangle */
                         }
                     }
@@ -1950,7 +1950,7 @@ int convex_edge_test(tessellation *T, int tt, int tip, int *edgenr)
   if(status >= 0)
     {
       if(fabs(1.0 - x[2]) < INSIDE_EPS)
-        terminate("inconsistency");
+        terminate_program("inconsistency");
 
       double u, v, w;
 
@@ -2011,7 +2011,7 @@ int convex_edge_test(tessellation *T, int tt, int tip, int *edgenr)
         printf("p2=%d  %g %g %g\n", (int)(p2 - DP), p2->x, p2->y, p2->z);
         printf("p3=%d  %g %g %g\n", (int)(p3 - DP), p3->x, p3->y, p3->z);
         dump_points(T);
-        terminate("inconsistent tetrahedron");
+        terminate_program("inconsistent tetrahedron");
       }
     }
 
@@ -2152,7 +2152,7 @@ void make_a_face_split(tessellation *T, int tt0, int face_nr, int pp, int tt1, i
     }
 
   if(i0 < 0 || i1 < 0 || i2 < 0 || i3 < 0 || j0 < 0 || j1 < 0 || j2 < 0 || j3 < 0)
-    terminate("inconsistency");
+    terminate_program("inconsistency");
 
   t0->p[i2] = pp;
   t1->p[i0] = pp;
@@ -2275,7 +2275,7 @@ void make_an_edge_split(tessellation *T, int tt0, int edge_nr, int count, int pp
         }
 
       if(ll < 0 || ii < 0 || jj < 0)
-        terminate("inconsistency");
+        terminate_program("inconsistency");
 
       kk = 6 - (ll + ii + jj);
 
@@ -2447,7 +2447,7 @@ void make_a_4_to_4_flip(tessellation *T, int tt, int tip_index, int edge_nr)
       if(t_top[j] == NULL || t_bottom[j] == NULL)
         {
           printf("bad!\n");
-          terminate("inconsistency");
+          terminate_program("inconsistency");
         }
     }
 
@@ -2456,7 +2456,7 @@ void make_a_4_to_4_flip(tessellation *T, int tt, int tip_index, int edge_nr)
       if(t_top[j] == NULL || t_bottom[j] == NULL)
         {
           printf("bad!\n");
-          terminate("inconsistency");
+          terminate_program("inconsistency");
         }
     }
 
@@ -2851,7 +2851,7 @@ int get_tetra(tessellation *T, point *p, int *moves, int ttstart, int *flag, int
           ErrorFlag = 1;
 
           if(count_moves > MAX_COUNT_MOVES + 10)
-            terminate("too many moves");
+            terminate_program("too many moves");
         }
 
       tt = next_tetra;
@@ -2908,7 +2908,7 @@ int InTetra(tessellation *T, int tt, point *p, int *edgeface_nr, int *nexttetra)
       printf("task=%d: we are in a tetraeder with an infinity point. tetra=%d, coordinates of point=(%g|%g|%g) ID=%llu\n", ThisTask,
              tt, p->x, p->y, p->z, p->ID);
 #endif /* #ifndef LONGIDS #else */
-      terminate("invalid tetrahedron");
+      terminate_program("invalid tetrahedron");
     }
 
   Count_InTetra++;
@@ -2973,7 +2973,7 @@ int InTetra(tessellation *T, int tt, point *p, int *edgeface_nr, int *nexttetra)
       if(ivol <= 0)
         {
           printf("flat or negatively tetrahedron found (ivol=%d) tt=%d\n", ivol, tt);
-          terminate("invalid tetrahedron");
+          terminate_program("invalid tetrahedron");
         }
     }
 
@@ -3097,7 +3097,7 @@ int InTetra(tessellation *T, int tt, point *p, int *edgeface_nr, int *nexttetra)
   if((ivol = Orient3d_Exact(p0, p1, p2, p3)) <= 0)
     {
       printf("flat or negatively oriented tetrahedron found (vol=%d)\n", ivol);
-      terminate("invalid tetrahedron");
+      terminate_program("invalid tetrahedron");
     }
 
   flag3 = Orient3d_Exact(p0, p1, p2, p);
@@ -3133,7 +3133,7 @@ int InTetra(tessellation *T, int tt, point *p, int *edgeface_nr, int *nexttetra)
       printf("task=%d imageflags=(%d %d %d %d %d)\n", ThisTask, p0->image_flags, p1->image_flags, p2->image_flags, p3->image_flags,
              p->image_flags);
 #endif /* #if defined(REFLECTIVE_X) || defined(REFLECTIVE_Y) || defined(REFLECTIVE_Z) */
-      terminate("strange zero count");
+      terminate_program("strange zero count");
     }
 
   if(flag0 >= 0 && flag1 >= 0 && flag2 >= 0 && flag3 >= 0)
@@ -3886,7 +3886,7 @@ void set_integers_for_pointer(point *p)
   if(p->xx < 1.0 || p->xx >= 2.0 || p->yy < 1.0 || p->yy >= 2.0 || p->zz < 1.0 || p->zz >= 2.0)
     {
       printf("(%g, %g, %g) (%g, %g, %g)\n", p->x, p->y, p->z, p->xx, p->yy, p->zz);
-      terminate("invalid coordinate range");
+      terminate_program("invalid coordinate range");
     }
 
   p->ix = double_to_voronoiint(p->xx);
@@ -4744,7 +4744,7 @@ void get_voronoi_face_vertex_indices(tessellation *T)
                 }
 
               if(ll < 0 || ii < 0 || jj < 0)
-                terminate("inconsistency");
+                terminate_program("inconsistency");
 
               kk = 6 - (ll + ii + jj);
               i  = ii;
@@ -4794,7 +4794,7 @@ void get_voronoi_face_vertex_indices(tessellation *T)
                 }
 
               if(ll < 0 || ii < 0 || jj < 0)
-                terminate("inconsistency");
+                terminate_program("inconsistency");
 
               kk = 6 - (ll + ii + jj);
 
@@ -4803,7 +4803,7 @@ void get_voronoi_face_vertex_indices(tessellation *T)
                 if((edge_start[nr_next] == ii && edge_end[nr_next] == jj) || (edge_start[nr_next] == jj && edge_end[nr_next] == ii))
                   {
                     if((Edge_visited[next_tetra_nr] & (1 << nr_next)) && next != t)
-                      terminate("inconsistency");
+                      terminate_program("inconsistency");
 
                     Edge_visited[next_tetra_nr] |= (1 << nr_next);
                     break;
@@ -4817,10 +4817,10 @@ void get_voronoi_face_vertex_indices(tessellation *T)
               prev = next;
 
               if(Nentries > MaxEntries)
-                terminate("Nentries > MaxEntries");
+                terminate_program("Nentries > MaxEntries");
 
               if(Nnormals > MaxFaces)
-                terminate("Nentries > MaxEntries");
+                terminate_program("Nentries > MaxEntries");
             }
           while(next != t);
 
@@ -4883,7 +4883,7 @@ void sort_faces_by_ID(void)
       i += 3 + VertexEntries[i + 2];
 
       if(j > MaxFaces)
-        terminate("j > MaxFaces");
+        terminate_program("j > MaxFaces");
     }
   while(i < Nentries);
 
@@ -4953,10 +4953,10 @@ void write_voronoi_face_vertex_indices(tessellation *T, char *fname1, char *fnam
           nNormals_tot += Nnormals_list[task];
         }
       if(!(fd1 = fopen(fname1, "w")))
-        terminate("I/O error");
+        terminate_program("I/O error");
 
       if(!(fd2 = fopen(fname2, "w")))
-        terminate("I/O error");
+        terminate_program("I/O error");
 
       my_fwrite(&nEntries_tot, sizeof(int), 1, fd1);
       my_fwrite(&nNormals_tot, sizeof(int), 1, fd2);
@@ -5048,7 +5048,7 @@ void write_voronoi_face_vertex_coordinates(tessellation *T, char *fname, int wri
         }
 
       if(!(fd = fopen(fname, "w")))
-        terminate("I/O error");
+        terminate_program("I/O error");
 
       my_fwrite(&nVertices_tot, sizeof(int), 1, fd);
       my_fwrite(VertexCoordinates, sizeof(float), 3 * Nvertices, fd);

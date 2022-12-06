@@ -399,7 +399,7 @@ double parallel_sort_comm(void *base, size_t nmemb, size_t size, int (*compar)(c
               printf("PSORT: iter=%d: ranks_not_found=%d  Local_NTask=%d\n", iter, ranks_not_found, Local_NTask);
               myflush(stdout);
               if(iter > MAX_ITER_PARALLEL_SORT)
-                terminate("can't find the split points. That's odd");
+                terminate_program("can't find the split points. That's odd");
             }
         }
       while(ranks_not_found);
@@ -418,7 +418,7 @@ double parallel_sort_comm(void *base, size_t nmemb, size_t size, int (*compar)(c
       /* we can now go ahead and determine how many elements of the local CPU have to go to each other CPU */
 
       if(nmemb * size > (1LL << 31))
-        terminate("currently, local data must be smaller than 2 GB");
+        terminate_program("currently, local data must be smaller than 2 GB");
       /* note: to restrict this limitation, the send/recv count arrays have to made 64-bit,
        * and the MPI data exchange though MPI_Alltoall has to be modified such that buffers > 2 GB become possible
        */
@@ -469,7 +469,7 @@ double parallel_sort_comm(void *base, size_t nmemb, size_t size, int (*compar)(c
         }
 
       if(nimport != nmemb)
-        terminate("nimport != nmemb");
+        terminate_program("nimport != nmemb");
 
       for(j = 0; j < Local_NTask; j++)
         {
@@ -535,7 +535,7 @@ static void get_local_rank(char *element, size_t tie_braking_rank, char *base, s
                            long long left, long long right, size_t *loc, int (*compar)(const void *, const void *))
 {
   if(right < left)
-    terminate("right < left");
+    terminate_program("right < left");
 
   if(left == 0 && right == nmemb + 1)
     {
@@ -600,7 +600,7 @@ static void get_local_rank(char *element, size_t tie_braking_rank, char *base, s
                   if((right - 1) == left + 1)
                     {
                       if(mid != left)
-                        terminate("Can't be: -->left=%lld  right=%lld\n", left, right);
+                        terminate_program("Can't be: -->left=%lld  right=%lld\n", left, right);
 
                       *loc = left;
                       break;
@@ -734,7 +734,7 @@ void parallel_sort_test_order(char *base, size_t nmemb, size_t size, int (*compa
       for(i = 0; i < nmemb; i++)
         {
           if(compar(element, base + i * size) > 0)
-            terminate("wrong order");
+            terminate_program("wrong order");
         }
     }
 

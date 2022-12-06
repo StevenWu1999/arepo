@@ -274,7 +274,7 @@ int insert_point(tessellation *T, int pp, int ttstart)
           T->DTF = myrealloc_movable(T->DTF, T->MaxNdt * sizeof(char));
 
           if(T->Ndt > T->MaxNdt)
-            terminate("Ndt > MaxNdt");
+            terminate_program("Ndt > MaxNdt");
         }
 
       T->DT[tt1] = T->DT[tt0];
@@ -312,7 +312,7 @@ int insert_point(tessellation *T, int pp, int ttstart)
           T->DTF = myrealloc_movable(T->DTF, T->MaxNdt * sizeof(char));
 
           if(T->Ndt > T->MaxNdt)
-            terminate("Ndt > MaxNdt");
+            terminate_program("Ndt > MaxNdt");
         }
 
       T->DT[tt2] = T->DT[tt0];
@@ -602,7 +602,7 @@ int get_triangle(tessellation *T, int pp, int *moves, int *degenerate_flag, int 
         {
           printf("ta=%d triangle=%d  xy=(%g|%g) ID=%d\n", ThisTask, (int)(tt), T->DP[pp].x, T->DP[pp].y, T->DP[pp].ID);
           if(count_moves > MAX_COUNT_MOVES + 10)
-            terminate("too many moves, problem to find triangle");
+            terminate_program("too many moves, problem to find triangle");
         }
 
       tt = next_tetra;
@@ -704,7 +704,7 @@ int FindTriangle(tessellation *T, int tt, int pp, int *degnerate_flag, int *next
     {
       char buf[1000];
       sprintf(buf, "we are in a triangle with an infinity point. tetra=%d  p=(%g|%g)\n", (int)(tt), p->x, p->y);
-      terminate(buf);
+      terminate_program(buf);
     }
 
   Count_InTetra++;
@@ -735,7 +735,7 @@ int FindTriangle(tessellation *T, int tt, int pp, int *degnerate_flag, int *next
         {
           char buf[1000];
           sprintf(buf, "flat or negatively triangle found (ivol=%d)\n", ivol);
-          terminate(buf);
+          terminate_program(buf);
         }
     }
 
@@ -802,7 +802,7 @@ int FindTriangle(tessellation *T, int tt, int pp, int *degnerate_flag, int *next
     {
       char buf[1000];
       sprintf(buf, "flat or negatively oriented triangle found (ivol=%d)\n", ivol);
-      terminate(buf);
+      terminate_program(buf);
     }
 
   flag0 = Orient2d_Exact(T, pp1, pp2, pp);
@@ -831,7 +831,7 @@ int FindTriangle(tessellation *T, int tt, int pp, int *degnerate_flag, int *next
       printf("xyz, p=%d: (%g|%g)  index=%d task=%d ID=%d  flags\n", (int)(pp2), p2->x, p2->y, p2->index, p2->task,
              P[p2->index % NumGas].ID);
       printf("xyz, p=%d: (%g|%g)  index=%d task=%d ID=%d  flags\n", (int)(pp), p->x, p->y, p->index, p->task, P[p->index % NumGas].ID);
-      terminate("too many zeros - (perhaps identical points inserted?)");
+      terminate_program("too many zeros - (perhaps identical points inserted?)");
     }
 
   if(flag0 >= 0 && flag1 >= 0 && flag2 >= 0)
@@ -1319,7 +1319,7 @@ void process_edge_faces_and_volumes(tessellation *T, int tt, int nr)
       T->VF = myrealloc_movable(T->VF, T->MaxNvf * sizeof(face));
 
       if(T->Nvf + 1 >= T->MaxNvf)
-        terminate("Nvf larger than MaxNvf");
+        terminate_program("Nvf larger than MaxNvf");
     }
 
   tetra *DT         = T->DT;
@@ -1492,7 +1492,7 @@ void process_edge_faces_and_volumes(tessellation *T, int tt, int nr)
             {
               /* here we have a foreign ghost point */
               if(DP[q].originalindex < 0)
-                terminate("should not happen");
+                terminate_program("should not happen");
 
               if(Narea >= MaxNarea)
                 {
@@ -1501,7 +1501,7 @@ void process_edge_faces_and_volumes(tessellation *T, int tt, int nr)
                   AreaList = myrealloc_movable(AreaList, MaxNarea * sizeof(struct area_list_data));
 
                   if(Narea >= MaxNarea)
-                    terminate("Narea >= MaxNarea");
+                    terminate_program("Narea >= MaxNarea");
                 }
 
               AreaList[Narea].task  = DP[q].task;
@@ -1535,7 +1535,7 @@ int derefine_refine_get_triangles(tessellation *T, int tt, int nr, point *dtip, 
   int qq            = t->t[nr];
 
   if(ntri >= max_n_tri)
-    terminate("ntri >= max_n_tri");
+    terminate_program("ntri >= max_n_tri");
 
   trilist[ntri].p[0][0] = DTC[tt].cx;
   trilist[ntri].p[0][1] = DTC[tt].cy;
@@ -1583,14 +1583,14 @@ int derefine_add_point_and_split_tri(int q, triangle *trilist, int ntri, int max
         {
           char buf[1000];
           sprintf(buf, "i=%d trilist[i].owner=%d\n", i, trilist[i].owner);
-          terminate(buf);
+          terminate_program(buf);
         }
 
       if(q < 0 || q >= Mesh.Ndp)
         {
           char buf[1000];
           sprintf(buf, "i=%d q=%d\n", i, q);
-          terminate(buf);
+          terminate_program(buf);
         }
 
       /* midpoint */
@@ -1601,7 +1601,7 @@ int derefine_add_point_and_split_tri(int q, triangle *trilist, int ntri, int max
       n[1] = (Mesh.DP[q].y - Mesh.DP[trilist[i].owner].y);
 
       if(q == trilist[i].owner)
-        terminate("q == trilist[i].owner");
+        terminate_program("q == trilist[i].owner");
 
       for(k = 0, count = 0; k < 3; k++) /* determine the side of each point */
         {
@@ -1631,7 +1631,7 @@ int derefine_add_point_and_split_tri(int q, triangle *trilist, int ntri, int max
           case 2:
 
             if(nnew + 2 > max_ntri)
-              terminate("nnew + 2 > max_ntri");
+              terminate_program("nnew + 2 > max_ntri");
 
             trilist[nnew]     = trilist[i];
             trilist[nnew + 1] = trilist[i];
@@ -1873,7 +1873,7 @@ void update_circumcircle(tessellation *T, int tt)
 
   if(status < 0)
     {
-      terminate("trouble in circum-circle calculation\n");
+      terminate_program("trouble in circum-circle calculation\n");
     }
   else
     {
@@ -1900,7 +1900,7 @@ void set_integers_for_pointer(point *p)
   if(p->xx < 1.0 || p->xx >= 2.0 || p->yy < 1.0 || p->yy >= 2.0)
     {
       printf("(%g, %g) (%g, %g)\n", p->x, p->y, p->xx, p->yy);
-      terminate("invalid coordinate range");
+      terminate_program("invalid coordinate range");
     }
 
   p->ix = double_to_voronoiint(p->xx);
@@ -1983,7 +1983,7 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
           Nedges[i]++;
 
           if(Nel >= MaxNel)
-            terminate("Nel >= MaxNel");
+            terminate_program("Nel >= MaxNel");
 
           EdgeList[Nel++] = q - DT;
 
@@ -2028,7 +2028,7 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
       if(!(fd = fopen(fname, "w")))
         {
           sprintf(msg, "can't open file `%s' for writing snapshot.\n", fname);
-          terminate(msg);
+          terminate_program(msg);
         }
 
       my_fwrite(&ngas_tot, sizeof(int), 1, fd);

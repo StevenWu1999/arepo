@@ -264,7 +264,7 @@ void domain_preserve_relevant_topnode_data(void)
           zb >>= blocks;
           int idx = (xb & 1) | ((yb & 1) << 1) | ((zb & 1) << 2);
           if(idx < 0 || idx > 7)
-            terminate("j=%d  idx=%d", j, idx);
+            terminate_program("j=%d  idx=%d", j, idx);
 
           TopNodes[i].MortonToPeanoSubnode[idx] = j;
         }
@@ -281,7 +281,7 @@ void domain_preserve_relevant_topnode_data(void)
 void domain_find_total_cost(void)
 {
   if(All.MultipleDomains < 1 || All.MultipleDomains > 512)
-    terminate("All.MultipleDomains < 1 || All.MultipleDomains > 512");
+    terminate_program("All.MultipleDomains < 1 || All.MultipleDomains > 512");
 
   gravcost = sphcost  = 0;
   double partcount    = 0;
@@ -349,7 +349,7 @@ void domain_find_total_cost(void)
       fac_worksph     = normsum_worksph / totsphcost;
     }
   else
-    terminate("strange: totsphcost=%g  totgravcost=%g\n", totsphcost, totgravcost);
+    terminate_program("strange: totsphcost=%g  totgravcost=%g\n", totsphcost, totgravcost);
 }
 
 /*! \brief Coordinate conversion to integer.
@@ -381,7 +381,7 @@ void domain_allocate(void)
   MaxTopNodes = (int)(All.TopNodeAllocFactor * All.MaxPart + 1);
 
   if(DomainStartList)
-    terminate("domain storage already allocated");
+    terminate_program("domain storage already allocated");
 
   DomainStartList        = (int *)mymalloc_movable(&DomainStartList, "DomainStartList", (NTask * All.MultipleDomains * sizeof(int)));
   DomainEndList          = (int *)mymalloc_movable(&DomainEndList, "DomainEndList", (NTask * All.MultipleDomains * sizeof(int)));
@@ -403,7 +403,7 @@ void domain_allocate(void)
 void domain_free(void)
 {
   if(!DomainStartList)
-    terminate("domain storage not allocated");
+    terminate_program("domain storage not allocated");
 
   myfree_movable(DomainListOfLocalTopleaves);
   myfree_movable(DomainTask);

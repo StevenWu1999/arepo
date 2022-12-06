@@ -174,7 +174,7 @@ int ngb_treefind_variable_threads(MyDouble searchcenter[3], MyFloat hsml, int ta
           else /* pseudo particle */
             {
               if(mode == MODE_IMPORTED_PARTICLES)
-                terminate("mode == MODE_IMPORTED_PARTICLES should not occur here");
+                terminate_program("mode == MODE_IMPORTED_PARTICLES should not occur here");
 
               if(target >= 0) /* if no target is given, export will not occur */
                 if(ngb_treefind_export_node_threads(no, target, thread_id, 0))

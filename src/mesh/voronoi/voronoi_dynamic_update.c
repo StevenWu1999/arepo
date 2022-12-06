@@ -111,7 +111,7 @@ int voronoi_get_connected_particles(tessellation *T)
               ListExports = myrealloc_movable(ListExports, MaxNinlist * sizeof(struct list_export_data));
 
               if(Ninlist >= MaxNinlist)
-                terminate("Ninlist >= MaxNinlist");
+                terminate_program("Ninlist >= MaxNinlist");
             }
 
           List_InMesh[NumGasInMesh++] = p;
@@ -135,7 +135,7 @@ int voronoi_get_connected_particles(tessellation *T)
               T->DP += 5;
 
               if(T->Ndp >= T->MaxNdp)
-                terminate("Ndp >= MaxNdp");
+                terminate_program("Ndp >= MaxNdp");
             }
 
           SphP[p].ActiveArea = 0;
@@ -178,7 +178,7 @@ int voronoi_get_connected_particles(tessellation *T)
             {
               char buf[1000];
               sprintf(buf, "strange connectivity q=%d Nvc=%d", q, MaxNvc);
-              terminate(buf);
+              terminate_program(buf);
             }
 
           if(DC[q].task >= 0 && DC[q].task < NTask)
@@ -200,7 +200,7 @@ int voronoi_get_connected_particles(tessellation *T)
                             {
                               char buf[1000];
                               sprintf(buf, "strange p=%d (Ngas=%d) for q=%d Nvc=%d", p, NumGas, q, Nvc);
-                              terminate(buf);
+                              terminate_program(buf);
                             }
 
                           image_flags = (DC[q].image_flags & MASK);
@@ -218,7 +218,7 @@ int voronoi_get_connected_particles(tessellation *T)
                           if(List_P[p].firstexport >= 0)
                             {
                               if(ListExports[List_P[p].currentexport].origin != ThisTask)
-                                terminate("can't be");
+                                terminate_program("can't be");
                             }
                           else
                             {
@@ -234,7 +234,7 @@ int voronoi_get_connected_particles(tessellation *T)
                                   ListExports = myrealloc_movable(ListExports, MaxNinlist * sizeof(struct list_export_data));
 
                                   if(Ninlist >= MaxNinlist)
-                                    terminate("Ninlist >= MaxNinlist");
+                                    terminate_program("Ninlist >= MaxNinlist");
                                 }
 
                               List_InMesh[NumGasInMesh++] = p;
@@ -263,7 +263,7 @@ int voronoi_get_connected_particles(tessellation *T)
                                   T->DP += 5;
 
                                   if(T->Ndp >= T->MaxNdp)
-                                    terminate("Ndp >= MaxNdp");
+                                    terminate_program("Ndp >= MaxNdp");
                                 }
 
                               SphP[p].ActiveArea = 0;
@@ -392,7 +392,7 @@ int voronoi_get_connected_particles(tessellation *T)
     }
 
   if(count_foreign_bak != count_foreign)
-    terminate("bad");
+    terminate_program("bad");
 
   /* we sort this list by tasks, and then eliminate duplicates */
   mysort(ForeignDC, count_foreign, sizeof(struct foreign_connection), compare_foreign_connection);
@@ -435,11 +435,11 @@ int voronoi_get_connected_particles(tessellation *T)
     {
       char buf[1000];
       sprintf(buf, "nexport=%d  count_foreign=%d\n", nexport, count_foreign);
-      terminate(buf);
+      terminate_program(buf);
     }
 
   if(Send_count[ThisTask] != 0)
-    terminate("bad");
+    terminate_program("bad");
 
   ImportedDC = mymalloc_movable(&ImportedDC, "ImportedDC", nimport * sizeof(struct foreign_connection));
 
@@ -521,7 +521,7 @@ int voronoi_get_connected_particles(tessellation *T)
                           ListExports = myrealloc_movable(ListExports, MaxNinlist * sizeof(struct list_export_data));
 
                           if(Ninlist >= MaxNinlist)
-                            terminate("Ninlist >= MaxNinlist");
+                            terminate_program("Ninlist >= MaxNinlist");
                         }
 
                       List_P[p].currentexport                         = Ninlist++;
@@ -551,7 +551,7 @@ int voronoi_get_connected_particles(tessellation *T)
               ListExports = myrealloc_movable(ListExports, MaxNinlist * sizeof(struct list_export_data));
 
               if(Ninlist >= MaxNinlist)
-                terminate("Ninlist >= MaxNinlist");
+                terminate_program("Ninlist >= MaxNinlist");
             }
 
           List_InMesh[NumGasInMesh++] = p;
@@ -756,7 +756,7 @@ void voronoi_update_connectivity(tessellation *T)
         continue;
 
       if(i >= NumGas)
-        terminate("i >= NumGas");
+        terminate_program("i >= NumGas");
 
       q = SphP[i].first_connection;
 
@@ -828,7 +828,7 @@ void voronoi_update_connectivity(tessellation *T)
                         {
                           char buf[1000];
                           sprintf(buf, "strange: FirstUnusedConnection=%d Nvc=%d MaxNvc=%d\n", FirstUnusedConnection, Nvc, MaxNvc);
-                          terminate(buf);
+                          terminate_program(buf);
                         }
 
                       int n, old_MaxNvc = MaxNvc;
@@ -883,7 +883,7 @@ void voronoi_update_connectivity(tessellation *T)
 
                   if(SphP[p_index].last_connection >= MaxNvc)
                     {
-                      terminate("this is wrong");
+                      terminate_program("this is wrong");
                     }
                 }
             }
@@ -905,7 +905,7 @@ void voronoi_update_connectivity(tessellation *T)
                     {
                       char buf[1000];
                       sprintf(buf, "strange: FirstUnusedConnection=%d Nvc=%d MaxNvc=%d\n", FirstUnusedConnection, Nvc, MaxNvc);
-                      terminate(buf);
+                      terminate_program(buf);
                     }
 
                   int n, old_MaxNvc = MaxNvc;
@@ -958,7 +958,7 @@ void voronoi_update_connectivity(tessellation *T)
 
               if(DP[index].last_connection >= MaxNvc)
                 {
-                  terminate("this is wrong");
+                  terminate_program("this is wrong");
                 }
             }
 #endif /* #ifdef DOUBLE_STENCIL */

@@ -75,16 +75,16 @@ void set_softenings(void)
     All.SofteningTable[i + NSOFTTYPES] = All.MinimumComovingHydroSoftening * pow(All.AdaptiveHydroSofteningSpacing, i);
 
   if(All.AdaptiveHydroSofteningSpacing < 1)
-    terminate("All.AdaptiveHydroSofteningSpacing < 1");
+    terminate_program("All.AdaptiveHydroSofteningSpacing < 1");
 
 #ifdef MULTIPLE_NODE_SOFTENING
   /* we check that type=0 has its own slot 0 in the softening types, so that only gas masses are stored there */
   if(All.SofteningTypeOfPartType[0] != 0)
-    terminate("All.SofteningTypeOfPartType[0] != 0");
+    terminate_program("All.SofteningTypeOfPartType[0] != 0");
 
   for(i = 1; i < NTYPES; i++)
     if(All.SofteningTypeOfPartType[i] == All.SofteningTypeOfPartType[0])
-      terminate("i=%d: All.SofteningTypeOfPartType[i] == All.SofteningTypeOfPartType[0]", i);
+      terminate_program("i=%d: All.SofteningTypeOfPartType[i] == All.SofteningTypeOfPartType[0]", i);
 #endif /* #ifdef MULTIPLE_NODE_SOFTENING */
 
 #endif /* #ifdef ADAPTIVE_HYDRO_SOFTENING */
@@ -159,7 +159,7 @@ int get_softening_type_from_mass(double mass)
         }
     }
   if(min_type < 0)
-    terminate("min_type < 0  mass=%g  eps=%g   All.AvgType1Mass=%g  All.ForceSoftening[1]=%g", mass, eps, All.AvgType1Mass,
+    terminate_program("min_type < 0  mass=%g  eps=%g   All.AvgType1Mass=%g  All.ForceSoftening[1]=%g", mass, eps, All.AvgType1Mass,
               All.ForceSoftening[1]);
 
   return min_type;

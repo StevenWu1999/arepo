@@ -85,22 +85,22 @@ void read_parameter_file(char *fname)
 
   if(sizeof(long long) != 8)
     {
-      mpi_terminate("\nType `long long' is not 64 bit on this platform. Stopping.\n\n");
+      mpi_terminate_program("\nType `long long' is not 64 bit on this platform. Stopping.\n\n");
     }
 
   if(sizeof(int) != 4)
     {
-      mpi_terminate("\nType `int' is not 32 bit on this platform. Stopping.\n\n");
+      mpi_terminate_program("\nType `int' is not 32 bit on this platform. Stopping.\n\n");
     }
 
   if(sizeof(float) != 4)
     {
-      mpi_terminate("\nType `float' is not 32 bit on this platform. Stopping.\n\n");
+      mpi_terminate_program("\nType `float' is not 32 bit on this platform. Stopping.\n\n");
     }
 
   if(sizeof(double) != 8)
     {
-      mpi_terminate("\nType `double' is not 64 bit on this platform. Stopping.\n\n");
+      mpi_terminate_program("\nType `double' is not 64 bit on this platform. Stopping.\n\n");
     }
 
   if(ThisTask == 0) /* read parameter file on process 0 */
@@ -705,7 +705,7 @@ void check_parameters()
     {
       printf("PARAMETERS: check_parameters: TimeBegin = %g, TimeMax = %g, MaxSizeTimestep = %g \n", All.TimeBegin, All.TimeMax,
              All.MaxSizeTimestep);
-      terminate(
+      terminate_program(
           "check_parameters: Your total runtime is smaller than the maximum allowed timestep! Choose an appropriate value for "
           "MaxSizeTimestep < TimeMax-TimeBegin! \n");
     }
@@ -721,7 +721,7 @@ void check_parameters()
     }
 
   if(errorFlag)
-    mpi_terminate("Softening invalid!");
+    mpi_terminate_program("Softening invalid!");
 
   if(All.NumFilesWrittenInParallel > NTask)
     {
@@ -739,14 +739,14 @@ void check_parameters()
 #ifndef GRAVITY_NOT_PERIODIC
   if(All.PeriodicBoundariesOn == 0)
     {
-      mpi_terminate(
+      mpi_terminate_program(
           "Code was compiled with gravity periodic boundary conditions switched on.\nYou must set `PeriodicBoundariesOn=1', or "
           "recompile the code.\n");
     }
 #else  /* #ifndef GRAVITY_NOT_PERIODIC */
   if(All.PeriodicBoundariesOn == 1)
     {
-      mpi_terminate(
+      mpi_terminate_program(
           "Code was compiled with gravity periodic boundary conditions switched off.\nYou must set `PeriodicBoundariesOn=0', or "
           "recompile the code.\n");
     }
@@ -755,49 +755,49 @@ void check_parameters()
 #ifdef COOLING
   if(All.CoolingOn == 0)
     {
-      mpi_terminate("Code was compiled with cooling switched on.\nYou must set `CoolingOn=1', or recompile the code.\n");
+      mpi_terminate_program("Code was compiled with cooling switched on.\nYou must set `CoolingOn=1', or recompile the code.\n");
     }
 #else  /* #ifdef COOLING */
   if(All.CoolingOn == 1)
     {
-      mpi_terminate("Code was compiled with cooling switched off.\nYou must set `CoolingOn=0', or recompile the code.\n");
+      mpi_terminate_program("Code was compiled with cooling switched off.\nYou must set `CoolingOn=0', or recompile the code.\n");
     }
 #endif /* #ifdef COOLING #else */
 
   if(All.TypeOfTimestepCriterion >= 3)
     {
-      mpi_terminate("The specified timestep criterion\nis not valid\n");
+      mpi_terminate_program("The specified timestep criterion\nis not valid\n");
     }
 
 #if(NTYPES < 6)
-  mpi_terminate("NTYPES < 6 is not allowed.\n");
+  mpi_terminate_program("NTYPES < 6 is not allowed.\n");
 #endif /* #if (NTYPES < 6) */
 
 #if(NTYPES > 15)
-  mpi_terminate("NTYPES > 15 is not supported yet.\n");
+  mpi_terminate_program("NTYPES > 15 is not supported yet.\n");
 #endif /* #if (NTYPES > 15) */
 
 #if(NTYPES > 8)
   if(All.ICFormat == 1 || All.ICFormat == 2)
     {
-      mpi_terminate("NTYPES>8 is not allowed with ICFormat=%d, since the header block is limited to 256 bytes.\n", All.ICFormat);
+      mpi_terminate_program("NTYPES>8 is not allowed with ICFormat=%d, since the header block is limited to 256 bytes.\n", All.ICFormat);
     }
 #endif /* #if (NTYPES > 8) */
 
 #ifdef USE_SFR
   if(All.StarformationOn == 0)
     {
-      mpi_terminate("Code was compiled with star formation switched on.\nYou must set `StarformationOn=1', or recompile the code.\n");
+      mpi_terminate_program("Code was compiled with star formation switched on.\nYou must set `StarformationOn=1', or recompile the code.\n");
     }
   if(All.CoolingOn == 0)
     {
-      mpi_terminate(
+      mpi_terminate_program(
           "You try to use the code with star formation enabled,\nbut you did not switch on cooling.\nThis mode is not supported.\n");
     }
 #else  /* #ifdef USE_SFR */
   if(All.StarformationOn == 1)
     {
-      mpi_terminate("Code was compiled with star formation switched off.\nYou must set `StarformationOn=0', or recompile the code.\n");
+      mpi_terminate_program("Code was compiled with star formation switched off.\nYou must set `StarformationOn=0', or recompile the code.\n");
     }
 #endif /* #ifdef USE_SFR #else */
 
@@ -845,7 +845,7 @@ int read_outputlist(char *fname)
           if(All.OutputListLength >= MAXLEN_OUTPUTLIST)
             {
               sprintf(msg, "\ntoo many entries in output-list. You should increase MAXLEN_OUTPUTLIST=%d.\n", (int)MAXLEN_OUTPUTLIST);
-              terminate(msg);
+              terminate_program(msg);
             }
 
           All.OutputListFlag[All.OutputListLength] = flag;

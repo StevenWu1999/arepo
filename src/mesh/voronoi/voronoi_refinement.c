@@ -60,7 +60,7 @@ static void refine_add_ngb(int i, int j)
     {
       if(i >= Mesh.Ndp || j >= Mesh.Ndp)
         {
-          terminate("i>= Ndp || j>= Ndp");
+          terminate_program("i>= Ndp || j>= Ndp");
         }
 
       if(first_ngb[i] >= 0)
@@ -123,14 +123,14 @@ int do_refinements(void)
         {
           sprintf(buf, "On Task=%d with NumPart=%d we try to produce %d cells. Sorry, no space left...(All.MaxPart=%d)\n", ThisTask,
                   NumPart, count, All.MaxPart);
-          terminate(buf);
+          terminate_program(buf);
         }
 
       if(NumGas + count >= All.MaxPartSph)
         {
           sprintf(buf, "On Task=%d with NumGas=%d we try to produce %d cells. Sorry, no space left...(All.MaxPartSph=%d)\n", ThisTask,
                   NumGas, count, All.MaxPartSph);
-          terminate(buf);
+          terminate_program(buf);
         }
 
       if(All.MaxID == 0) /* MaxID not calculated yet */
@@ -240,7 +240,7 @@ int do_refinements(void)
 
               int jj = ref_SphP_dp_index[i]; /* this is the delaunay point of this cell */
               if(jj < 0)
-                terminate("jj < 0");
+                terminate_program("jj < 0");
 
               initialize_and_create_first_tetra(&DeRefMesh);
 
@@ -276,7 +276,7 @@ int do_refinements(void)
                            pow(DeRefMesh.DP[DeRefMesh.Ndp].z - P[i].Pos[2], 2));
 
                   if(r < 2 * fac)
-                    terminate("We are trying to split a heavily distorted cell... We better stop. Check your refinement criterion.");
+                    terminate_program("We are trying to split a heavily distorted cell... We better stop. Check your refinement criterion.");
 
 #ifndef OPTIMIZE_MEMORY_USAGE
                   set_integers_for_point(&DeRefMesh, DeRefMesh.Ndp);

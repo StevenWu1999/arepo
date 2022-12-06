@@ -67,7 +67,7 @@
  */
 void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTask)
 {
-  terminate("write_voronoi_mesh not supported in 1d spherical case!");
+  terminate_program("write_voronoi_mesh not supported in 1d spherical case!");
 }
 
 /*! \brief Initialises spherical 1d tesslation and create all-enclosing
@@ -84,7 +84,7 @@ void initialize_and_create_first_tetra(tessellation *T)
 
   if(NTask > 1)
     {
-      mpi_terminate("1D code works only for 1 CPU\n");
+      mpi_terminate_program("1D code works only for 1 CPU\n");
     }
 
   T->MaxNdp = NumGas + 4;
@@ -94,7 +94,7 @@ void initialize_and_create_first_tetra(tessellation *T)
   if(NumGas == 0)
     {
       sprintf(msg, "NumGas=%d on Task=%d, but need at least one particle!\n", NumGas, ThisTask);
-      terminate(msg);
+      terminate_program(msg);
     }
 
   T->Ndp = 0;

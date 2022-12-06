@@ -67,7 +67,7 @@
  */
 void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTask)
 {
-  terminate("write_voronoi_mesh not supported in 1d case!");
+  terminate_program("write_voronoi_mesh not supported in 1d case!");
 }
 
 /*! \brief Initialises 1d tessellation and create all-enclosing segment.
@@ -94,7 +94,7 @@ void initialize_and_create_first_tetra(tessellation *T)
   if(NumGas == 0)
     {
       sprintf(msg, "NumGas=%d on Task=%d, but need at least one particle!\n", NumGas, ThisTask);
-      terminate(msg);
+      terminate_program(msg);
     }
 
   T->Ndp = 0;

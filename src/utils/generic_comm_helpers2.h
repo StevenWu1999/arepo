@@ -98,7 +98,7 @@ static void generic_set_info(const char *func, const char *file, int line)
 #endif /* #ifdef VERBOSE */
 
   if(ExportSpace < MinSpace)
-    terminate(
+    terminate_program(
         "Bummer. Can't even safely process a single particle for the available memory. FreeBytes=%lld  ExportSpace=%lld  "
         "MinSpace=%lld  MyNTask=%d  NTopleaves=%d",
         (long long)FreeBytes, (long long)ExportSpace, (long long)MinSpace, MyNTask, NTopleaves);
@@ -351,7 +351,7 @@ static void generic_multiple_phases(void (*kernel)(void))
       while(ncycles > 0);
 
       if(ncycles == 0)
-        terminate(
+        terminate_program(
             "Seems like we can't even do one cycle: ncycles=%d  ngrpstart=%d  Nimport=%d  NimportNodes=%d  FreeBytes=%lld  needed "
             "storage=%lld",
             ncycles, ngrpstart, Nimport, NimportNodes, (long long)FreeBytes,
@@ -691,7 +691,7 @@ static int generic_prepare_import_counts_ibarrier(void)
           if(tag == TAG_N && source != MyThisTask)
             {
               if(count != 8)
-                terminate("count=%d\n", count);
+                terminate_program("count=%d\n", count);
 
               MPI_Recv(&Recv[source], sizeof(struct send_recv_counts), MPI_BYTE, source, tag, MYCOMMUNICATOR, MPI_STATUS_IGNORE);
             }

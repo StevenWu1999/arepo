@@ -173,7 +173,7 @@ void sfr_create_star_particles(void)
             continue;
 
           if(prob < 0)
-            terminate("prob < 0");
+            terminate_program("prob < 0");
 
           if(prob > 1)
             {
@@ -402,7 +402,7 @@ void spawn_star_from_cell(int igas, double birthtime, int istar, MyDouble mass_o
 void make_star(int idx, int i, double prob, MyDouble mass_of_star, double *sum_mass_stars)
 {
   if(mass_of_star > P[i].Mass)
-    terminate("mass_of_star > P[i].Mass");
+    terminate_program("mass_of_star > P[i].Mass");
 
   if(get_random_number() < prob)
     {
@@ -422,7 +422,7 @@ void make_star(int idx, int i, double prob, MyDouble mass_of_star, double *sum_m
           /* in this case we spawn a new star particle, only reducing the mass in the cell by mass_of_star */
           altogether_spawned = stars_spawned;
           if(NumPart + altogether_spawned >= All.MaxPart)
-            terminate("NumPart=%d spwawn %d particles no space left (All.MaxPart=%d)\n", NumPart, altogether_spawned, All.MaxPart);
+            terminate_program("NumPart=%d spwawn %d particles no space left (All.MaxPart=%d)\n", NumPart, altogether_spawned, All.MaxPart);
 
           int j = NumPart + altogether_spawned; /* index of new star */
 

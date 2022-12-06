@@ -320,7 +320,7 @@ void domain_sumCost(void)
             task = rmd + (no - pivot_no) / blk; /* note: if blk=0, then this case can not occur, since then always no < pivot_no */
 
           if(task < 0 || task > NTask)
-            terminate("task < 0 || task > NTask");
+            terminate_program("task < 0 || task > NTask");
 
           Send_count[task]++;
         }
@@ -381,7 +381,7 @@ void domain_sumCost(void)
       int j = import_node_data[i].no - loc_first_no;
 
       if(j < 0 || j >= blocksize[ThisTask])
-        terminate("j=%d < 0 || j>= blocksize[ThisTask]=%d   loc_first_no=%d  import_node_data[i].no=%d  i=%d  nimport=%d", j,
+        terminate_program("j=%d < 0 || j>= blocksize[ThisTask]=%d   loc_first_no=%d  import_node_data[i].no=%d  i=%d  nimport=%d", j,
                   blocksize[ThisTask], loc_first_no, import_node_data[i].no, i, nimport);
 
       loc_DomainLeaveNode[j].Count += import_node_data[i].Count;
@@ -957,7 +957,7 @@ void domain_combine_multipledomains(void)
         }
 
       if(best_target < 0)
-        terminate("best_target < 0");
+        terminate_program("best_target < 0");
 
       target = best_target;
 

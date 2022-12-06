@@ -119,7 +119,7 @@ int ngb_treebuild(int npart)
       int no   = Ngb_DomainNodeIndex[list[i]];
 
       if(no < Ngb_MaxPart || no >= Ngb_MaxPart + Ngb_MaxNodes)
-        terminate("i=%d no=%d  task=%d \n", i, no, DomainTask[list[i]]);
+        terminate_program("i=%d no=%d  task=%d \n", i, no, DomainTask[list[i]]);
 
       ngb_update_node_recursive(no, Ngb_Node_Tmp_Sibling[no], no, &last, 0);
 
@@ -289,7 +289,7 @@ int ngb_treebuild_construct(int npart)
         no = TopNodes[no].Leaf;
 
         if(DomainTask[no] != ThisTask)
-          terminate("STOP!  ID=%lld of type=%d is inserted into task=%d, but should be on task=%d no=%d\n", (long long)P[i].ID,
+          terminate_program("STOP!  ID=%lld of type=%d is inserted into task=%d, but should be on task=%d no=%d\n", (long long)P[i].ID,
                     P[i].Type, ThisTask, DomainTask[no], no);
 
         int th = Ngb_DomainNodeIndex[no];
@@ -399,7 +399,7 @@ int ngb_treebuild_construct(int npart)
       if(All.NgbTreeAllocFactor > MAX_TREE_ALLOC_FACTOR)
         {
           dump_particles();
-          terminate("task %d: out of space for neighbor tree, stopping with particle dump.\n", ThisTask);
+          terminate_program("task %d: out of space for neighbor tree, stopping with particle dump.\n", ThisTask);
         }
       else
         return -1;
@@ -439,7 +439,7 @@ int ngb_create_empty_nodes(int no, int topnode, int bits, int x, int y, int z)
                   if(All.NgbTreeAllocFactor > MAX_TREE_ALLOC_FACTOR)
                     {
                       dump_particles();
-                      terminate("task %d: looks like a serious problem (NTopnodes=%d), stopping with particle dump.\n", ThisTask,
+                      terminate_program("task %d: looks like a serious problem (NTopnodes=%d), stopping with particle dump.\n", ThisTask,
                                 NTopnodes);
                     }
                   return -1;
@@ -503,7 +503,7 @@ void ngb_update_node_recursive(int no, int sib, int father, int *last, int mode)
           if(*last >= Ngb_MaxPart)
             {
               if(*last == no)
-                terminate("as");
+                terminate_program("as");
 
               if(*last >= Ngb_MaxPart + Ngb_MaxNodes) /* a pseudo-particle */
                 Ngb_Nextnode[*last - Ngb_MaxNodes] = no;
@@ -521,7 +521,7 @@ void ngb_update_node_recursive(int no, int sib, int father, int *last, int mode)
       if(mode == 1)
         {
           if(!(no >= Ngb_MaxPart && no < Ngb_FirstNonTopLevelNode))
-            terminate("can't be");
+            terminate_program("can't be");
 
           if(Ngb_Node_Tmp_Sibling[no] != -2)
             not_interal_top_level = 1;
@@ -541,7 +541,7 @@ void ngb_update_node_recursive(int no, int sib, int father, int *last, int mode)
             }
 
           if(Ngb_Node_Tmp_Sibling[no] != sib)
-            terminate("Ngb_Node_Tmp_Sibling[no] != sib");
+            terminate_program("Ngb_Node_Tmp_Sibling[no] != sib");
 
           /* restore the sibling pointer for local toplevel nodes (we had temporarily stored the last element in this branch */
           Ngb_Nodes[no].u.d.sibling = sib;
@@ -701,7 +701,7 @@ void ngb_update_node_recursive(int no, int sib, int father, int *last, int mode)
       if(no < Ngb_MaxPart) /* only set it for single particles... */
         {
           if(father < Ngb_MaxPart)
-            terminate("no=%d father=%d\n", no, father);
+            terminate_program("no=%d father=%d\n", no, father);
 
           Ngb_Father[no] = father;
         }
@@ -1343,7 +1343,7 @@ void ngb_treeallocate(void)
     return;
 
   if(Ngb_Nodes)
-    terminate("already allocated");
+    terminate_program("already allocated");
 
   Ngb_DomainNodeIndex = (int *)mymalloc_movable(&Ngb_DomainNodeIndex, "Ngb_DomainNodeIndex", NTopleaves * sizeof(int));
 
@@ -1390,5 +1390,5 @@ void ngb_treefree(void)
       Ngb_MaxNodes        = 0;
     }
   else
-    terminate("trying to free the tree even though it's not allocated");
+    terminate_program("trying to free the tree even though it's not allocated");
 }

@@ -342,7 +342,7 @@ void gravity_forcetest(void)
           sprintf(buf, "%s%s", All.OutputDir, "forcetest.txt");
 
           if(!(FdForceTest = fopen(buf, "a")))
-            terminate("error in opening file '%s'\n", buf);
+            terminate_program("error in opening file '%s'\n", buf);
 
           for(idx = 0; idx < TimeBinsGravity.NActiveParticles; idx++)
             {
@@ -938,17 +938,17 @@ void forcetest_ewald_init(void)
 
 #ifdef LONG_X
   if(LONG_X != (int)(LONG_X))
-    terminate("LONG_X must be an integer");
+    terminate_program("LONG_X must be an integer");
 #endif /* #ifdef LONG_X */
 
 #ifdef LONG_Y
   if(LONG_Y != (int)(LONG_Y))
-    terminate("LONG_Y must be an integer");
+    terminate_program("LONG_Y must be an integer");
 #endif /* #ifdef LONG_Y */
 
 #ifdef LONG_Z
   if(LONG_Z != (int)(LONG_Z))
-    terminate("LONG_Z must be an integer");
+    terminate_program("LONG_Z must be an integer");
 #endif /* #ifdef LONG_Z */
 
   /* ok, let's compute things. Actually, we do that in parallel. */

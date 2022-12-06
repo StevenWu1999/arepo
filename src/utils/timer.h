@@ -80,11 +80,11 @@
       if(counter == TimerStack[itimer])                                           \
         {                                                                         \
           printf("Try to start timer %d, but it is already running.\n", counter); \
-          terminate("fail")                                                       \
+          terminate_program("fail")                                                       \
         };                                                                        \
     if(++TimerStackPos >= TIMER_STACK_DEPTH)                                      \
       {                                                                           \
-        terminate("Run out of timer stack space, increase TIMER_STACK_DEPTH");    \
+        terminate_program("Run out of timer stack space, increase TIMER_STACK_DEPTH");    \
       }                                                                           \
     else                                                                          \
       {                                                                           \
@@ -106,12 +106,12 @@
   {                                                                                 \
     if(TimerStack[TimerStackPos] != (counter))                                      \
       {                                                                             \
-        terminate("Wrong use of TIMER_STOP, you must stop the timer started last"); \
+        terminate_program("Wrong use of TIMER_STOP, you must stop the timer started last"); \
       }                                                                             \
     CPU_Step[TimerStack[TimerStackPos--]] += measure_time();                        \
     if(TimerStackPos < 0)                                                           \
       {                                                                             \
-        terminate("Do not stop the out CPU_MISC timer");                            \
+        terminate_program("Do not stop the out CPU_MISC timer");                            \
       }                                                                             \
     TIMER_INSTRUMENT_STOP(counter);                                                 \
   }

@@ -199,7 +199,7 @@ int subfind_coll_treebuild_construct(int npart, struct unbind_data *mp)
 
           if(*posp < SubDomainCorner[j] || *posp >= SubDomainCorner[j] + SubDomainLen)
             {
-              terminate("out of box i=%d j=%d coord=%g SubDomainCorner=(%g|%g|%g) SubDomainLen=%g", i, j, *posp, SubDomainCorner[0],
+              terminate_program("out of box i=%d j=%d coord=%g SubDomainCorner=(%g|%g|%g) SubDomainLen=%g", i, j, *posp, SubDomainCorner[0],
                         SubDomainCorner[1], SubDomainCorner[2], SubDomainLen);
             }
 
@@ -246,7 +246,7 @@ int subfind_coll_treebuild_construct(int npart, struct unbind_data *mp)
       no = SubTopNodes[no].Leaf;
 
       if(no >= SubTree_ImportedNodeOffset)
-        terminate("i=%d: no=%d SubTree_ImportedNodeOffset=%d", i, no, SubTree_ImportedNodeOffset);
+        terminate_program("i=%d: no=%d SubTree_ImportedNodeOffset=%d", i, no, SubTree_ImportedNodeOffset);
 
       if(subfind_coll_treebuild_insert_single_point(k, &SubTree_IntPos_list[3 * k], SubDomainNodeIndex[no], levels) < 0)
         {
@@ -356,7 +356,7 @@ int subfind_coll_treebuild_insert_single_point(int i, unsigned long long *intpos
 
           if(th >= SubTree_ImportedNodeOffset)
             {
-              terminate("unexpected here: th=%d SubTree_ImportedNodeOffset=%d", th, SubTree_ImportedNodeOffset);
+              terminate_program("unexpected here: th=%d SubTree_ImportedNodeOffset=%d", th, SubTree_ImportedNodeOffset);
             }
           else
             intppos = &SubTree_IntPos_list[3 * th];
@@ -380,7 +380,7 @@ int subfind_coll_treebuild_insert_single_point(int i, unsigned long long *intpos
                           "SubTree_MaxNodes=%d  0=%d NumPart=%d\n",
                           SubThisTask, i, SubTree_NumNodes, SubTree_MaxNodes, 0, NumPart);
                   dump_particles();
-                  terminate(buf);
+                  terminate_program(buf);
                 }
 
               return -1;
@@ -433,7 +433,7 @@ int subfind_coll_create_empty_nodes(int no, int topnode, int bits, int x, int y,
                       sprintf(buf, "task %d: looks like a serious problem (NTopnodes=%d), stopping with particle dump.\n", SubThisTask,
                               NTopnodes);
                       dump_particles();
-                      terminate(buf);
+                      terminate_program(buf);
                     }
                   return -1;
                 }
@@ -635,7 +635,7 @@ void subfind_coll_update_node_recursive(int no, int sib, int father, int *last)
               else
                 {
                   /* an imported point */
-                  terminate("should not occur here");
+                  terminate_program("should not occur here");
                 }
             }
         }
@@ -729,7 +729,7 @@ void subfind_coll_exchange_topleafdata(void)
   for(n = 0; n < SubNTopleaves; n++)
     {
       if(SubDomainTask[n] < 0 || SubDomainTask[n] >= SubNTask)
-        terminate("n=%d|%d: SubDomainTask[n]=%d", n, SubNTopleaves, SubDomainTask[n]);
+        terminate_program("n=%d|%d: SubDomainTask[n]=%d", n, SubNTopleaves, SubDomainTask[n]);
 
       recvcounts[SubDomainTask[n]]++;
     }
@@ -889,7 +889,7 @@ void subfind_coll_treeupdate_toplevel(int no, int topnode, int bits, int x, int 
 #endif /* #ifdef MULTIPLE_NODE_SOFTENING */
             }
           else
-            terminate("may not happen");
+            terminate_program("may not happen");
 
           p = SubNodes[p].u.d.sibling;
         }
@@ -938,7 +938,7 @@ void subfind_coll_treeupdate_toplevel(int no, int topnode, int bits, int x, int 
 void subfind_coll_treeallocate(int maxpart, int maxindex)
 {
   if(SubNodes)
-    terminate("already allocated");
+    terminate_program("already allocated");
 
   SubTree_MaxPart  = maxindex;
   SubTree_MaxNodes = (int)(SubTreeAllocFactor * maxpart) + SubNTopnodes;
@@ -986,7 +986,7 @@ void subfind_coll_treefree(void)
       SubTree_Pos_list   = NULL;
     }
   else
-    terminate("trying to free the tree even though it's not allocated");
+    terminate_program("trying to free the tree even though it's not allocated");
 }
 
 #endif /* #ifdef SUBFIND */

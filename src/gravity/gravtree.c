@@ -456,7 +456,7 @@ void gravity_tree(int timebin)
                   fflush(stdout);
                   MPI_Barrier(MPI_COMM_WORLD);
 
-                  terminate("TakeLevel=%d < 0", TakeLevel);
+                  terminate_program("TakeLevel=%d < 0", TakeLevel);
                 }
             }
         }

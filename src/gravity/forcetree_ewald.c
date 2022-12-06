@@ -97,17 +97,17 @@ void ewald_init(void)
 
 #ifdef LONG_X
   if(LONG_X != (int)(LONG_X))
-    terminate("LONG_X must be an integer");
+    terminate_program("LONG_X must be an integer");
 #endif /* #ifdef LONG_X */
 
 #ifdef LONG_Y
   if(LONG_Y != (int)(LONG_Y))
-    terminate("LONG_Y must be an integer");
+    terminate_program("LONG_Y must be an integer");
 #endif /* #ifdef LONG_Y */
 
 #ifdef LONG_Z
   if(LONG_Z != (int)(LONG_Z))
-    terminate("LONG_Z must be an integer");
+    terminate_program("LONG_Z must be an integer");
 #endif /* #ifdef LONG_Z */
 
   sprintf(buf, "ewald_table_%d_%d_%d.dat", ENX, ENY, ENZ);

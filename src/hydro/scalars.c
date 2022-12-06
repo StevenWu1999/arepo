@@ -60,7 +60,7 @@ void init_scalars()
 #if defined(REFINEMENT_HIGH_RES_GAS)
   ScalarIndex.HighResMass = scalar_init(&SphP[0].HighResDensity, &SphP[0].HighResMass, SCALAR_TYPE_PASSIVE);
   if(ScalarIndex.HighResMass == -1)
-    terminate("ScalarIndex.HighResMass initialized incorrectly\n");
+    terminate_program("ScalarIndex.HighResMass initialized incorrectly\n");
 #endif /* #if defined(REFINEMENT_HIGH_RES_GAS) */
 
 #ifdef PASSIVE_SCALARS
@@ -89,7 +89,7 @@ int scalar_init(MyFloat *addr, MyFloat *addr_mass, int type)
   if(N_Scalar == MAXSCALARS)
     {
       mpi_printf("Failed to register scalar, maximum of %d already reached\n", MAXSCALARS);
-      terminate("MAXSCALARS reached");
+      terminate_program("MAXSCALARS reached");
     }
 
   /* save type and relative address */

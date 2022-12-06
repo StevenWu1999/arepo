@@ -103,10 +103,10 @@ double DoCooling(double u_old, double rho, double dt, double *ne_guess)
   DoCool.ne_guess_input = *ne_guess;
 
   if(!gsl_finite(u_old))
-    terminate("invalid input: u_old=%g\n", u_old);
+    terminate_program("invalid input: u_old=%g\n", u_old);
 
   if(u_old < 0 || rho < 0)
-    terminate("invalid input: task=%d u_old=%g  rho=%g  dt=%g  All.MinEgySpec=%g\n", ThisTask, u_old, rho, dt, All.MinEgySpec);
+    terminate_program("invalid input: task=%d u_old=%g  rho=%g  dt=%g  All.MinEgySpec=%g\n", ThisTask, u_old, rho, dt, All.MinEgySpec);
 
   rho *= All.UnitDensity_in_cgs * All.HubbleParam * All.HubbleParam; /* convert to physical cgs units */
   u_old *= All.UnitPressure_in_cgs / All.UnitDensity_in_cgs;
@@ -169,7 +169,7 @@ double DoCooling(double u_old, double rho, double dt, double *ne_guess)
   while(fabs(du / u) > 1.0e-6 && iter < MAXITER);
 
   if(iter >= MAXITER)
-    terminate(
+    terminate_program(
         "failed to converge in DoCooling(): DoCool.u_old_input=%g\nDoCool.rho_input= %g\nDoCool.dt_input= %g\nDoCool.ne_guess_input= "
         "%g\n",
         DoCool.u_old_input, DoCool.rho_input, DoCool.dt_input, DoCool.ne_guess_input);
@@ -276,7 +276,7 @@ double convert_u_to_temp(double u, double rho, double *ne_guess)
       printf("u_input= %g\nrho_input=%g\n ne_input=%g\n", u_input, rho_input, ne_input);
       printf("DoCool.u_old_input=%g\nDoCool.rho_input= %g\nDoCool.dt_input= %g\nDoCool.ne_guess_input= %g\n", DoCool.u_old_input,
              DoCool.rho_input, DoCool.dt_input, DoCool.ne_guess_input);
-      terminate("convergence failure");
+      terminate_program("convergence failure");
     }
 
   gs.mu = mu;
@@ -308,7 +308,7 @@ void find_abundances_and_rates(double logT, double rho, double *ne_guess)
   ne_input   = *ne_guess;
 
   if(!gsl_finite(logT))
-    terminate("logT=%g\n", logT);
+    terminate_program("logT=%g\n", logT);
 
   if(logT <= Tmin) /* everything neutral */
     {
@@ -421,7 +421,7 @@ void find_abundances_and_rates(double logT, double rho, double *ne_guess)
       fwrite(&rho_input, sizeof(double), 1, fp);
       fwrite(&ne_input, sizeof(double), 1, fp);
       fclose(fp);
-      terminate(
+      terminate_program(
           "no convergence reached in find_abundances_and_rates(): logT_input= %g  rho_input= %g  ne_input= %g "
           "DoCool.u_old_input=%g\nDoCool.rho_input= %g\nDoCool.dt_input= %g\nDoCool.ne_guess_input= %g\n",
           logT_input, rho_input, ne_input, DoCool.u_old_input, DoCool.rho_input, DoCool.dt_input, DoCool.ne_guess_input);
@@ -679,7 +679,7 @@ void ReadIonizeParams(char *fname, int which)
       for(iter = 0, i = 0; iter < 2; iter++)
         {
           if(!(fdcool = fopen(fname, "r")))
-            terminate("COOLING: cannot read ionization table in file `%s'\n", fname);
+            terminate_program("COOLING: cannot read ionization table in file `%s'\n", fname);
           if(iter == 0)
             while(fscanf(fdcool, "%g %g %g %g %g %g %g", &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy) != EOF)
               NheattabUVB++;
@@ -849,7 +849,7 @@ void cool_cell(int i)
   SphP[i].Ne = ne;
 
   if(unew < 0)
-    terminate("invalid temperature: Thistask=%d i=%d unew=%g\n", ThisTask, i, unew);
+    terminate_program("invalid temperature: Thistask=%d i=%d unew=%g\n", ThisTask, i, unew);
 
   double du = unew - SphP[i].Utherm;
 

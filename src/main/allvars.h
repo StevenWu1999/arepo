@@ -170,7 +170,7 @@
 #define MPI_Sendrecv MPI_Check_Sendrecv
 #endif /* #ifdef MPISENDRECV_CHECKSUM */
 
-#define terminate(...)                                                                                                            \
+#define terminate_program(...)                                                                                                            \
   {                                                                                                                               \
     if(FlagNyt == 0)                                                                                                              \
       {                                                                                                                           \
@@ -185,10 +185,10 @@
       }                                                                                                                           \
     exit(1);                                                                                                                      \
   }
-#define mpi_terminate(...)    \
+#define mpi_terminate_program(...)    \
   {                           \
     if(ThisTask == 0)         \
-      terminate(__VA_ARGS__); \
+      terminate_program(__VA_ARGS__); \
   }
 #define warn(...)                                                                                                            \
   {                                                                                                                          \
@@ -1650,7 +1650,7 @@ extern struct io_header_ICs
 #if(NTYPES_ICS == 6)
   char fill[40]; /*!< fills to 256 Bytes */
 #else            /* #if (NTYPES_ICS==6) */
-  terminate("NTYPES_ICS != 6")
+  terminate_program("NTYPES_ICS != 6")
 #endif           /* #if (NTYPES_ICS==6) #else */
 } header_ICs;    /*!< holds header for IC files */
 #endif           /* #ifdef NTYPES_ICS */

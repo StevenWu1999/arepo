@@ -174,17 +174,17 @@ void pm_init_periodic(void)
 {
 #ifdef LONG_X
   if(LONG_X != (int)(LONG_X))
-    terminate("LONG_X must be an integer if used with PMGRID");
+    terminate_program("LONG_X must be an integer if used with PMGRID");
 #endif /* #ifdef LONG_X */
 
 #ifdef LONG_Y
   if(LONG_Y != (int)(LONG_Y))
-    terminate("LONG_Y must be an integer if used with PMGRID");
+    terminate_program("LONG_Y must be an integer if used with PMGRID");
 #endif /* #ifdef LONG_Y */
 
 #ifdef LONG_Z
   if(LONG_Z != (int)(LONG_Z))
-    terminate("LONG_Z must be an integer if used with PMGRID");
+    terminate_program("LONG_Z must be an integer if used with PMGRID");
 #endif /* #ifdef LONG_Z */
 
   All.Asmth[0] = ASMTH * All.BoxSize / PMGRID;
@@ -1580,7 +1580,7 @@ void pmforce_periodic(int mode, int *typelist)
 
 #ifndef NUMPART_PER_TASK_LARGE
   if((((long long)NumPart) << 3) >= (((long long)1) << 31))
-    terminate("We are dealing with a too large particle number per MPI rank - enabling NUMPART_PER_TASK_LARGE might help.");
+    terminate_program("We are dealing with a too large particle number per MPI rank - enabling NUMPART_PER_TASK_LARGE might help.");
 #endif /* #ifndef NUMPART_PER_TASK_LARGE */
 
   double asmth2 = All.Asmth[0] * All.Asmth[0];

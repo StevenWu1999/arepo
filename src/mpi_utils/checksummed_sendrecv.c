@@ -76,7 +76,7 @@ int MPI_Check_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype, int 
   char msg[500];
 
   if(dest != source)
-    terminate("destination task different from source task");
+    terminate_program("destination task different from source task");
 
   MPI_Type_size(sendtype, &size_sendtype);
   MPI_Type_size(recvtype, &size_recvtype);
@@ -88,7 +88,7 @@ int MPI_Check_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype, int 
     }
 
   if(!(buf = mymalloc(recvcount * size_recvtype + 1024)))
-    terminate("not enough memory to allocate the buffer buf");
+    terminate_program("not enough memory to allocate the buffer buf");
 
   for(i = 0, p = buf; i < recvcount * size_recvtype + 1024; i++)
     *p++ = 255;
@@ -103,7 +103,7 @@ int MPI_Check_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype, int 
         {
           sprintf(msg, "MPI-ERROR: Task=%d/%s: Recv occured before recv buffer. message-size=%d from %d, i=%d c=%d\n", ThisTask,
                   getenv("HOST"), recvcount, dest, i, *p);
-          terminate(msg);
+          terminate_program(msg);
         }
     }
 
@@ -113,7 +113,7 @@ int MPI_Check_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype, int 
         {
           sprintf(msg, "MPI-ERROR: Task=%d/%s: Recv occured after recv buffer. message-size=%d from %d, i=%d c=%d\n", ThisTask,
                   getenv("HOST"), recvcount, dest, i, *p);
-          terminate(msg);
+          terminate_program(msg);
         }
     }
 
@@ -307,7 +307,7 @@ int MPI_Check_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype, int 
           fclose(fd);
 
           sprintf(msg, "MPI-ERROR: Even 10 trials proved to be insufficient on task=%d/%s. Stopping\n", ThisTask, getenv("HOST"));
-          terminate(msg);
+          terminate_program(msg);
         }
     }
 

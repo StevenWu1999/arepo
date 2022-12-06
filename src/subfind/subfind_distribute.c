@@ -66,7 +66,7 @@ void subfind_distribute_groups(void)
       target = Group[i].TargetTask;
 
       if(target < 0 || target >= NTask)
-        terminate("target < 0 || target >= NTask");
+        terminate_program("target < 0 || target >= NTask");
 
       if(target != ThisTask)
         Send_count[target]++;
@@ -172,7 +172,7 @@ void subfind_distribute_particles(MPI_Comm Communicator)
       if(target != CommThisTask)
         {
           if(target < 0 || target >= CommNTask)
-            terminate("n=%d targettask=%d", n, target);
+            terminate_program("n=%d targettask=%d", n, target);
 
           Send_count[target]++;
         }

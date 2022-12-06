@@ -68,7 +68,7 @@ void domain_displacePosition(MyDouble *pos, enum domain_displace_mode mode)
       pos[2] = WRAP_Z(pos[2] - All.GlobalDisplacementVector[2]);
     }
   else
-    terminate("Unkown mode %d.", mode);
+    terminate_program("Unkown mode %d.", mode);
 }
 
 /*! \brief Move the coordinate for all positions by the global displacement vector
@@ -279,7 +279,7 @@ void do_box_wrapping(void)
           char buf[1000];
 
           sprintf(buf, "i=%d ID=%d type=%d moved out of box. x=%g", i, P[i].ID, P[i].Type, P[i].Pos[0]);
-          terminate(buf);
+          terminate_program(buf);
         }
 #endif /* #if !defined(REFLECTIVE_X) #else */
 
@@ -304,7 +304,7 @@ void do_box_wrapping(void)
           char buf[1000];
 
           sprintf(buf, "i=%d ID=%d type=%d moved out of box. y=%g", i, P[i].ID, P[i].Type, P[i].Pos[1]);
-          terminate(buf);
+          terminate_program(buf);
         }
 #endif /* #if !defined(REFLECTIVE_Y) #else */
 
@@ -329,7 +329,7 @@ void do_box_wrapping(void)
           char buf[1000];
 
           sprintf(buf, "i=%d ID=%d type=%d moved out of box. z=%g", i, P[i].ID, P[i].Type, P[i].Pos[2]);
-          terminate(buf);
+          terminate_program(buf);
         }
 #endif /* #if !defined(REFLECTIVE_Z) #else */
     }

@@ -182,7 +182,7 @@ int main(int argc, char **argv)
               printf("touching a running-file: %s \n", runningfname);
             }
           else
-            terminate("could not touch a running-file: %s\n", runningfname);
+            terminate_program("could not touch a running-file: %s\n", runningfname);
         }
     }
 #endif /* #ifdef RUNNING_SAFETY_FILE */
@@ -262,7 +262,7 @@ int main(int argc, char **argv)
  *
  *  This method has to be called by all processes. It should be used only
  *  if the simulation ends without a errors.
- *  Otherwise terminate() should be used instead.
+ *  Otherwise terminate_program() should be used instead.
  *
  *  \return void
  */

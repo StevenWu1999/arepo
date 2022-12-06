@@ -108,7 +108,7 @@ void domain_mark_in_trans_table(int i, int task)
             {
               int qq = DC[q].next;
               if(q == qq)
-                terminate("preventing getting stuck in a loop due to q == DC[q].next : i=%d q=%d last_connection=%d", i, q,
+                terminate_program("preventing getting stuck in a loop due to q == DC[q].next : i=%d q=%d last_connection=%d", i, q,
                           SphP[i].last_connection);
 
               if((P[i].Mass == 0 && P[i].ID == 0) || P[i].Type != 0) /* this cell has been deleted or turned into a star */
@@ -271,7 +271,7 @@ void domain_exchange_and_update_DC(void)
       if(task >= 0)
         {
           if(task >= NTask)
-            terminate("i=%d Nvc=%d MaxNvc=%d task=%d\n", i, Nvc, MaxNvc, task);
+            terminate_program("i=%d Nvc=%d MaxNvc=%d task=%d\n", i, Nvc, MaxNvc, task);
 
           Send_count[task]++;
         }
@@ -327,10 +327,10 @@ void domain_exchange_and_update_DC(void)
   for(int i = 0; i < nimport; i++)
     {
       if(recv_transscribe_data[i].old_index >= N_trans)
-        terminate("recv_transscribe_data[i].old_index >= N_trans");
+        terminate_program("recv_transscribe_data[i].old_index >= N_trans");
 
       if(recv_transscribe_data[i].old_index < 0)
-        terminate("recv_transscribe_data[i].old_index < 0");
+        terminate_program("recv_transscribe_data[i].old_index < 0");
 
       int old_index = recv_transscribe_data[i].old_index;
 
@@ -356,13 +356,13 @@ void domain_exchange_and_update_DC(void)
                   else if(xbits == 0)
                     xbits = 2;
                   else /* xbits == 2 */
-                    terminate("b");
+                    terminate_program("b");
                 }
               else if(trans_table[old_index].wrapped & 2)
                 {
                   if(xbits == 1)
                     {
-                      terminate("a");
+                      terminate_program("a");
                     }
                   else if(xbits == 0)
                     xbits = 1;
@@ -378,14 +378,14 @@ void domain_exchange_and_update_DC(void)
                     ybits = 2;
                   else
                     {
-                      terminate("b");
+                      terminate_program("b");
                     }
                 }
               else if(trans_table[old_index].wrapped & 8)
                 {
                   if(ybits == 1)
                     {
-                      terminate("a");
+                      terminate_program("a");
                     }
                   else if(ybits == 0)
                     ybits = 1;
@@ -401,14 +401,14 @@ void domain_exchange_and_update_DC(void)
                     zbits = 2;
                   else
                     {
-                      terminate("b");
+                      terminate_program("b");
                     }
                 }
               else if(trans_table[old_index].wrapped & 32)
                 {
                   if(zbits == 1)
                     {
-                      terminate("a");
+                      terminate_program("a");
                     }
                   else if(zbits == 0)
                     zbits = 1;
@@ -467,7 +467,7 @@ void domain_exchange_and_update_DC(void)
           if(task >= 0)
             {
               if(task >= NTask)
-                terminate("Thistask=%d  i=%d Nvc=%d MaxNvc=%d DC[i].task=%d DC[i].next=%d\n", ThisTask, i, Nvc, MaxNvc, DC[i].task,
+                terminate_program("Thistask=%d  i=%d Nvc=%d MaxNvc=%d DC[i].task=%d DC[i].next=%d\n", ThisTask, i, Nvc, MaxNvc, DC[i].task,
                           DC[i].next);
 
               if(DC[i].index >= 0)
@@ -598,7 +598,7 @@ void domain_exchange_and_update_DC(void)
         }
       else
         {
-          terminate("strange");
+          terminate_program("strange");
         }
     }
 

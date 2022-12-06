@@ -277,7 +277,7 @@ void subfind_find_linkngb(void)
                   else
                     {
                       if(Right[i] == 0 && Left[i] == 0)
-                        terminate("can't occur");
+                        terminate_program("can't occur");
 
                       if(Right[i] == 0 && Left[i] > 0)
                         PS[i].Hsml *= 1.26;
@@ -307,7 +307,7 @@ void subfind_find_linkngb(void)
             }
 
           if(iter > MAXITER)
-            terminate("failed to converge in neighbour iteration in density()\n");
+            terminate_program("failed to converge in neighbour iteration in density()\n");
         }
     }
   while(ntot > 0);
@@ -433,7 +433,7 @@ static int subfind_linkngb_evaluate(int target, int mode, int threadid)
           else
             { /* pseudo particle */
               if(mode == MODE_IMPORTED_PARTICLES)
-                terminate("mode == MODE_IMPORTED_PARTICLES");
+                terminate_program("mode == MODE_IMPORTED_PARTICLES");
 
               if(target >= 0) /* if no target is given, export will not occur */
                 {

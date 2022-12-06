@@ -259,7 +259,7 @@ void find_nearest_meshpoint_global(mesh_search_data *searchdata_input, int nn, i
                   myflush(stdout);
                 }
               if(iter > MAXITER)
-                terminate("NGBSEARCH: iter > MAXITER");
+                terminate_program("NGBSEARCH: iter > MAXITER");
             }
         }
 
@@ -275,7 +275,7 @@ void find_nearest_meshpoint_global(mesh_search_data *searchdata_input, int nn, i
             }
 
           if(iter > MAXITER)
-            terminate("NGBSEARCH: failed to converge in tracer particles\n");
+            terminate_program("NGBSEARCH: failed to converge in tracer particles\n");
         }
     }
   while(ntot > 0);

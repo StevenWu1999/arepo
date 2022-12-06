@@ -197,7 +197,7 @@ void find_gravity_timesteps_and_do_gravity_step_first_half(void)
               if(bin == 0)
                 {
                   print_particle_info(i);
-                  terminate("timestep too small");
+                  terminate_program("timestep too small");
                 }
 
               timebin_move_particle(&TimeBinsGravity, i, binold, bin);

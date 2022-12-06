@@ -229,18 +229,18 @@ int init(void)
 
 #ifndef REFINEMENT_HIGH_RES_GAS
   if(glob_num != All.TotNumGas)
-    terminate("glob_num(=%lld) != All.TotNumGas(=%lld)", glob_num, All.TotNumGas);
+    terminate_program("glob_num(=%lld) != All.TotNumGas(=%lld)", glob_num, All.TotNumGas);
 #endif /* #ifndef REFINEMENT_HIGH_RES_GAS */
 
   if(All.TotNumGas > 0 && (glob_num == 0 || glob_mass == 0))
-    terminate("All.TotNumGas(=%lld) > 0 && (glob_num(=%lld) == 0 || glob_mass(=%g) == 0)", All.TotNumGas, glob_num, glob_mass);
+    terminate_program("All.TotNumGas(=%lld) > 0 && (glob_num(=%lld) == 0 || glob_mass(=%g) == 0)", All.TotNumGas, glob_num, glob_mass);
 
     /* assign global variables that depend on the mean cell mass */
 #if defined(REFINEMENT)
   if(All.ReferenceGasPartMass == 0)
     {
       if(!All.ComovingIntegrationOn)
-        terminate("In non-comoving runs, ReferenceGasPartMass must be set to a non-zero value");
+        terminate_program("In non-comoving runs, ReferenceGasPartMass must be set to a non-zero value");
 
       All.ReferenceGasPartMass = glob_mass / glob_num;
 
@@ -341,7 +341,7 @@ int init(void)
 #ifdef REFINEMENT_MERGE_CELLS
   for(i = 0; i < NumPart; i++)
     if(P[i].Type == 0 && P[i].ID == 0)
-      terminate("INIT: Cannot use ID==0 for gas in ICs with derefinement enabled.");
+      terminate_program("INIT: Cannot use ID==0 for gas in ICs with derefinement enabled.");
 #endif /* #ifdef REFINEMENT_MERGE_CELLS */
 
   voronoi_init_connectivity(&Mesh);
@@ -605,7 +605,7 @@ void check_omega(void)
       if(fabs((omega - All.Omega0) / omega) > 1.0e-1 || fabs((omega_b - All.OmegaBaryon) / omega_b) > 1.0e-1)
         {
 #ifndef TWODIMS
-          mpi_terminate(
+          mpi_terminate_program(
               "\n\nI've found something odd!\nThe mass content accounts for Omega=%g and OmegaBaryon=%g,\nbut you specified Omega=%g "
               "and OmegaBaryon=%g in the parameterfile.\n\nI better stop.\n",
               omega, omega_b, All.Omega0, All.OmegaBaryon);
@@ -631,7 +631,7 @@ void check_omega(void)
       if(fabs((omega - All.Omega0) / omega) > 1.0e-1)
         {
 #ifndef TWODIMS
-          mpi_terminate(
+          mpi_terminate_program(
               "\n\nI've found something odd!\nThe mass content accounts for Omega=%g and OmegaBaryon=%g,\nbut you specified Omega=%g "
               "and OmegaBaryon=%g in the parameterfile.\n\nI better stop.\n",
               omega, omega_b, All.Omega0, All.OmegaBaryon);
@@ -688,7 +688,7 @@ void setup_smoothinglengths(void)
       no = Father[i];
 
       if(no < 0)
-        terminate("i=%d no=%d\n", i, no);
+        terminate_program("i=%d no=%d\n", i, no);
 
       while(10 * All.DesNumNgb * P[i].Mass > Nodes[no].u.d.mass)
         {
@@ -752,7 +752,7 @@ void test_id_uniqueness(void)
   mpi_printf("INIT: Testing ID uniqueness...\n");
 
   if(NumPart == 0)
-    terminate("need at least one particle per cpu\n");
+    terminate_program("need at least one particle per cpu\n");
 
   t0 = second();
 
@@ -767,14 +767,14 @@ void test_id_uniqueness(void)
   for(i = 1; i < NumPart; i++)
     {
       if(ids[i] == ids[i - 1])
-        terminate("non-unique ID=%lld found on task=%d (i=%d NumPart=%d)\n", (long long)ids[i], ThisTask, i, NumPart);
+        terminate_program("non-unique ID=%lld found on task=%d (i=%d NumPart=%d)\n", (long long)ids[i], ThisTask, i, NumPart);
     }
   MPI_Allgather(&ids[0], sizeof(MyIDType), MPI_BYTE, ids_first, sizeof(MyIDType), MPI_BYTE, MPI_COMM_WORLD);
 
   if(ThisTask < NTask - 1)
     {
       if(ids[NumPart - 1] == ids_first[ThisTask + 1])
-        terminate("non-unique ID=%lld found on task=%d\n", (long long)ids[NumPart - 1], ThisTask);
+        terminate_program("non-unique ID=%lld found on task=%d\n", (long long)ids[NumPart - 1], ThisTask);
     }
   myfree(ids_first);
   myfree(ids);
