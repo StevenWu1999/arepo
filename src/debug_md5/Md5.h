@@ -82,7 +82,7 @@ typedef struct
 
 void MD5Final(MD5_CTX *mdContext);
 // void MD5Update(MD5_CTX * mdContext, unsigned char *inBuf, unsigned int inLen);
-void MD5UpdateLong(MD5_CTX *mdContext, unsigned char *inBuf, unsigned long long inLenLong);
+void MD5UpdateLong(MD5_CTX *mdContext, void *inBuf, unsigned long long inLenLong);
 void MD5Init(MD5_CTX *mdContext);
 
 /*

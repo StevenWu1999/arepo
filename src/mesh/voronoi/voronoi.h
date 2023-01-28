@@ -34,6 +34,13 @@
 
 #include <gmp.h>
 
+
+#ifdef __cplusplus
+extern "C"{
+#endif
+
+
+
 #define STACKSIZE_TETRA 10000
 #define MIN_ALLOC_NUMBER 1000
 #define ALLOC_INCREASE_FACTOR 1.1
@@ -278,6 +285,7 @@ void free_all_remaining_mesh_structures(void);
 void apply_area_list(void);
 int area_list_data_compare(const void *a, const void *b);
 void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTask);
+void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, int lastTask);
 void initialize_and_create_first_tetra(tessellation *T);
 void compute_voronoi_faces_and_volumes(void);
 void get_line_segments(int sphp_index, int dp_index, double *segments, unsigned int *nof_elements, unsigned int max_elements);
@@ -375,5 +383,11 @@ int ngb_treefind_ghost_search(tessellation *T, MyDouble searchcenter[3], MyDoubl
 int voronoi_ghost_search_evaluate(tessellation *T, int target, int mode, int q, int thread_id);
 int voronoi_ghost_search(tessellation *T);
 double distance_to_border(int cell);
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* HAVE_H_VORONOI */

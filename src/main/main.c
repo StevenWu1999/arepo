@@ -39,6 +39,8 @@
 
 #include "../main/allvars.h"
 #include "../main/proto.h"
+#include "../main/cpp_functions.h"
+
 
 #ifdef HAVE_HDF5
 #include <hdf5.h>
@@ -71,6 +73,7 @@ int main(int argc, char **argv)
 
   /* output a welcome message */
   hello();
+  cpp_hello_world();
 
   /* initialize CPU-time/Wallclock-time measurement */
   init_cpu_log();
@@ -239,6 +242,9 @@ int main(int argc, char **argv)
 
       /* init returns a status code, where a value of >=0 means that endrun() should be called. */
       int status = init();
+
+      MPI_Barrier(MPI_COMM_WORLD);
+      endrun();
 
       if(status >= 0)
         {

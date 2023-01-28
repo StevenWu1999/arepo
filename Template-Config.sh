@@ -25,6 +25,10 @@
 #PASSIVE_SCALARS=3             # number of passive scalar fields advected with fluid (default: 0)
 #NO_SCALAR_GRADIENTS           # disables time and spatial extrapolation for passive scalar fields (use only if you know why you're doing this)
 
+#--------------------------------------- Hydrodynamics with Residual Distribution solver
+#RESIDUAL_DISTRIBUTION         # replace Finite-Volume method with Residual Distribution
+
+
 #--------------------------------------- Magnetohydrodynamics
 #MHD                           # Master switch for magnetohydrodynamics
 #MHD_POWELL                    # Powell div(B) cleaning scheme for magnetohydrodynamics

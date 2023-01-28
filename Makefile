@@ -30,7 +30,7 @@ $(info CONFIG: $(CONFIG))
 $(info EXEC: $(EXEC))
 $(info )
 
-PYTHON = python
+PYTHON = python3
 PERL   = /usr/bin/perl
 RESULT     := $(shell CONFIG=$(CONFIG) PERL=$(PERL) BUILD_DIR=$(BUILD_DIR) make -f config-makefile)
 CONFIGVARS := $(shell cat $(BUILD_DIR)/arepoconfig.h)
@@ -92,7 +92,9 @@ endif
 ifeq ($(SYSTYPE),"MacBookPro")
 # compiler and its optimization options
 CC        =  mpicc   # sets the C-compiler
+CXX       =  mpicxx  # sets the Cpp-compiler for residual distribution
 OPTIMIZE  =  -std=c11 -ggdb -O3 -Wall -Wno-format-security -Wno-unknown-pragmas -Wno-unused-function
+# OPTIMIZE_CXX  =  -std=c++11 -ggdb -O3 -Wall -Wno-format-security -Wno-unknown-pragmas -Wno-unused-function
 
 # overwrite default:
 MPICH_LIB = -lmpi
@@ -169,6 +171,7 @@ OBJS =   debug_md5/calc_checksum.o \
          gravity/pm/pm_nonperiodic.o \
          hydro/finite_volume_solver.o \
          hydro/gradients.o \
+         hydro/residual_distribution_solver.o \
          hydro/riemann.o \
          hydro/riemann_hllc.o \
          hydro/riemann_hlld.o \
@@ -235,6 +238,7 @@ INCL += debug_md5/Md5.h \
         gitversion/version.h\
         gravity/forcetree.h \
         main/allvars.h \
+        main/cpp_functions.h \
         main/proto.h \
         mesh/mesh.h \
         mesh/voronoi/voronoi.h \
@@ -242,6 +246,9 @@ INCL += debug_md5/Md5.h \
         utils/dtypes.h \
         utils/generic_comm_helpers2.h \
         utils/timer.h
+
+# OBJS_CXX = hydro/residual_distribution_solver.o
+# INCL_CXX = main/cpp_functions.h
 
 ifeq (TWODIMS,$(findstring TWODIMS,$(CONFIGVARS)))
 OBJS    += mesh/voronoi/voronoi_2d.o
@@ -368,8 +375,8 @@ all: check build
 
 build: $(EXEC)
 
-$(EXEC): $(OBJS)
-	$(LINKER) $(OPTIMIZE) $(OBJS) $(LIBS) -o $(EXEC)
+$(EXEC): $(OBJS) $(OBJS_CXX)
+	$(LINKER) $(OPTIMIZE2) $(OBJS) $(OBJS_CXX) $(LIBS) -o $(EXEC)
 
 lib$(LIBRARY).a: $(filter-out $(BUILD_DIR)/main/main.o,$(OBJS))
 	$(AR) -rcs lib$(LIBRARY).a $(OBJS)
@@ -382,8 +389,11 @@ clean:
 	@rm -f $(TO_CHECK) $(CONFIG_CHECK)
 	@rm -rf $(BUILD_DIR)
 
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(INCL) $(MAKEFILES)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(INCL) $(INCL_CXX) $(MAKEFILES)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp $(INCL) $(INCL_CXX) $(MAKEFILES)
+	$(CC) -c $< -o $@
 
 $(BUILD_DIR)/compile_time_info.o: $(BUILD_DIR)/compile_time_info.c $(MAKEFILES)
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -404,6 +414,9 @@ $(CONFIG_CHECK): $(TO_CHECK) $(CONFIG) check.py
 	@$(PYTHON) check.py 2 $(CONFIG) $(CONFIG_CHECK) defines_extra $(TO_CHECK)
 
 $(BUILD_DIR)/%.o.check: $(SRC_DIR)/%.c Template-Config.sh defines_extra check.py
+	@$(PYTHON) check.py 1 $< $@ Template-Config.sh defines_extra
+
+$(BUILD_DIR)/%.o.check: $(SRC_DIR)/%.cpp Template-Config.sh defines_extra check.py
 	@$(PYTHON) check.py 1 $< $@ Template-Config.sh defines_extra
 
 $(BUILD_DIR)/%.o.check: $(SRC_DIR)/%.F

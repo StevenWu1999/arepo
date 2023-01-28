@@ -42,6 +42,7 @@
 
 #include "../main/allvars.h"
 #include "../main/proto.h"
+#include "../main/cpp_functions.h"
 
 #include "../domain/domain.h"
 #include "../mesh/voronoi/voronoi.h"
@@ -409,9 +410,13 @@ int init(void)
 
   if(RestartFlag == 14)
     {
-      char tess_name[1024];
-      sprintf(tess_name, "%s/tess_%03d", All.OutputDir, RestartSnapNum);
-      write_voronoi_mesh(&Mesh, tess_name, 0, NTask - 1);
+//      char tess_name[1024];
+//      sprintf(tess_name, "%s/tess_%03d", All.OutputDir, RestartSnapNum);
+//      write_voronoi_mesh(&Mesh, tess_name, 0, NTask - 1);
+      char triangulation_name[1024];
+      sprintf(triangulation_name, "%s/triangulation_%03d", All.OutputDir, RestartSnapNum);
+      write_delaunay_triangulation(&Mesh,triangulation_name,0,NTask - 1);
+
       return 0;
     }
 
@@ -554,6 +559,12 @@ int init(void)
   calculate_gradients();
 
   exchange_primitive_variables_and_gradients();
+
+  compute_residuals(&Mesh);
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+
 
 #if !defined(ONEDIMS) && !defined(TWODIMS)
   int xaxis, yaxis, zaxis, weight_flag = 0;

@@ -251,6 +251,10 @@ void exchange_primitive_variables(void)
 
               tmpPrimExch[off].Pressure = SphP[place].Pressure;
 
+#ifdef RESIDUAL_DISTRIBUTION
+              tmpPrimExch[off].Energy = SphP[place].Energy;
+#endif
+
 #ifdef MHD
               tmpPrimExch[off].B[0] = SphP[place].B[0];
               tmpPrimExch[off].B[1] = SphP[place].B[1];

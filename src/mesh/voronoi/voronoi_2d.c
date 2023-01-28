@@ -1927,13 +1927,14 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
   CPU_Step[CPU_MISC] += measure_time();
 
   FILE *fd;
+  FILE *fdtxt;
   char msg[1000];
   MPI_Status status;
   int i, j, k, MaxNel, Nel;
   int ngas_tot, nel_tot, ndt_tot, nel_before, ndt_before, task;
   int *EdgeList, *Nedges, *NedgesOffset, *whichtetra;
   int *ngas_list, *nel_list, *ndt_list, *tmp;
-  float *xyz_edges;
+  float *xyz_edges, *tmp_float;
   tetra *q, *qstart;
 
   tetra_center *DTC = T->DTC;
@@ -2031,47 +2032,120 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
           terminate_program(msg);
         }
 
+
+
+      if(!(fdtxt = fopen("tess0.txt", "w")))
+      {
+        sprintf(msg, "can't open file `%s' for writing snapshot.\n", fname);
+        terminate_program(msg);
+      }
+
+      fprintf(fdtxt,"ngas_tot: %d\n",ngas_tot);
+      fprintf(fdtxt,"nel_tot: %d\n",nel_tot);
+      fprintf(fdtxt,"ndt_tot: %d\n",ndt_tot);
+
+      printf("ngas_tot: %d\n",ngas_tot);
+      printf("nel_tot: %d\n",nel_tot);
+      printf("ndt_tot: %d\n",ndt_tot);
+
+
       my_fwrite(&ngas_tot, sizeof(int), 1, fd);
       my_fwrite(&nel_tot, sizeof(int), 1, fd);
       my_fwrite(&ndt_tot, sizeof(int), 1, fd);
 
+
+
       my_fwrite(Nedges, sizeof(int), NumGas, fd);
-      for(task = writeTask + 1; task <= lastTask; task++)
+
+      fprintf(fdtxt,"%s \n","Nedges:");
+      for (i=0;i<NumGas;i++){
+          fprintf(fdtxt,"%d \t",Nedges[i]);
+        }
+      fprintf(fdtxt,"\n");
+
+
+    for(task = writeTask + 1; task <= lastTask; task++)
         {
           tmp = mymalloc("tmp", sizeof(int) * ngas_list[task]);
           MPI_Recv(tmp, ngas_list[task], MPI_INT, task, TAG_N + 2, MPI_COMM_WORLD, &status);
           my_fwrite(tmp, sizeof(int), ngas_list[task], fd);
+          fprintf(fdtxt,"task: %d tmp: \n",task);
+          for (i=0;i<ngas_list[task];i++){
+            fprintf(fdtxt,"%d \t",tmp[i]);
+          }
+         fprintf(fdtxt,"\n");
+
+
           myfree(tmp);
         }
 
       my_fwrite(NedgesOffset, sizeof(int), NumGas, fd);
+      fprintf(fdtxt,"%s \n","NedgesOffset:");
+      for (i=0;i<NumGas;i++){
+        fprintf(fdtxt,"%d \t",NedgesOffset[i]);
+      }
+      fprintf(fdtxt,"\n");
+
+
       for(task = writeTask + 1; task <= lastTask; task++)
         {
           tmp = mymalloc("tmp", sizeof(int) * ngas_list[task]);
           MPI_Recv(tmp, ngas_list[task], MPI_INT, task, TAG_N + 3, MPI_COMM_WORLD, &status);
           my_fwrite(tmp, sizeof(int), ngas_list[task], fd);
+          fprintf(fdtxt,"task: %d tmp: \n",task);
+          for (i=0;i<ngas_list[task];i++){
+            fprintf(fdtxt,"%d \t",tmp[i]);
+          }
+          fprintf(fdtxt,"\n");
           myfree(tmp);
-        }
+
+
+      }
 
       my_fwrite(EdgeList, sizeof(int), Nel, fd);
+      fprintf(fdtxt,"%s \n","EdgeList:");
+      for (i=0;i<Nel;i++){
+        fprintf(fdtxt,"%d \t",EdgeList[i]);
+      }
+      fprintf(fdtxt,"\n");
+
       for(task = writeTask + 1; task <= lastTask; task++)
         {
           tmp = mymalloc("tmp", sizeof(int) * nel_list[task]);
           MPI_Recv(tmp, nel_list[task], MPI_INT, task, TAG_N + 4, MPI_COMM_WORLD, &status);
           my_fwrite(tmp, sizeof(int), nel_list[task], fd);
+          fprintf(fdtxt,"task: %d tmp: \n",task);
+          for (i=0;i<nel_list[task];i++){
+            fprintf(fdtxt,"%d \t",tmp[i]);
+          }
+          fprintf(fdtxt,"\n");
+
           myfree(tmp);
         }
 
       my_fwrite(xyz_edges, sizeof(float), T->Ndt * DIMS, fd);
+      fprintf(fdtxt,"%s \n","xyz_edges:");
+      for (i=0;i<T->Ndt*DIMS;i++){
+        fprintf(fdtxt,"%f \t",xyz_edges[i]);
+      }
+      fprintf(fdtxt,"\n");
       for(task = writeTask + 1; task <= lastTask; task++)
         {
-          tmp = mymalloc("tmp", sizeof(float) * DIMS * ndt_list[task]);
-          MPI_Recv(tmp, sizeof(float) * DIMS * ndt_list[task], MPI_BYTE, task, TAG_N + 5, MPI_COMM_WORLD, &status);
-          my_fwrite(tmp, sizeof(float), DIMS * ndt_list[task], fd);
-          myfree(tmp);
+          tmp_float = mymalloc("tmp", sizeof(float) * DIMS * ndt_list[task]);
+          MPI_Recv(tmp_float, sizeof(float) * DIMS * ndt_list[task], MPI_BYTE, task, TAG_N + 5, MPI_COMM_WORLD, &status);
+          my_fwrite(tmp_float, sizeof(float), DIMS * ndt_list[task], fd);
+          fprintf(fdtxt,"task: %d tmp: \n",task);
+          for (i=0;i<DIMS*ndt_list[task];i++){
+            fprintf(fdtxt,"%f \t",tmp_float[i]);
+          }
+          fprintf(fdtxt,"\n");
+          printf("debug: tmp line 2144 task %d %f %f \n",task,tmp_float[0],tmp_float[1]);
+
+          myfree(tmp_float);
         }
 
       fclose(fd);
+      fclose(fdtxt);
     }
   else
     {
@@ -2104,6 +2178,80 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
 
   mpi_printf("wrote Voronoi mesh to file\n");
 
+  CPU_Step[CPU_MAKEIMAGES] += measure_time();
+}
+
+void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, int lastTask){
+  CPU_Step[CPU_MISC] += measure_time();
+
+  FILE* fdtxt;
+  int i, pindex;
+  char msg[1000], fname_new[1000];
+  tetra *DT         = T->DT;
+  point *DP         = T->DP;
+
+
+
+  sprintf(fname_new,"%s_%d.txt",fname,ThisTask);
+
+  if(!(fdtxt = fopen(fname_new, "w")))
+  {
+    sprintf(msg, "can't open file `%s' for writing snapshot.\n", fname);
+    terminate_program(msg);
+  }
+
+
+  fprintf(fdtxt,"NumGas: %d \n",NumGas);
+  fprintf(fdtxt,"P[i].ID, P[i].x, P[i].y, P[i].Velx, P[i].Vely, SphP[i].Pressure, SphP[i].DualArea \n");
+
+
+  for (i=0;i<NumGas;i++){
+      fprintf(fdtxt,"%d %f %f    %f %f    %f  %.10e\n",P[i].ID, P[i].Pos[0], P[i].Pos[1], P[i].Vel[0], P[i].Vel[1], SphP[i].Pressure, SphP[i].DualArea);
+    }
+
+  fprintf(fdtxt, "\nNdp: %d \n",T->Ndp);
+  fprintf(fdtxt,"DP[i].task, index, ID, x, y, pressure (DP[-3]~DP[Ndp-1]) \n");
+  for (i=-3;i<T->Ndp;i++){
+      if (DP[i].index < 0 ){
+          fprintf(fdtxt,"%d %d %d %f %f   %f\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, -999.0);
+      }else if(DP[i].task == ThisTask && DP[i].index < NumGas) {
+          pindex = DP[i].index;
+          fprintf(fdtxt,"%d %d %d %f %f   %f\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, SphP[pindex].Pressure);
+      }else if(DP[i].task == ThisTask && DP[i].index >= NumGas){
+          pindex = DP[i].index - NumGas;
+          fprintf(fdtxt,"%d %d %d %f %f   %f\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, SphP[pindex].Pressure);
+      }else if(DP[i].task != ThisTask){
+          pindex = DP[i].index;
+          fprintf(fdtxt,"%d %d %d %f %f   %f\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, PrimExch[pindex].Pressure);
+      }else{
+          mpi_terminate_program("Error, invalid DP points!");
+      }
+  }
+//      mpi_printf("debug: DP-1,  %d %d %d %f %f\n ",DP[-1].task, DP[-1].index, DP[-1].ID, DP[-1].x, DP[-1].y);
+//      mpi_printf("debug: DP-2,  %d %d %d %f %f\n ",DP[-2].task, DP[-2].index, DP[-2].ID, DP[-2].x, DP[-2].y);
+//      mpi_printf("debug: DP-3,  %d %d %d %f %f\n ",DP[-3].task, DP[-3].index, DP[-3].ID, DP[-3].x, DP[-3].y);
+//      mpi_printf("debug: DP-4,  %d %d %d %f %f\n ",DP[-4].task, DP[-4].index, DP[-4].ID, DP[-4].x, DP[-4].y);
+
+
+  fprintf(fdtxt,"\nNdt: %d\n", T->Ndt);
+  fprintf(fdtxt,"DT[i].p[DIMS+1], DT[i].t[DIMS+1], DT[i].s[DIMS+1]:\n");
+  for (i=0;i<T->Ndt;i++){
+      fprintf(fdtxt,"%d %d %d   %d %d %d   %u %u %u\n",DT[i].p[0],DT[i].p[1],DT[i].p[2], DT[i].t[0],DT[i].t[1],DT[i].t[2],
+              DT[i].s[0],DT[i].s[1],DT[i].s[2]);
+    }
+
+
+
+//  for (int i = 0; i<T->Ndp;i++){
+//    if (DP[i].task != ThisTask){
+//      int point_index = DP[i].index;
+//      PrimExch[point_index].
+//    }
+//
+//  }
+
+
+  mpi_printf("wrote Delaunay triangulation to file \n");
   CPU_Step[CPU_MAKEIMAGES] += measure_time();
 }
 

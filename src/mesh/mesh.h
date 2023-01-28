@@ -121,6 +121,10 @@ extern struct primexch
 #endif /* #ifdef MHD */
   MyFloat Pressure;
 
+#ifdef RESIDUAL_DISTRIBUTION
+  MyFloat Energy;
+#endif
+
 #ifdef MAXSCALARS
   MyFloat Scalars[MAXSCALARS];
 #endif /* #ifdef MAXSCALARS */
@@ -254,15 +258,25 @@ extern struct geometry
   double cx, cy, cz;
 } geom;
 
+struct triangle_normals
+{
+  double normal[3][2];
+  double mag[3];
+  double area;  //area of the triangle
+}; /*2D normal vectors to the edges of Delaunay triangles, used for residual distribution*/
+
 struct pv_update_data
 {
   double atime;
   double hubble_a;
   double a3inv;
 };
-#endif /* MESH_H */
 
 struct fvs_stat
 {
   int count_disable_extrapolation;
 };
+
+#endif /* MESH_H */
+
+

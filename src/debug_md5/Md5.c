@@ -69,7 +69,7 @@
 
 /* forward declaration */
 static void Transform();
-static void MD5Update(MD5_CTX *mdContext, unsigned char *inBuf, unsigned int inLen);
+static void MD5Update(MD5_CTX *mdContext, void *inBuf, unsigned int inLen);
 
 static unsigned char PADDING[64] = {0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -124,25 +124,27 @@ void MD5Init(MD5_CTX *mdContext)
   mdContext->buf[3] = (UINT4)0x10325476;
 }
 
-void MD5UpdateLong(MD5_CTX *mdContext, unsigned char *inBuf, unsigned long long inLenLong)
+void MD5UpdateLong(MD5_CTX *mdContext, void *inBuf, unsigned long long inLenLong)
 {
+  unsigned char* inBuf_u = (unsigned char*) inBuf;
   while(inLenLong > 0)
     {
       unsigned int inLen = 0x10000000;
       if(inLen > inLenLong)
         inLen = inLenLong;
-      MD5Update(mdContext, inBuf, inLen);
-      inBuf += inLen;
+      MD5Update(mdContext, inBuf_u, inLen);
+      inBuf_u += inLen;
       inLenLong -= inLen;
     }
 }
 
-void MD5Update(MD5_CTX *mdContext, unsigned char *inBuf, unsigned int inLen)
+void MD5Update(MD5_CTX *mdContext, void *inBuf, unsigned int inLen)
 {
   UINT4 in[16];
   int mdi;
   unsigned int i, ii;
 
+  unsigned char* inBuf_u = (unsigned char*) inBuf;
   /* compute number of bytes mod 64 */
   mdi = (int)((mdContext->i[0] >> 3) & 0x3F);
 
@@ -155,7 +157,7 @@ void MD5Update(MD5_CTX *mdContext, unsigned char *inBuf, unsigned int inLen)
   while(inLen--)
     {
       /* add new character to buffer, increment mdi */
-      mdContext->in[mdi++] = *inBuf++;
+      mdContext->in[mdi++] = *inBuf_u++;
 
       /* transform if necessary */
       if(mdi == 0x40)

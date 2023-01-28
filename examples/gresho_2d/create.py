@@ -13,20 +13,21 @@ simulation_directory = str(sys.argv[1])
 print("examples/Gresho_2d/create.py: creating ICs in directory " + simulation_directory)
 
 """ initial condition parameters """
-FilePath = simulation_directory + '/IC.hdf5'
+FilePath = simulation_directory + '/IC_gresho_v0_50.hdf5'
 
 FloatType = np.float64  # double precision: np.float64, for single use np.float32
 IntType = np.int32
 
 Boxsize = FloatType(1.0)
-if len(sys.argv) > 3:
-    CellsPerDimension = IntType(sys.argv[3])
+
+if len(sys.argv) > 2:
+    CellsPerDimension = IntType(sys.argv[2])
 else:
-    CellsPerDimension = IntType(40)
+    CellsPerDimension = IntType(50)
 
 ## parameters
 density_0 = 1.0
-velocity_0 = 3.0 ## bulk velocity
+velocity_0 = 0.0 ## bulk velocity
 gamma = 5.0/3.0
 gamma_minus_one = gamma - 1.0
 
@@ -93,7 +94,7 @@ Pressure[i3] = 3.0 + 4.0 * np.log(2.0)
 Uthermal = Pressure / density_0 / gamma_minus_one
 
 """ write *.hdf5 file; minimum number of fields required by Arepo """
-IC = h5py.File(simulation_directory+'/IC.hdf5', 'w')
+IC = h5py.File(FilePath, 'w')
 
 ## create hdf5 groups
 header = IC.create_group("Header")

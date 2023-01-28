@@ -210,8 +210,17 @@ void run(void)
 
           exchange_primitive_variables_and_gradients();
 
+//          if(ThisTask == 2){
+//              printf("debug: task2 mass %.10e\n",P[11].Mass);
+//            }
+
           /* compute intercell flux with Riemann solver and update the cells with the fluxes */
           compute_interface_fluxes(&Mesh);
+
+//          if(ThisTask == 2){
+//            printf("debug: task2 mass %.10e\n",P[11].Mass);
+//          }
+//
 
 #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT
 #ifndef VORONOI_STATIC_MESH
@@ -290,7 +299,19 @@ void run(void)
 
       exchange_primitive_variables_and_gradients();
 
+//      if(ThisTask == 2){
+//        printf("debug: task2 mass %.10e\n",P[11].Mass);
+//      }
+
+
       compute_interface_fluxes(&Mesh);
+
+
+//      if(ThisTask == 2){
+//        printf("debug: task2 mass %.10e\n",P[11].Mass);
+//      }
+
+//      mpi_terminate_program("end debug");
 
       update_primitive_variables(); /* these effectively closes off the hydro step */
 

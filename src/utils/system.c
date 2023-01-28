@@ -28,6 +28,7 @@
  *                int system_compare_hostname(const void *a, const void *b)
  *                int system_compare_first_task(const void *a, const void *b)
  *                int system_compare_task(const void *a, const void *b)
+ *                int system_compare_int(const void *a, const void *b)
  *                void determine_compute_nodes(void)
  *                void allreduce_sparse_double_sum(double *loc, double *glob, int N)
  *                void allreduce_sparse_imin(int *loc, int *glob, int N)
@@ -37,6 +38,9 @@
  *                size_t smax(size_t a, size_t b)
  *                double dmin(double a, double b)
  *                double max_array(double *a, int num_elements)
+ *                int imax_array(int *a, int num_elements)
+ *                int arg_imax(int *a, int num_elements)
+ *                int imin_array(int *a, int num_elements)
  *                int imax(int a, int b)
  *                int imin(int a, int b)
  *                int myflush(FILE * fstream)
@@ -255,6 +259,28 @@ int system_compare_task(const void *a, const void *b)
 
   return 0;
 }
+
+
+/*! \brief Compares int values
+ *
+ *  Sorting kernel.
+ *
+ *  \param[in] a First element to compare.
+ *  \param[in] b Second element to compare.
+ *
+ *  \return (-1,0,1);  -1 if a < b
+ */
+int system_compare_int( const void* a, const void* b)
+{
+  int int_a = * ( (int*) a );
+  int int_b = * ( (int*) b );
+
+  if ( int_a == int_b ) return 0;
+  else if ( int_a < int_b ) return -1;
+  else return 1;
+}
+
+
 
 /*! \brief Determines the compute nodes the simulation is running on.
  *
@@ -735,6 +761,72 @@ double max_array(double *a, int num_elements)
         }
     }
   return (max);
+}
+
+/*! \brief Maximum value in an array of int variables.
+ *
+ *  \param[in] a Array of int variables.
+ *  \param[in] num_elements Number of elements in array.
+ *
+ *  \return Maximum value.
+ */
+int imax_array(int *a, int num_elements)
+{
+  int i;
+  int max = a[0];
+  for(i = 0; i < num_elements; i++)
+  {
+    if(a[i] > max)
+    {
+      max = a[i];
+    }
+  }
+  return (max);
+}
+
+
+/*! \brief index of the Maximum value in an array of int variables.
+ *
+ *  \param[in] a Array of int variables.
+ *  \param[in] num_elements Number of elements in array.
+ *
+ *  \return index of the Maximum value.
+ */
+int arg_imax(int *a, int num_elements)
+{
+  int i;
+  int max = a[0]; int index = 0;
+  for(i = 0; i < num_elements; i++)
+  {
+    if(a[i] > max)
+    {
+      max = a[i]; index = i;
+    }
+  }
+  return (index);
+}
+
+
+
+/*! \brief Minimum value in an array of int variables.
+ *
+ *  \param[in] a Array of int variables.
+ *  \param[in] num_elements Number of elements in array.
+ *
+ *  \return Minimum value.
+ */
+int imin_array(int *a, int num_elements)
+{
+  int i;
+  int min = a[0];
+  for(i = 0; i < num_elements; i++)
+  {
+    if(a[i] < min)
+    {
+      min = a[i];
+    }
+  }
+  return (min);
 }
 
 /*! \brief Maximum value of two integers.

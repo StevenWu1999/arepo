@@ -54,6 +54,11 @@
 #include "../cooling/cooling_proto.h"
 #endif /* #if defined(COOLING) */
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
+
 void sfr_init();
 void sfr_create_star_particles(void);
 void ngb_finish_rangebounds_update(int nchanged, int *nodelist);
@@ -96,9 +101,13 @@ double dabs(double a);
 double dmax(double a, double b);
 double dmin(double a, double b);
 double max_array(double *a, int num_elements);
+int imax_array(int *a, int num_elements);
+int arg_imax(int *a, int num_elements);
+int imin_array(int *a, int num_elements);
 int imax(int a, int b);
 int imin(int a, int b);
 double mysort(void *base, size_t nel, size_t width, int (*compar)(const void *, const void *));
+int system_compare_int( const void*, const void*);
 
 int myflush(FILE *fstream);
 int flush_everything(void);
@@ -469,6 +478,7 @@ void face_turn_momentum_flux(struct fluxes *flux, struct geometry *geom);
 void face_clear_fluxes(struct fluxes *flux);
 int face_check_responsibility_of_this_task(tessellation *T, int p1, int p2, struct state *st_L, struct state *st_R);
 int face_get_normals(tessellation *T, int i, struct geometry *geom);
+void triangle_get_normals_area(tessellation *T, int i, struct triangle_normals *tri_normals);
 int face_get_state(tessellation *T, int p, int i, struct state *st);
 void face_boundary_check(point *p, double *velx, double *vely, double *velz);
 void face_boundary_check_vertex(tessellation *T, int p, MyFloat *velx, MyFloat *vely, MyFloat *velz);
@@ -661,5 +671,9 @@ void convert_cell_into_star(int i, double birthtime);
 void spawn_star_from_cell(int igas, double birthtime, int istar, MyDouble mass_of_star);
 void make_star(int idx, int i, double prob, MyDouble mass_of_star, double *sum_mass_stars);
 #endif /* #ifdef USE_SFR */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* #ifndef PROTO_H */

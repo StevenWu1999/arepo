@@ -175,9 +175,9 @@
     if(FlagNyt == 0)                                                                                                              \
       {                                                                                                                           \
         char termbuf1[1000], termbuf2[1000];                                                                                      \
-        sprintf(termbuf1, "TERMINATE: ******!!!!!******  Code termination on task=%d, function %s(), file %s, line %d", ThisTask, \
+        snprintf(termbuf1,1000, "TERMINATE: ******!!!!!******  Code termination on task=%d, function %s(), file %s, line %d", ThisTask, \
                 __FUNCTION__, __FILE__, __LINE__);                                                                                \
-        sprintf(termbuf2, __VA_ARGS__);                                                                                           \
+        snprintf(termbuf2,1000, __VA_ARGS__);                                                                                           \
         printf("%s: %s\n", termbuf1, termbuf2);                                                                                   \
         fflush(stdout);                                                                                                           \
         FlagNyt = 1;                                                                                                              \
@@ -193,9 +193,9 @@
 #define warn(...)                                                                                                            \
   {                                                                                                                          \
     char termbuf1[1000], termbuf2[1000];                                                                                     \
-    sprintf(termbuf1, "WARNING: Code warning on task=%d, function %s(), file %s, line %d", ThisTask, __FUNCTION__, __FILE__, \
+    snprintf(termbuf1,1000, "WARNING: Code warning on task=%d, function %s(), file %s, line %d", ThisTask, __FUNCTION__, __FILE__, \
             __LINE__);                                                                                                       \
-    sprintf(termbuf2, __VA_ARGS__);                                                                                          \
+    snprintf(termbuf2,1000, __VA_ARGS__);                                                                                          \
     printf("%s: %s\n", termbuf1, termbuf2);                                                                                  \
     myflush(stdout);                                                                                                         \
     FILE *fd = fopen("WARNINGS", "a");                                                                                       \
@@ -1340,6 +1340,9 @@ extern struct sph_particle_data
   MySingle MaxDelaunayRadius;
   MySingle Hsml; /* auxiliary search radius for points around a delaunay triangle */
   MySingle SurfaceArea;
+#ifdef RESIDUAL_DISTRIBUTION
+  MyDouble DualArea;
+#endif
 
 #if defined(REGULARIZE_MESH_FACE_ANGLE) || defined(OUTPUT_MESH_FACE_ANGLE)
   MySingle MaxFaceAngle;
@@ -1348,7 +1351,7 @@ extern struct sph_particle_data
   MySingle ActiveArea;
 
 #if defined(OUTPUT_DIVVEL)
-  MyFloat DivVel; /*!< divergence of the velocity field */
+   MyFloat DivVel; /*!< divergence of the velocity field */
 #endif            /* #if defined(OUTPUT_DIVVEL) */
 
 #if defined(REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED) || defined(OUTPUT_CURLVEL)

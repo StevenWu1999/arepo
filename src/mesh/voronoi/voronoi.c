@@ -39,6 +39,7 @@
  *                void dump_points(tessellation * T)
  *                int face_get_normals(tessellation * T, int i, struct
  *                  geometry *geom)
+ *                int triangle_get_normals(tessellation *T, int i, struct triangle_normals *tri_normals)
  *                double distance_to_border(int cell)
  *
  *
@@ -255,7 +256,7 @@ void create_mesh(void)
                     continue;
                   SphP[i].Hsml *= HSML_INCREASE_FACTOR;
                 }
-#else  /* #ifndef DOUBLE_STENCIL */
+#else /* #ifndef DOUBLE_STENCIL */
               for(i = 0; i < Mesh.Ndp; i++)
                 Mesh.DP[i].Hsml *= HSML_INCREASE_FACTOR;
 #endif /* #ifndef DOUBLE_STENCIL #else */
@@ -317,10 +318,10 @@ void create_mesh(void)
   in[13] = CountConvexEdgeTest;
   in[14] = CountConvexEdgeTestExact;
   n      = 15;
-#else  /* #ifndef TWODIMS */
-  in[7]                   = Count_1_to_3_Flips2d;
-  in[8]                   = Count_2_to_4_Flips2d;
-  n                       = 9;
+#else /* #ifndef TWODIMS */
+  in[7] = Count_1_to_3_Flips2d;
+  in[8] = Count_2_to_4_Flips2d;
+  n     = 9;
 #endif /* #ifndef TWODIMS #else */
 
   sumup_large_ints(n, in, out);
@@ -341,7 +342,7 @@ void create_mesh(void)
   TotCount_EdgeSplits         = out[12];
   TotCountConvexEdgeTest      = out[13];
   TotCountConvexEdgeTestExact = out[14];
-#else  /* #ifndef TWODIMS */
+#else /* #ifndef TWODIMS */
   TotCount_1_to_3_Flips2d = out[7];
   TotCount_2_to_4_Flips2d = out[8];
 #endif /* #ifndef TWODIMS #else */
@@ -359,7 +360,7 @@ void create_mesh(void)
              TotCount_4_to_4_Flips / NTask, TotCount_FaceSplits / NTask, TotCount_EdgeSplits / NTask);
       printf("VORONOI: InTetra=%llu  InTetraExact=%llu  ConvexEdgeTest=%llu  ConvexEdgeTestExact=%llu\n", TotCount_InTetra,
              TotCount_InTetraExact / NTask, TotCountConvexEdgeTest / NTask, TotCountConvexEdgeTestExact / NTask);
-#else  /* #ifndef TWODIMS */
+#else /* #ifndef TWODIMS */
       printf(
           "VORONOI: Average D-Points=%llu  (NumGas=%llu)  D-Triangles=%llu  InCircleTests=%llu InCircleTestsExact=%llu  Flips=%llu\n",
           TotNdp / NTask, All.TotNumGas / NTask, TotNdt / NTask, TotCountInSphereTests / NTask, TotCountInSphereTestsExact / NTask,
@@ -981,10 +982,10 @@ double get_cell_radius(int i)
 #ifdef ONEDIMS
 #ifdef ONEDIMS_SPHERICAL
   cellrad = 0.5 * (Mesh.VF[i + 1].cx - Mesh.VF[i].cx);
-#else  /* #ifdef ONEDIMS_SPHERICAL */
+#else /* #ifdef ONEDIMS_SPHERICAL */
   cellrad = 0.5 * SphP[i].Volume;
 #endif /* #ifdef ONEDIMS_SPHERICAL #else */
-#else  /* #ifdef ONEDIMS */
+#else /* #ifdef ONEDIMS */
   cellrad = pow(SphP[i].Volume * 3.0 / (4.0 * M_PI), 1.0 / 3);
 #endif /* #ifdef ONEDIMS #else */
 #endif /* #ifdef TWODIMS */
@@ -1126,6 +1127,46 @@ int face_get_normals(tessellation *T, int i, struct geometry *geom)
   geom->pz = geom->nx * geom->my - geom->ny * geom->mx;
 
   return 0;
+}
+
+/*! \brief Calculates the normals to Delaunay triangles (2D, possibly moved to voronoi_2d.c in the future).
+ *
+ *  \param[in] T Pointer to tesslation data.
+ *  \param[in] i Index of Delaunay triangle.
+ *  \param[out] tri_normals Pointer to structure to which normal data is written.
+ *
+ */
+void triangle_get_normals_area(tessellation *T, int i, struct triangle_normals *tri_normals)
+{
+  tetra *DT = T->DT;
+  point *DP = T->DP;
+
+  double x0 = DP[DT[i].p[0]].x;
+  double y0 = DP[DT[i].p[0]].y;
+  double x1 = DP[DT[i].p[1]].x;
+  double y1 = DP[DT[i].p[1]].y;
+  double x2 = DP[DT[i].p[2]].x;
+  double y2 = DP[DT[i].p[2]].y;
+
+  tri_normals->normal[0][0] = y1 - y2;
+  tri_normals->normal[0][1] = x2 - x1;
+
+  tri_normals->normal[1][0] = y2 - y0;
+  tri_normals->normal[1][1] = x0 - x2;
+
+  tri_normals->normal[2][0] = y0 - y1;
+  tri_normals->normal[2][1] = x1 - x0;
+
+  for(int i = 0; i < 3; i++)
+    {
+      tri_normals->mag[i] = sqrt(pow(tri_normals->normal[i][0], 2) + pow(tri_normals->normal[i][1], 2));
+      tri_normals->normal[i][0] /= tri_normals->mag[i];
+      tri_normals->normal[i][1] /= tri_normals->mag[i];
+    }
+
+  double half_perimeter = 0.5*(tri_normals->mag[0]+tri_normals->mag[1]+tri_normals->mag[2]);
+  tri_normals->area = sqrt(half_perimeter*(half_perimeter-tri_normals->mag[0])*(half_perimeter-tri_normals->mag[1])*(half_perimeter-tri_normals->mag[2]));
+
 }
 
 /*! \brief Calculates distance of a cell to boundary of computational box.
