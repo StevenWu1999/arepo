@@ -4,6 +4,7 @@
 #  Enable/Disable compile-time options as needed #
 ##################################################
 
+#Warning: use parentheses in macros to prevent possible errors, e.g. GAMMA=(5.0/3.0), not GAMMA=5.0/3.0
 #--------------------------------------- Basic operation mode of code; default: 3d with 6 particle types; type 0: gas >0: only gravitationally interacting
 #NTYPES=6                      # number of particle types
 #TWODIMS                       # 2d simulation
@@ -27,7 +28,9 @@
 
 #--------------------------------------- Hydrodynamics with Residual Distribution solver
 #RESIDUAL_DISTRIBUTION         # replace Finite-Volume method with Residual Distribution
-
+#LDA_SCHEME                    # LDA scheme for residual distribution
+#N_SCHEME                      # N scheme for residual distribution
+#B_SCHEME                      # B (Blended) scheme for residual distribution
 
 #--------------------------------------- Magnetohydrodynamics
 #MHD                           # Master switch for magnetohydrodynamics

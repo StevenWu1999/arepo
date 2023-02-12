@@ -2202,27 +2202,27 @@ void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, i
 
 
   fprintf(fdtxt,"NumGas: %d \n",NumGas);
-  fprintf(fdtxt,"P[i].ID, P[i].x, P[i].y, P[i].Velx, P[i].Vely, SphP[i].Pressure, SphP[i].DualArea \n");
+  fprintf(fdtxt,"P[i].ID, P[i].x, P[i].y, P[i].Velx, P[i].Vely, SphP[i].Pressure, SphP[i].Energy, SphP[i].DualArea \n");
 
 
   for (i=0;i<NumGas;i++){
-      fprintf(fdtxt,"%d %f %f    %f %f    %f  %.10e\n",P[i].ID, P[i].Pos[0], P[i].Pos[1], P[i].Vel[0], P[i].Vel[1], SphP[i].Pressure, SphP[i].DualArea);
+      fprintf(fdtxt,"%d %.10g %.10g    %.10g %.10g    %.10g %.10g   %.10g\n",P[i].ID, P[i].Pos[0], P[i].Pos[1], P[i].Vel[0], P[i].Vel[1], SphP[i].Pressure, SphP[i].Energy, SphP[i].DualArea);
     }
 
   fprintf(fdtxt, "\nNdp: %d \n",T->Ndp);
-  fprintf(fdtxt,"DP[i].task, index, ID, x, y, pressure (DP[-3]~DP[Ndp-1]) \n");
+  fprintf(fdtxt,"DP[i].task, index, ID, x, y, pressure (DP[-3]~DP[Ndp-1]), energy \n");
   for (i=-3;i<T->Ndp;i++){
       if (DP[i].index < 0 ){
-          fprintf(fdtxt,"%d %d %d %f %f   %f\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, -999.0);
+          fprintf(fdtxt,"%d %d %d %.10g %.10g   %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, -999.0, -999.0);
       }else if(DP[i].task == ThisTask && DP[i].index < NumGas) {
           pindex = DP[i].index;
-          fprintf(fdtxt,"%d %d %d %f %f   %f\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, SphP[pindex].Pressure);
+          fprintf(fdtxt,"%d %d %d %.10g %.10g   %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, SphP[pindex].Pressure, SphP[pindex].Energy);
       }else if(DP[i].task == ThisTask && DP[i].index >= NumGas){
           pindex = DP[i].index - NumGas;
-          fprintf(fdtxt,"%d %d %d %f %f   %f\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, SphP[pindex].Pressure);
+          fprintf(fdtxt,"%d %d %d %.10g %.10g   %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, SphP[pindex].Pressure,SphP[pindex].Energy);
       }else if(DP[i].task != ThisTask){
           pindex = DP[i].index;
-          fprintf(fdtxt,"%d %d %d %f %f   %f\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, PrimExch[pindex].Pressure);
+          fprintf(fdtxt,"%d %d %d %.10g %.10g   %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, PrimExch[pindex].Pressure, PrimExch[pindex].Energy);
       }else{
           mpi_terminate_program("Error, invalid DP points!");
       }

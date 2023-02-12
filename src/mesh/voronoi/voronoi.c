@@ -1132,7 +1132,7 @@ int face_get_normals(tessellation *T, int i, struct geometry *geom)
 /*! \brief Calculates the normals to Delaunay triangles (2D, possibly moved to voronoi_2d.c in the future).
  *
  *  \param[in] T Pointer to tesslation data.
- *  \param[in] i Index of Delaunay triangle.
+ *  \param[in] i Index of Delaunay triangle array DT.
  *  \param[out] tri_normals Pointer to structure to which normal data is written.
  *
  */

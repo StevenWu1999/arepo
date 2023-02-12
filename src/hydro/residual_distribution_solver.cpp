@@ -1,11 +1,12 @@
 
+#include <lapacke.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <iostream>
-
+#include <math.h>
 #include "../main/allvars.h"
 #include "../main/cpp_functions.h"
 #include "../main/proto.h"
@@ -142,7 +143,10 @@ void compute_residuals(tessellation *T)
         }
     }
 
-  // compute residual: calculate normal vectors and triangular area; assign dual area to vertices
+  /* compute residual: calculate normal vectors and triangular area; assign dual area to vertices
+   tri_normals_list is a shorter list compared to DT because it only keeps necessary triangles for
+   this task (Ndt_thistask). tri_normal_list[i]  <-->  DT[thistask_triangles[i]]
+   */
   tri_normals_list = (struct triangle_normals *)mymalloc_movable(&tri_normals_list, "tri_normals_list",
                                                                  Ndt_thistask * sizeof(struct triangle_normals));
 
@@ -171,7 +175,7 @@ void compute_residuals(tessellation *T)
               if(SphP_index > NumGas)
                 SphP_index -= NumGas;
 
-              SphP[SphP_index].DualArea += tri_normals_list[thistask_triangles[i]].area / (DIMS + 1);
+              SphP[SphP_index].DualArea += tri_normals_list[i].area / (DIMS + 1);
             }
           else
             {
@@ -191,7 +195,7 @@ void compute_residuals(tessellation *T)
             {
               DualArea_list[k].task     = DP[DT[thistask_triangles[i]].p[j]].task;
               DualArea_list[k].index    = DP[DT[thistask_triangles[i]].p[j]].originalindex;
-              DualArea_list[k].DualArea = tri_normals_list[thistask_triangles[i]].area / (DIMS + 1);
+              DualArea_list[k].DualArea = tri_normals_list[i].area / (DIMS + 1);
               k += 1;
             }
         }
@@ -201,9 +205,11 @@ void compute_residuals(tessellation *T)
   MPI_Barrier(MPI_COMM_WORLD);
   char triangulation_name[1024];
   snprintf(triangulation_name, 100, "%s/triangulation_dual_%03d", All.OutputDir, 0);
-  write_delaunay_triangulation(T, triangulation_name, 0, 2);
+  write_delaunay_triangulation(T, triangulation_name, 0, NTask - 1);
 
-
+// debug
+//  double *Residual_List;
+//  Residual_List = (double *)mymalloc_movable(&Residual_List, "Residual_List", Ndt_thistask *4* sizeof(double));
 
   for(i = 0; i < Ndt_thistask; i++)
     {
@@ -228,11 +234,21 @@ void compute_residuals(tessellation *T)
                       SphP[SphP_index].Momentum[k] / SphP[SphP_index].Volume;  // or P[SphP_index].Vel * SphP[SphP_index].Density
                 }
               U_fluid[j][DIMS + 1] = SphP[SphP_index].Energy / SphP[SphP_index].Volume;
+
+              if(U_fluid[j][DIMS + 1]<=0){
+                  printf("sph energy <= 0 error %d %d   %f  %f\n",ThisTask,thistask_triangles[i],U_fluid[j][DIMS + 1],SphP[SphP_index].Energy);
+                  terminate_program("sph energy <= 0 error.");
+                }
+
 #ifdef TREE_BASED_TIMESTEPS
               C_sound[j] = SphP[SphP_index].Csnd;
 #else
               C_sound[j] = get_sound_speed(SphP_index);
 #endif
+              if(C_sound[j] <= 0){
+                terminate_program("sph Cs <= 0 error!");
+              }
+
               Pressure[j] = SphP[SphP_index].Pressure;
             }
           else
@@ -245,6 +261,16 @@ void compute_residuals(tessellation *T)
                 }
               U_fluid[j][DIMS + 1] = PrimExch[PrimExch_index].Energy / PrimExch[PrimExch_index].Volume;
               C_sound[j]           = PrimExch[PrimExch_index].Csnd;
+
+              if(C_sound[j] <= 0){
+                terminate_program("primexch Cs <= 0 error!");
+              }
+              if(U_fluid[j][DIMS + 1]<=0){
+                printf("primexch energy <= 0 error %d %d  %d %d %d    %f  %f\n",ThisTask, DT[thistask_triangles[i]].p[j], DP[DT[thistask_triangles[i]].p[j]].task ,
+                         DP[DT[thistask_triangles[i]].p[j]].originalindex, DP[DT[thistask_triangles[i]].p[j]].ID,
+                         U_fluid[j][DIMS + 1],PrimExch[PrimExch_index].Energy);
+                terminate_program("primexch energy <= 0 error.");
+              }
 
               Pressure[j] = PrimExch[PrimExch_index].Pressure;
             }
@@ -278,9 +304,7 @@ void compute_residuals(tessellation *T)
           U_hat[j][0] = 2.0 * Z_avg[0] * Z_Roe[j][0];
           U_hat[j][1] = Z_avg[1] * Z_Roe[j][0] + Z_avg[0] * Z_Roe[j][1];
           U_hat[j][2] = Z_avg[2] * Z_Roe[j][0] + Z_avg[0] * Z_Roe[j][2];
-          U_hat[j][3] = (Z_avg[3] * Z_Roe[j][0] + GAMMA_MINUS1 * Z_avg[1] * Z_Roe[j][1] + GAMMA_MINUS1 * Z_avg[2] * Z_Roe[j][2] +
-                         Z_avg[0] * Z_Roe[j][3]) /
-                        GAMMA;
+          U_hat[j][3] = (Z_avg[3] * Z_Roe[j][0] + GAMMA_MINUS1 * Z_avg[1] * Z_Roe[j][1] + (5.0/3.0-1.0) * Z_avg[2] * Z_Roe[j][2] + Z_avg[0] * Z_Roe[j][3])/(GAMMA);
         }
 
       // compute residual: Construct average state for element
@@ -298,6 +322,12 @@ void compute_residuals(tessellation *T)
       h_avg /= sum_sqrt_rho;
 
       double Cs_avg = sqrt(GAMMA_MINUS1 * (h_avg - (velx_avg * velx_avg + vely_avg * vely_avg) / 2.0));
+      if(isnan(Cs_avg)){
+          printf("cs avg nan error! %d %d    %f    %f %f %f   %f %f %f   %f %f %f\n",ThisTask,thistask_triangles[i],h_avg, Enthalpy[0],Enthalpy[1],Enthalpy[2],
+                 U_fluid[0][DIMS + 1], U_fluid[1][DIMS + 1], U_fluid[2][DIMS + 1],  Pressure[0],Pressure[1],Pressure[2]);
+          terminate_program("Cs avg nan.")
+
+        }
 
       // compute residual: Reassign variables to local equivalents
       double velx_c  = velx_avg / Cs_avg;
@@ -407,10 +437,50 @@ void compute_residuals(tessellation *T)
             }
         }
 
+      for(k=0;k<4;k++){
+          if(isnan(Phi[k])){
+              printf("phi nan error! %d %d   %f %f %f %f\n",ThisTask,i,vel_dot_n,Cs_avg,Kmatrix[0][0][0][kfull],Value123);
+            }
+        }
+
+      /*
+      double Kmatrix_minus_sum[4][4];
+
+      for(k = 0; k < 4; k++)
+        {
+          for(p = 0; p < 4; p++)
+            {
+              Kmatrix_minus_sum[k][p] = 0.0;
+              for(j = 0; j < 3; j++)
+                {
+                  Kmatrix_minus_sum[k][p] += Kmatrix[k][p][j][kminus];
+                }
+            }
+        }
+        */
+        //      mat_inv(&Kmatrix_minus_sum[0][0], 4);
+
+        // residual distribution:
+#ifdef LDA_SCHEME
+      double test_phi = 0.0;
+
+#endif
+
+//      for(k = 0; k < 4; k++)
+//        {
+//          Residual_List[i*4+k] = Phi[k];
+//        }
+
 
 #endif  // TWO_DIMS
-    }  // for loop of triangles
+    }  // for loop of triangles, i= 0~ Ndt_thistask
 
+// debug
+//  char res_filename[100];
+//  snprintf(res_filename, 100, "%s/residual_%03d", All.OutputDir, 0);
+//  write_residual(res_filename,Ndt_thistask, thistask_triangles,Residual_List);
+
+//  myfree_movable(Residual_List);
   myfree_movable(DualArea_list);
   myfree_movable(tri_normals_list);
   myfree_movable(thistask_triangles);
@@ -690,3 +760,60 @@ int DualArea_list_data_compare(const void *a, const void *b)
 
   return 0;
 }
+
+lapack_int mat_inv(double *A, unsigned n)
+{
+  int ipiv[n + 1];
+  lapack_int ret;
+
+  ret = LAPACKE_dgetrf(LAPACK_COL_MAJOR, n, n, A, n, ipiv);
+
+#ifdef DEBUG
+  std::cout << "ret =\t" << ret << "\t(0 = done, <0 = illegal arguement, >0 = singular)" << std::endl;
+#endif
+
+  if(ret != 0)
+    {
+      std::cout << "B WARNING: MATRIX CANNOT BE INVERTED\t" << std::endl;
+      for(int i = 0; i < n * n; ++i)
+        {
+          std::cout << A[i] << "\t";
+          if((i + 1) % n == 0)
+            {
+              std::cout << std::endl;
+            }
+        }
+      exit(0);
+    }
+  ret = LAPACKE_dgetri(LAPACK_COL_MAJOR, n, A, n, ipiv);
+
+  return ret;
+}
+
+/*
+ void write_residual(char* fname,int Ndt_thistask, int* thistask_triangles,double* Residual_List){
+
+//   DT[thistask_triangles[i]] Res[i]
+//
+   FILE* fdtxt;
+   char msg[1000], fname_new[1000];
+
+
+   snprintf(fname_new,1000,"%s_%d.txt",fname,ThisTask);
+
+   if(!(fdtxt = fopen(fname_new, "w")))
+   {
+     snprintf(msg,1000,"can't open file `%s' for writing snapshot.\n", fname);
+     terminate_program("%s",msg);
+   }
+
+   fprintf(fdtxt,"thistask_triangles[i](i.e. triangle index of DT),  Residual \n");
+   for (int i = 0;i< Ndt_thistask;i++){
+       fprintf(fdtxt, "%d   %.10g %.10g %.10g %.10g \n",
+               thistask_triangles[i],Residual_List[i*4],Residual_List[i*4+1],Residual_List[i*4+2],Residual_List[i*4+3]);
+     }
+   fclose(fdtxt);
+
+ }
+
+*/

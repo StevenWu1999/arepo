@@ -99,7 +99,9 @@ OPTIMIZE  =  -std=c11 -ggdb -O3 -Wall -Wno-format-security -Wno-unknown-pragmas 
 # overwrite default:
 MPICH_LIB = -lmpi
 GSL_INCL  = -I/usr/local/include
-GSL_LIB   = -L/usr/local/lib -lgsl -lgslcblas
+LAPACK_INCL = -I/usr/local/Cellar/lapack/3.10.1/include
+GSL_LIB   = -L/usr/local/lib -lgsl -lgslcblas 
+LAPACK_LIB = -L/usr/local/Cellar/lapack/3.10.1/lib -llapacke -llapack
 HWLOC_LIB = -L/usr/local/lib -lhwloc
 
 # libraries that are included on demand, depending on Config.sh options
@@ -343,9 +345,9 @@ endif
 #combine compiler options#
 ##########################
 
-CFLAGS = $(OPTIMIZE) $(MPICH_INCL) $(HDF5_INCL) $(GSL_INCL) $(FFTW_INCL) $(HWLOC_INCL) -I$(BUILD_DIR)
+CFLAGS = $(OPTIMIZE) $(MPICH_INCL) $(HDF5_INCL) $(GSL_INCL) $(LAPACK_INCL) $(FFTW_INCL) $(HWLOC_INCL) -I$(BUILD_DIR)
 
-LIBS = $(GMP_LIB) $(MATH_LIB) $(MPICH_LIB) $(HDF5_LIB) $(GSL_LIB) $(FFTW_LIB) $(HWLOC_LIB)
+LIBS = $(GMP_LIB) $(MATH_LIB) $(MPICH_LIB) $(HDF5_LIB) $(GSL_LIB) $(LAPACK_LIB) $(FFTW_LIB) $(HWLOC_LIB)
 
 FOPTIONS = $(OPTIMIZE)
 FFLAGS = $(FOPTIONS)
@@ -393,7 +395,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(INCL) $(INCL_CXX) $(MAKEFILES)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp $(INCL) $(INCL_CXX) $(MAKEFILES)
-	$(CC) -c $< -o $@
+	$(CC) $(LAPACK_INCL) -c $< -o $@
 
 $(BUILD_DIR)/compile_time_info.o: $(BUILD_DIR)/compile_time_info.c $(MAKEFILES)
 	$(CC) $(CFLAGS) -c $< -o $@

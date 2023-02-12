@@ -41,7 +41,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "./arepoconfig.h"
+#include "./../../build/arepoconfig.h"
 
 #ifdef IMPOSE_PINNING
 #include <hwloc.h>

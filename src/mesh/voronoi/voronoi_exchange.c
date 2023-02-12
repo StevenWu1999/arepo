@@ -357,6 +357,9 @@ void exchange_primitive_variables_and_gradients(void)
               tmpPrimExch[off].Volume   = SphP[place].Volume;
               tmpPrimExch[off].Density  = SphP[place].Density;
               tmpPrimExch[off].Pressure = SphP[place].Pressure;
+#ifdef RESIDUAL_DISTRIBUTION
+              tmpPrimExch[off].Energy = SphP[place].Energy;
+#endif
 
 #ifdef MHD
               tmpPrimExch[off].B[0] = SphP[place].B[0];

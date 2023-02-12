@@ -556,9 +556,33 @@ int init(void)
 
   exchange_primitive_variables();
 
+
+//  if(ThisTask==2){
+//    printf("A  init task2 DP781: %d    %.10g %.10g %.10g %.10g\n",Mesh.DP[781].ID,SphP[781].Energy,SphP[781].Density, SphP[781].Pressure, SphP[781].Volume);
+//  }
+//  if(ThisTask == 0){
+//    printf("A init task0 DP1052: %d    %.10g %.10g %.10g %.10g\n",Mesh.DP[1052].ID,PrimExch[257].Energy,PrimExch[257].Density, PrimExch[257].Pressure, PrimExch[257].Volume);
+//  }
+
   calculate_gradients();
 
+
+//  if(ThisTask==2){
+//    printf("B init task2 DP781: %d    %.10g %.10g %.10g %.10g\n",Mesh.DP[781].ID,SphP[781].Energy,SphP[781].Density, SphP[781].Pressure, SphP[781].Volume);
+//  }
+//  if(ThisTask == 0){
+//    printf("B init task0 DP1052: %d    %.10g %.10g %.10g %.10g\n",Mesh.DP[1052].ID,PrimExch[257].Energy,PrimExch[257].Density, PrimExch[257].Pressure, PrimExch[257].Volume);
+//  }
+
+
   exchange_primitive_variables_and_gradients();
+//
+//  if(ThisTask==2){
+//      printf("C init task2 DP781: %d    %.10g %.10g %.10g %.10g\n",Mesh.DP[781].ID,SphP[781].Energy,SphP[781].Density, SphP[781].Pressure, SphP[781].Volume);
+//    }
+//  if(ThisTask == 0){
+//      printf("C init task0 DP1052: %d    %.10g %.10g %.10g %.10g\n",Mesh.DP[1052].ID,PrimExch[257].Energy,PrimExch[257].Density, PrimExch[257].Pressure, PrimExch[257].Volume);
+//    }
 
   compute_residuals(&Mesh);
 
