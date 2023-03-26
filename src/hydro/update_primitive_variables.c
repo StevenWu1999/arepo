@@ -190,6 +190,9 @@ void update_primitive_variables_single(struct particle_data *localP, struct sph_
       localP[i].Vel[1] = localSphP[i].Momentum[1] / localP[i].Mass;
       localP[i].Vel[2] = localSphP[i].Momentum[2] / localP[i].Mass;
 
+//#ifdef RESIDUAL_DISTRIBUTION   //zero velocity problem
+//#endif
+
 #ifdef MAXSCALARS
       for(int k = 0; k < N_Scalar; k++)
         {

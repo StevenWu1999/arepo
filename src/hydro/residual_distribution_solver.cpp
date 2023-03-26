@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include <iostream>
-#include <math.h>
+
 #include "../main/allvars.h"
 #include "../main/cpp_functions.h"
 #include "../main/proto.h"
@@ -32,12 +32,18 @@ using namespace std;
 //} * FluxList;
 
 // extern "C" void mpi_printf(const char *fmt, ...);
+void cpp_hello_world() { cout << "This is a test function in C++!" << endl; }
 
-static struct fluxRD_list_data
+#ifdef RESIDUAL_DISTRIBUTION
+
+static struct FluxRD_list_data
 {
   int task, index;
-  double dPressure;
-} * FluxListRD;
+  double dMass_Dual;
+  double dMomentum_Dual[3];
+  double dEnergy_Dual;
+
+} * FluxRD_list;
 
 static struct DualArea_list_data
 {
@@ -45,13 +51,19 @@ static struct DualArea_list_data
   double DualArea;
 } * DualArea_list;
 
-static int Nflux, MaxNflux, N_DualArea_export;
+static int Nflux, MaxNflux, N_DualArea_export, N_FluxRD_export;
 struct triangle_normals *tri_normals_list;
 extern struct primexch *PrimExch;
 extern struct grad_data *GradExch;
 
-void cpp_hello_world() { cout << "This is a test function in C++!" << endl; }
-
+/*! \brief Compute residuals of triangles/tetrahedra and distribute them.
+ *  This function is used for Residual Distribution hydrodynamics method, which is equivalent to
+ *  compute_interface_fluxes() in the original AREPO's Finite Volume approach.
+ *
+ *  \param[in] T Pointer to tessellation.
+ *
+ *  \return void
+ */
 void compute_residuals(tessellation *T)
 {
 #ifdef NOHYDRO
@@ -202,17 +214,30 @@ void compute_residuals(tessellation *T)
     }
 
   apply_DualArea_list();
-  MPI_Barrier(MPI_COMM_WORLD);
-  char triangulation_name[1024];
-  snprintf(triangulation_name, 100, "%s/triangulation_dual_%03d", All.OutputDir, 0);
-  write_delaunay_triangulation(T, triangulation_name, 0, NTask - 1);
+  //  MPI_Barrier(MPI_COMM_WORLD);
+  //  char triangulation_name[1024];
+  //  snprintf(triangulation_name, 100, "%s/triangulation_dual_%03d", All.OutputDir, 0);
+  //  write_delaunay_triangulation(T, triangulation_name, 0, NTask - 1);
 
-// debug
-//  double *Residual_List;
-//  Residual_List = (double *)mymalloc_movable(&Residual_List, "Residual_List", Ndt_thistask *4* sizeof(double));
+  // debug
+  //  double *Residual_List;
+  //  Residual_List = (double *)mymalloc_movable(&Residual_List, "Residual_List", Ndt_thistask *4* sizeof(double));
 
+  //
+  //  face_dt = (((integertime)1) << timeBin) * All.Timebase_interval
+  //
+
+  N_FluxRD_export = N_DualArea_export;
+  FluxRD_list =
+      (struct FluxRD_list_data *)mymalloc_movable(&FluxRD_list, "FluxRD_list", N_FluxRD_export * sizeof(struct FluxRD_list_data));
+  int FluxRD_list_index = 0;
+
+  // main loop through triangles this task responsible for
   for(i = 0; i < Ndt_thistask; i++)
     {
+      int timebin_global = -1;
+      int timebin_this_triangle[3];
+
       // compute residual: set up initial states
 
       double U_fluid[DIMS + 1][DIMS + 2];  // specific conserved fluid variables
@@ -228,6 +253,9 @@ void compute_residuals(tessellation *T)
                 SphP_index -= NumGas;
 
               U_fluid[j][0] = SphP[SphP_index].Density;
+
+              timebin_this_triangle[j] = P[SphP_index].TimeBinHydro;
+
               for(k = 0; k < DIMS; k++)
                 {
                   U_fluid[j][k + 1] =
@@ -235,8 +263,10 @@ void compute_residuals(tessellation *T)
                 }
               U_fluid[j][DIMS + 1] = SphP[SphP_index].Energy / SphP[SphP_index].Volume;
 
-              if(U_fluid[j][DIMS + 1]<=0){
-                  printf("sph energy <= 0 error %d %d   %f  %f\n",ThisTask,thistask_triangles[i],U_fluid[j][DIMS + 1],SphP[SphP_index].Energy);
+              if(U_fluid[j][DIMS + 1] <= 0)
+                {
+                  printf("sph energy <= 0 error %d %d   %f  %f\n", ThisTask, thistask_triangles[i], U_fluid[j][DIMS + 1],
+                         SphP[SphP_index].Energy);
                   terminate_program("sph energy <= 0 error.");
                 }
 
@@ -245,16 +275,19 @@ void compute_residuals(tessellation *T)
 #else
               C_sound[j] = get_sound_speed(SphP_index);
 #endif
-              if(C_sound[j] <= 0){
-                terminate_program("sph Cs <= 0 error!");
-              }
+              if(C_sound[j] <= 0)
+                {
+                  terminate_program("sph Cs <= 0 error!");
+                }
 
               Pressure[j] = SphP[SphP_index].Pressure;
             }
           else
             {
-              int PrimExch_index = DP[DT[thistask_triangles[i]].p[j]].index;
-              U_fluid[j][0]      = PrimExch[PrimExch_index].Density;
+              int PrimExch_index       = DP[DT[thistask_triangles[i]].p[j]].index;
+              timebin_this_triangle[j] = PrimExch[PrimExch_index].TimeBinHydro;
+
+              U_fluid[j][0] = PrimExch[PrimExch_index].Density;
               for(k = 0; k < DIMS; k++)
                 {
                   U_fluid[j][k + 1] = PrimExch[PrimExch_index].VelGas[k] * U_fluid[j][0];
@@ -262,26 +295,40 @@ void compute_residuals(tessellation *T)
               U_fluid[j][DIMS + 1] = PrimExch[PrimExch_index].Energy / PrimExch[PrimExch_index].Volume;
               C_sound[j]           = PrimExch[PrimExch_index].Csnd;
 
-              if(C_sound[j] <= 0){
-                terminate_program("primexch Cs <= 0 error!");
-              }
-              if(U_fluid[j][DIMS + 1]<=0){
-                printf("primexch energy <= 0 error %d %d  %d %d %d    %f  %f\n",ThisTask, DT[thistask_triangles[i]].p[j], DP[DT[thistask_triangles[i]].p[j]].task ,
-                         DP[DT[thistask_triangles[i]].p[j]].originalindex, DP[DT[thistask_triangles[i]].p[j]].ID,
-                         U_fluid[j][DIMS + 1],PrimExch[PrimExch_index].Energy);
-                terminate_program("primexch energy <= 0 error.");
-              }
+              if(C_sound[j] <= 0)
+                {
+                  terminate_program("primexch Cs <= 0 error!");
+                }
+              if(U_fluid[j][DIMS + 1] <= 0)
+                {
+                  printf("primexch energy <= 0 error %d %d  %d %d %d    %f  %f\n", ThisTask, DT[thistask_triangles[i]].p[j],
+                         DP[DT[thistask_triangles[i]].p[j]].task, DP[DT[thistask_triangles[i]].p[j]].originalindex,
+                         DP[DT[thistask_triangles[i]].p[j]].ID, U_fluid[j][DIMS + 1], PrimExch[PrimExch_index].Energy);
+                  terminate_program("primexch energy <= 0 error.");
+                }
 
               Pressure[j] = PrimExch[PrimExch_index].Pressure;
             }
         }
+
+      if((timebin_this_triangle[0] == timebin_this_triangle[1]) && (timebin_this_triangle[0] == timebin_this_triangle[2]))
+        {
+          timebin_global = timebin_this_triangle[0];
+        }
+      else
+        {
+          terminate_program("debug: wrong timebin !");
+        }
+
+        double dt_fixed = (((integertime)1) << timebin_global) * All.Timebase_interval;
+
         // compute residuals: Roe Vector Z, Modified fluid state U_hat = \frac{ \partial{U(Z_avg)}}{ \partial Z} * Z
 #ifdef TWODIMS  // for now we only consider 2D. 3D case needs to be included in the future
       double Z_Roe[3][4];
       double Z_avg[4];
       double Enthalpy[DIMS + 1];
       double N_X[3], N_Y[3], Mag[3];
-      double U_hat[3][4];
+      double U_hat[4][3];  // notice: now U_hat[4][3] and Z_Roe[3][4] We may unify their formats in the future
 
       for(j = 0; j < 3; j++)
         {
@@ -301,10 +348,12 @@ void compute_residuals(tessellation *T)
 
       for(j = 0; j < 3; j++)
         {
-          U_hat[j][0] = 2.0 * Z_avg[0] * Z_Roe[j][0];
-          U_hat[j][1] = Z_avg[1] * Z_Roe[j][0] + Z_avg[0] * Z_Roe[j][1];
-          U_hat[j][2] = Z_avg[2] * Z_Roe[j][0] + Z_avg[0] * Z_Roe[j][2];
-          U_hat[j][3] = (Z_avg[3] * Z_Roe[j][0] + GAMMA_MINUS1 * Z_avg[1] * Z_Roe[j][1] + (5.0/3.0-1.0) * Z_avg[2] * Z_Roe[j][2] + Z_avg[0] * Z_Roe[j][3])/(GAMMA);
+          U_hat[0][j] = 2.0 * Z_avg[0] * Z_Roe[j][0];
+          U_hat[1][j] = Z_avg[1] * Z_Roe[j][0] + Z_avg[0] * Z_Roe[j][1];
+          U_hat[2][j] = Z_avg[2] * Z_Roe[j][0] + Z_avg[0] * Z_Roe[j][2];
+          U_hat[3][j] = (Z_avg[3] * Z_Roe[j][0] + GAMMA_MINUS1 * Z_avg[1] * Z_Roe[j][1] + GAMMA_MINUS1 * Z_avg[2] * Z_Roe[j][2] +
+                         Z_avg[0] * Z_Roe[j][3]) /
+                        (GAMMA);
         }
 
       // compute residual: Construct average state for element
@@ -322,11 +371,12 @@ void compute_residuals(tessellation *T)
       h_avg /= sum_sqrt_rho;
 
       double Cs_avg = sqrt(GAMMA_MINUS1 * (h_avg - (velx_avg * velx_avg + vely_avg * vely_avg) / 2.0));
-      if(isnan(Cs_avg)){
-          printf("cs avg nan error! %d %d    %f    %f %f %f   %f %f %f   %f %f %f\n",ThisTask,thistask_triangles[i],h_avg, Enthalpy[0],Enthalpy[1],Enthalpy[2],
-                 U_fluid[0][DIMS + 1], U_fluid[1][DIMS + 1], U_fluid[2][DIMS + 1],  Pressure[0],Pressure[1],Pressure[2]);
+      if(isnan(Cs_avg))
+        {
+          printf("cs avg nan error! %d %d    %f    %f %f %f   %f %f %f   %f %f %f\n", ThisTask, thistask_triangles[i], h_avg,
+                 Enthalpy[0], Enthalpy[1], Enthalpy[2], U_fluid[0][DIMS + 1], U_fluid[1][DIMS + 1], U_fluid[2][DIMS + 1], Pressure[0],
+                 Pressure[1], Pressure[2]);
           terminate_program("Cs avg nan.")
-
         }
 
       // compute residual: Reassign variables to local equivalents
@@ -432,18 +482,22 @@ void compute_residuals(tessellation *T)
           Phi[k] = 0.0;
           for(j = 0; j < 3; j++)
             {
-              Phi[k] += Kmatrix[k][0][j][kfull] * U_hat[j][0] + Kmatrix[k][1][j][kfull] * U_hat[j][1] +
-                        Kmatrix[k][2][j][kfull] * U_hat[j][2] + Kmatrix[k][3][j][kfull] * U_hat[j][3];
+              Phi[k] += Kmatrix[k][0][j][kfull] * U_hat[0][j] + Kmatrix[k][1][j][kfull] * U_hat[1][j] +
+                        Kmatrix[k][2][j][kfull] * U_hat[2][j] + Kmatrix[k][3][j][kfull] * U_hat[3][j];
             }
         }
+      // debug
+      //      for(k=0;k<4;k++){
+      //          if(isnan(Phi[k])){
+      //              printf("phi nan error! %d %d   %f %f %f %f\n",ThisTask,i,vel_dot_n,Cs_avg,Kmatrix[0][0][0][kfull],Value123);
+      //            }
+      //        }
 
-      for(k=0;k<4;k++){
-          if(isnan(Phi[k])){
-              printf("phi nan error! %d %d   %f %f %f %f\n",ThisTask,i,vel_dot_n,Cs_avg,Kmatrix[0][0][0][kfull],Value123);
-            }
-        }
+      //      for(k = 0; k < 4; k++)
+      //        {
+      //          Residual_List[i*4+k] = Phi[k];
+      //        }
 
-      /*
       double Kmatrix_minus_sum[4][4];
 
       for(k = 0; k < 4; k++)
@@ -457,30 +511,154 @@ void compute_residuals(tessellation *T)
                 }
             }
         }
-        */
-        //      mat_inv(&Kmatrix_minus_sum[0][0], 4);
 
-        // residual distribution:
-#ifdef LDA_SCHEME
-      double test_phi = 0.0;
+      mat_inv(&Kmatrix_minus_sum[0][0], 4);
 
+      // residual distribution:
+      double Flux_RD[4][3];
+#ifdef B_SCHEME
+      double Flux_LDA[4][3], Flux_N[4][3];
 #endif
 
-//      for(k = 0; k < 4; k++)
-//        {
-//          Residual_List[i*4+k] = Phi[k];
-//        }
+#if(defined(LDA_SCHEME) || defined(B_SCHEME))
+      double BetaLDA[4][4][3]; /* distributed residual phi_j= BetaLDA_j * phi_total */
+      for(k = 0; k < 4; k++)
+        {
+          for(p = 0; p < 4; p++)
+            {
+              for(j = 0; j < 3; j++)
+                {
+                  BetaLDA[k][p][j] =
+                      -1.0 * (Kmatrix[k][0][j][kplus] * Kmatrix_minus_sum[0][p] + Kmatrix[k][1][j][kplus] * Kmatrix_minus_sum[1][p] +
+                              Kmatrix[k][2][j][kplus] * Kmatrix_minus_sum[2][p] + Kmatrix[k][3][j][kplus] * Kmatrix_minus_sum[3][p]);
+                }
+            }
+        }
 
+      for(k = 0; k < 4; k++)
+        {
+          for(j = 0; j < 3; j++)
+            {
+#ifdef LDA_SCHEME
+              Flux_RD[k][j] =
+                  BetaLDA[k][0][j] * Phi[0] + BetaLDA[k][1][j] * Phi[1] + BetaLDA[k][2][j] * Phi[2] + BetaLDA[k][3][j] * Phi[3];
+#else
+              Flux_LDA[k][j] =
+                  BetaLDA[k][0][j] * Phi[0] + BetaLDA[k][1][j] * Phi[1] + BetaLDA[k][2][j] * Phi[2] + BetaLDA[k][3][j] * Phi[3];
+#endif
+            }
+        }
+
+#endif  // LDA scheme or B scheme
+
+#if(defined(N_SCHEME) || defined(B_SCHEME))
+
+      double Bracket[4][3];
+      double KU_Sum[4];
+
+      for(k = 0; k < 4; k++)
+        {
+          KU_Sum[k] = 0.0;
+          for(j = 0; j < 3; j++)
+            {
+              KU_Sum[k] += Kmatrix[k][0][j][kminus] * U_hat[0][j] + Kmatrix[k][1][j][kminus] * U_hat[1][j] +
+                           Kmatrix[k][2][j][kminus] * U_hat[2][j] + Kmatrix[k][3][j][kminus] * U_hat[3][j];
+            }
+        }
+
+      for(k = 0; k < 4; k++)
+        {
+          for(j = 0; j < 3; j++)
+            {
+              Bracket[k][j] = U_hat[k][j] - (Kmatrix_minus_sum[k][0] * KU_Sum[0] + Kmatrix_minus_sum[k][1] * KU_Sum[1] +
+                                             Kmatrix_minus_sum[k][2] * KU_Sum[2] + Kmatrix_minus_sum[k][3] * KU_Sum[3]);
+            }
+        }
+
+      for(k = 0; k < 4; k++)
+        {
+          for(j = 0; j < 3; j++)
+            {
+#ifdef N_SCHEME
+              Flux_RD[k][j] = Kmatrix[k][0][j][kplus] * Bracket[0][j] + Kmatrix[k][1][j][kplus] * Bracket[1][j] +
+                              Kmatrix[k][2][j][kplus] * Bracket[2][j] + Kmatrix[k][3][j][kplus] * Bracket[3][j];
+#else
+              Flux_N[k][j] = Kmatrix[k][0][j][kplus] * Bracket[0][j] + Kmatrix[k][1][j][kplus] * Bracket[1][j] +
+                             Kmatrix[k][2][j][kplus] * Bracket[2][j] + Kmatrix[k][3][j][kplus] * Bracket[3][j];
+#endif
+            }
+        }
+#endif  // N scheme or B scheme
+
+#ifdef B_SCHEME
+      double Sum_Flux_N[4];
+      double Theta_E[4];
+
+      for(k = 0; k < 4; k++)
+        {
+          Sum_Flux_N[k] = abs(Flux_N[k][0]) + abs(Flux_N[k][1]) + abs(Flux_N[k][2]);
+          if(Sum_Flux_N[i] == 0)
+            {
+              Theta_E[k] = 0.0;
+            }
+          else
+            {
+              Theta_E[k] = abs(Phi[k]) / Sum_Flux_N[k];
+            }
+          Flux_RD[k][0] = Theta_E[k] * Flux_N[k][0] + (1.0 - Theta_E[k]) * Flux_LDA[k][0];
+          Flux_RD[k][1] = Theta_E[k] * Flux_N[k][1] + (1.0 - Theta_E[k]) * Flux_LDA[k][1];
+          Flux_RD[k][2] = Theta_E[k] * Flux_N[k][2] + (1.0 - Theta_E[k]) * Flux_LDA[k][2];
+        }
+
+#endif  // B scheme
+
+      /*use residuals to update fluid state of local points or export to other tasks*/
+
+      for(j = 0; j < 3; j++)
+        {
+          if(DP[DT[thistask_triangles[i]].p[j]].task == ThisTask)
+            {
+              int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
+              //              if(SphP_index < 0)
+              //                continue;   not necessary here, since the triangles we selected should not contain external points
+              if(SphP_index > NumGas)
+                SphP_index -= NumGas;
+
+              int P_index = SphP_index;
+              P[P_index].Mass += SphP[SphP_index].Volume * (-1.0) * dt_fixed * Flux_RD[0][j] / SphP[SphP_index].DualArea;
+              SphP[SphP_index].Momentum[0] += SphP[SphP_index].Volume * (-1.0) * dt_fixed * Flux_RD[1][j] / SphP[SphP_index].DualArea;
+              SphP[SphP_index].Momentum[1] += SphP[SphP_index].Volume * (-1.0) * dt_fixed * Flux_RD[2][j] / SphP[SphP_index].DualArea;
+              SphP[SphP_index].Energy += SphP[SphP_index].Volume * (-1.0) * dt_fixed * Flux_RD[3][j] / SphP[SphP_index].DualArea;
+            }
+          else
+            {
+              int PrimExch_index = DP[DT[thistask_triangles[i]].p[j]].index;
+
+              FluxRD_list[FluxRD_list_index].task  = DP[DT[thistask_triangles[i]].p[j]].task;
+              FluxRD_list[FluxRD_list_index].index = DP[DT[thistask_triangles[i]].p[j]].originalindex;
+
+              FluxRD_list[FluxRD_list_index].dMass_Dual        = PrimExch[PrimExch_index].Volume * (-1.0) * dt_fixed * Flux_RD[0][j];
+              FluxRD_list[FluxRD_list_index].dMomentum_Dual[0] = PrimExch[PrimExch_index].Volume * (-1.0) * dt_fixed * Flux_RD[1][j];
+              FluxRD_list[FluxRD_list_index].dMomentum_Dual[1] = PrimExch[PrimExch_index].Volume * (-1.0) * dt_fixed * Flux_RD[2][j];
+              FluxRD_list[FluxRD_list_index].dMomentum_Dual[2] = 0.0;
+              FluxRD_list[FluxRD_list_index].dEnergy_Dual      = PrimExch[PrimExch_index].Volume * (-1.0) * dt_fixed * Flux_RD[3][j];
+
+              FluxRD_list_index += 1;
+            }
+        }
 
 #endif  // TWO_DIMS
     }  // for loop of triangles, i= 0~ Ndt_thistask
 
-// debug
-//  char res_filename[100];
-//  snprintf(res_filename, 100, "%s/residual_%03d", All.OutputDir, 0);
-//  write_residual(res_filename,Ndt_thistask, thistask_triangles,Residual_List);
+  apply_FluxRD_list();
 
-//  myfree_movable(Residual_List);
+  // debug
+  //  char res_filename[100];
+  //  snprintf(res_filename, 100, "%s/residual_%03d", All.OutputDir, 0);
+  //  write_residual(res_filename,Ndt_thistask, thistask_triangles,Residual_List);
+
+  //  myfree_movable(Residual_List);
+  myfree_movable(FluxRD_list);
   myfree_movable(DualArea_list);
   myfree_movable(tri_normals_list);
   myfree_movable(thistask_triangles);
@@ -564,6 +742,7 @@ void rd_test_func(tessellation *T)
   //    PrimExch[pindex].Pressure);
   //  }
 
+  /*
   FluxListRD = (struct fluxRD_list_data *)mymalloc_movable(&FluxListRD, "FluxListRD", 1 * sizeof(struct fluxRD_list_data));
 
   if(ThisTask == 0)
@@ -602,26 +781,23 @@ void rd_test_func(tessellation *T)
   write_delaunay_triangulation(T, triangulation_name, 0, 2);
   MPI_Barrier(MPI_COMM_WORLD);
   myfree_movable(FluxListRD);
+
+   */
 }
 
-void apply_fluxRD_list(void)
+void apply_FluxRD_list(void)
 {
   int i, j, p, nimport, ngrp, recvTask;
-#if defined(MAXSCALARS)
-  int k;
-#endif /* #if defined(MAXSCALARS) */
 
   /* now exchange the flux-list and apply it when needed */
 
-  mysort(FluxListRD, 1, sizeof(struct fluxRD_list_data), fluxRD_list_data_compare);
-
-  int Nflux = 1;
+  mysort(FluxRD_list, N_FluxRD_export, sizeof(struct FluxRD_list_data), FluxRD_list_data_compare);
 
   for(j = 0; j < NTask; j++)
     Send_count[j] = 0;
 
-  for(i = 0; i < Nflux; i++)
-    Send_count[FluxListRD[i].task]++;
+  for(i = 0; i < N_FluxRD_export; i++)
+    Send_count[FluxRD_list[i].task]++;
 
   if(Send_count[ThisTask] > 0)
     terminate_program("Send_count[ThisTask]");
@@ -639,7 +815,7 @@ void apply_fluxRD_list(void)
         }
     }
 
-  struct fluxRD_list_data *FluxListGet = (struct fluxRD_list_data *)mymalloc("FluxListGet", nimport * sizeof(struct fluxRD_list_data));
+  struct FluxRD_list_data *FluxListGet = (struct FluxRD_list_data *)mymalloc("FluxListGet", nimport * sizeof(struct FluxRD_list_data));
 
   /* exchange particle data */
   for(ngrp = 0; ngrp < (1 << PTask); ngrp++)
@@ -651,9 +827,9 @@ void apply_fluxRD_list(void)
           if(Send_count[recvTask] > 0 || Recv_count[recvTask] > 0)
             {
               /* get the particles */
-              MPI_Sendrecv(&FluxListRD[Send_offset[recvTask]], Send_count[recvTask] * sizeof(struct fluxRD_list_data), MPI_BYTE,
+              MPI_Sendrecv(&FluxRD_list[Send_offset[recvTask]], Send_count[recvTask] * sizeof(struct FluxRD_list_data), MPI_BYTE,
                            recvTask, TAG_DENS_A, &FluxListGet[Recv_offset[recvTask]],
-                           Recv_count[recvTask] * sizeof(struct fluxRD_list_data), MPI_BYTE, recvTask, TAG_DENS_A, MPI_COMM_WORLD,
+                           Recv_count[recvTask] * sizeof(struct FluxRD_list_data), MPI_BYTE, recvTask, TAG_DENS_A, MPI_COMM_WORLD,
                            MPI_STATUS_IGNORE);
             }
         }
@@ -665,17 +841,21 @@ void apply_fluxRD_list(void)
     {
       p = FluxListGet[i].index;
 
-      SphP[p].Pressure += FluxListGet[i].dPressure;
+      P[p].Mass += FluxListGet[i].dMass_Dual / SphP[p].DualArea;
+      SphP[p].Momentum[0] += FluxListGet[i].dMomentum_Dual[0] / SphP[p].DualArea;
+      SphP[p].Momentum[1] += FluxListGet[i].dMomentum_Dual[1] / SphP[p].DualArea;
+      SphP[p].Momentum[2] += FluxListGet[i].dMomentum_Dual[2] / SphP[p].DualArea;
+      SphP[p].Energy += FluxListGet[i].dEnergy_Dual / SphP[p].DualArea;
     }
   myfree(FluxListGet);
 }
 
-int fluxRD_list_data_compare(const void *a, const void *b)
+int FluxRD_list_data_compare(const void *a, const void *b)
 {
-  if(((struct fluxRD_list_data *)a)->task < (((struct fluxRD_list_data *)b)->task))
+  if(((struct FluxRD_list_data *)a)->task < (((struct FluxRD_list_data *)b)->task))
     return -1;
 
-  if(((struct fluxRD_list_data *)a)->task > (((struct fluxRD_list_data *)b)->task))
+  if(((struct FluxRD_list_data *)a)->task > (((struct FluxRD_list_data *)b)->task))
     return +1;
 
   return 0;
@@ -768,9 +948,9 @@ lapack_int mat_inv(double *A, unsigned n)
 
   ret = LAPACKE_dgetrf(LAPACK_COL_MAJOR, n, n, A, n, ipiv);
 
-#ifdef DEBUG
-  std::cout << "ret =\t" << ret << "\t(0 = done, <0 = illegal arguement, >0 = singular)" << std::endl;
-#endif
+  //#ifdef DEBUG
+  //  std::cout << "ret =\t" << ret << "\t(0 = done, <0 = illegal arguement, >0 = singular)" << std::endl;
+  //#endif
 
   if(ret != 0)
     {
@@ -789,6 +969,8 @@ lapack_int mat_inv(double *A, unsigned n)
 
   return ret;
 }
+
+#endif  //#ifdef RESIDUAL_DISTRIBUTION
 
 /*
  void write_residual(char* fname,int Ndt_thistask, int* thistask_triangles,double* Residual_List){

@@ -1342,7 +1342,9 @@ extern struct sph_particle_data
   MySingle SurfaceArea;
 #ifdef RESIDUAL_DISTRIBUTION
   MyDouble DualArea;
+
 #endif
+
 
 #if defined(REGULARIZE_MESH_FACE_ANGLE) || defined(OUTPUT_MESH_FACE_ANGLE)
   MySingle MaxFaceAngle;

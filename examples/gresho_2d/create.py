@@ -8,12 +8,18 @@ created by Rainer Weinberger, last modified 20.03.2020 -- comments welcome
 import sys    # system specific calls
 import numpy as np    ## load numpy
 import h5py    ## load h5py; needed to write initial conditions in hdf5 format
+from numpy.random import default_rng
+from math import floor
 
 simulation_directory = str(sys.argv[1])
 print("examples/Gresho_2d/create.py: creating ICs in directory " + simulation_directory)
 
 """ initial condition parameters """
-FilePath = simulation_directory + '/IC_gresho_v1e-12_50.hdf5'
+FilePath = simulation_directory + '/IC_gresho_v1e-8_random50.hdf5'
+mesh_type = 'random'
+
+np.random.seed(0)
+
 
 FloatType = np.float64  # double precision: np.float64, for single use np.float32
 IntType = np.int32
@@ -27,9 +33,11 @@ else:
 
 ## parameters
 density_0 = 1.0
-velocity_0 = 1.0e-12 ## bulk velocity
+velocity_0 = 1.0e-8 ## bulk velocity
 gamma = 5.0/3.0
 gamma_minus_one = gamma - 1.0
+
+
 
 """ set up grid: equidistant polar 2d grid; similar to Pakmor et al (2016) """
 d_ring = Boxsize / CellsPerDimension
@@ -38,25 +46,49 @@ Radius = [0.0]
 xPosFromCenter = [0.0]
 yPosFromCenter = [0.0]
 
-i_ring = 0
-while d_ring * FloatType(i_ring) <= 0.71 * Boxsize:
-    i_ring += 1
-    ## place i_ring cells at this distance
-    phi = np.random.uniform(0,2.0*np.pi) ## random starting angle
-    #print "i_ring", i_ring
-    for i_cell in np.arange( IntType(2.0*np.pi*i_ring) ):
-        radius_this_cell = d_ring * FloatType(i_ring)
-        #print radius_this_cell
-        xcoord = radius_this_cell * np.sin(phi)
-        ycoord = radius_this_cell * np.cos(phi)
-        
-        ## only include the cell if coordinates are within the box
-        if xcoord >= -0.5*Boxsize and xcoord < 0.5*Boxsize and ycoord >= -0.5*Boxsize and ycoord < 0.5*Boxsize:
-            Radius.append( radius_this_cell )
-            xPosFromCenter.append( xcoord )
-            yPosFromCenter.append( ycoord )
+
+if mesh_type == 'ring':
+    i_ring = 0
+    while d_ring * FloatType(i_ring) <= 0.71 * Boxsize:
+        i_ring += 1
+        ## place i_ring cells at this distance
+        phi = np.random.uniform(0,2.0*np.pi) ## random starting angle
+        #print "i_ring", i_ring
+        for i_cell in np.arange( IntType(2.0*np.pi*i_ring) ):
+            radius_this_cell = d_ring * FloatType(i_ring)
+            #print radius_this_cell
+            xcoord = radius_this_cell * np.cos(phi)
+            ycoord = radius_this_cell * np.sin(phi)
             
-        phi += (2.0*np.pi*i_ring) / IntType(2.0*np.pi*i_ring) / FloatType(i_ring)
+            ## only include the cell if coordinates are within the box
+            if xcoord >= -0.5*Boxsize and xcoord < 0.5*Boxsize and ycoord >= -0.5*Boxsize and ycoord < 0.5*Boxsize:
+                Radius.append( radius_this_cell )
+                xPosFromCenter.append( xcoord )
+                yPosFromCenter.append( ycoord )
+                
+            phi += (2.0*np.pi*i_ring) / IntType(2.0*np.pi*i_ring) / FloatType(i_ring)
+elif mesh_type == 'random':
+    Coordinates = []
+    rng = default_rng()
+    choice_per_dimension = int(5000)
+    position_index = rng.choice(choice_per_dimension**2, size=CellsPerDimension**2,replace=False)
+
+    for i in range(CellsPerDimension**2):
+        xcoord = (position_index[i]%choice_per_dimension)/float(choice_per_dimension)*Boxsize
+        ycoord = floor(position_index[i]/choice_per_dimension)/float(choice_per_dimension)*Boxsize
+        xcoord -= 0.5*Boxsize; ycoord -= 0.5*Boxsize
+        radius_this_cell = np.sqrt(xcoord**2 + ycoord**2)*Boxsize
+
+        Radius.append( radius_this_cell )
+        xPosFromCenter.append( xcoord )
+        yPosFromCenter.append( ycoord )
+
+        
+
+
+
+
+
 ## convert to numpy arrays now that number of cells is known
 Radius = np.array(Radius, dtype=FloatType)
 xPosFromCenter = np.array(xPosFromCenter, dtype=FloatType)
@@ -82,10 +114,9 @@ RotationVelocity[i2] = 2.0 - 5.0 * Radius[i2]
 RotationVelocity[i3] = 0.0
 Vel = np.zeros([NumberOfCells, 3], dtype=FloatType )
 i_all_but_central = np.arange(1,NumberOfCells)
-Vel[i_all_but_central,0] = RotationVelocity[i_all_but_central] * yPosFromCenter[i_all_but_central] / Radius[i_all_but_central]
-Vel[i_all_but_central,1] = -RotationVelocity[i_all_but_central] * xPosFromCenter[i_all_but_central] / Radius[i_all_but_central]
+Vel[i_all_but_central,0] = -RotationVelocity[i_all_but_central] * yPosFromCenter[i_all_but_central] / Radius[i_all_but_central]
+Vel[i_all_but_central,1] =  RotationVelocity[i_all_but_central] * xPosFromCenter[i_all_but_central] / Radius[i_all_but_central]
 Vel[:,0] += velocity_0
-Vel[:,1] += velocity_0
 
 ## specific internal energy
 Pressure = np.zeros( NumberOfCells, dtype=FloatType)

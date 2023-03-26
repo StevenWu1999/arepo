@@ -2182,6 +2182,8 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
 }
 
 void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, int lastTask){
+#ifdef RESIDUAL_DISTRIBUTION
+
   CPU_Step[CPU_MISC] += measure_time();
 
   FILE* fdtxt;
@@ -2204,11 +2206,9 @@ void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, i
   fprintf(fdtxt,"NumGas: %d \n",NumGas);
   fprintf(fdtxt,"P[i].ID, P[i].x, P[i].y, P[i].Velx, P[i].Vely, SphP[i].Pressure, SphP[i].Energy, SphP[i].DualArea \n");
 
-
   for (i=0;i<NumGas;i++){
       fprintf(fdtxt,"%d %.10g %.10g    %.10g %.10g    %.10g %.10g   %.10g\n",P[i].ID, P[i].Pos[0], P[i].Pos[1], P[i].Vel[0], P[i].Vel[1], SphP[i].Pressure, SphP[i].Energy, SphP[i].DualArea);
     }
-
   fprintf(fdtxt, "\nNdp: %d \n",T->Ndp);
   fprintf(fdtxt,"DP[i].task, index, ID, x, y, pressure (DP[-3]~DP[Ndp-1]), energy \n");
   for (i=-3;i<T->Ndp;i++){
@@ -2253,6 +2253,9 @@ void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, i
 
   mpi_printf("wrote Delaunay triangulation to file \n");
   CPU_Step[CPU_MAKEIMAGES] += measure_time();
+#endif /* #ifdef RESIDUAL_DISTRIBUTION */
+
+
 }
 
 #endif /* #if defined(TWODIMS) && !defined(ONEDIMS) */

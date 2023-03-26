@@ -48,12 +48,11 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../main/allvars.h"
-#include "../main/proto.h"
-
 #include "../domain/domain.h"
-#include "../mesh/voronoi/voronoi.h"
+#include "../main/allvars.h"
 #include "../main/cpp_functions.h"
+#include "../main/proto.h"
+#include "../mesh/voronoi/voronoi.h"
 
 static void do_second_order_source_terms_first_half(void);
 static void do_second_order_source_terms_second_half(void);
@@ -120,11 +119,11 @@ void run(void)
 
       exchange_primitive_variables();
 
-//      calculate_gradients();
+      calculate_gradients();
 
       set_vertex_velocities(); /* determine the speed of the mesh-generating vertices */
 
-//      ngb_update_velocities(); /* update the neighbor tree with the new vertex and cell velocities */
+      ngb_update_velocities(); /* update the neighbor tree with the new vertex and cell velocities */
 
       do_second_order_source_terms_second_half();
 
@@ -162,27 +161,10 @@ void run(void)
       free(hydro_particles);
     }
 #endif /* #if defined(VORONOI_STATIC_MESH) */
-  int N_test = 0;
-  All.Ti_nextoutput = 0;
-
-  mpi_terminate_program("end debug");
 
 
-  while(N_test<100000) /* main loop */
+  while(1) /* main loop */
     {
-
-      if(N_test%1000 == 0){
-          printf("debug: N = %d\n",N_test);
-        }
-      if(All.Ti_Current >= All.Ti_nextoutput && All.Ti_nextoutput >= 0)
-      {
-        DumpFlag = DumpFlagNextSnap;
-        produce_dump();
-
-        All.Ti_nextoutput += 10000;
-      }
-
-
       if(RestartFlag !=
          1) /* if we are starting from restart files, skip in the first iteration the parts until the restart files were written  */
         {
@@ -190,24 +172,25 @@ void run(void)
 
           flush_everything();
 
-//          create_snapshot_if_desired();
+          create_snapshot_if_desired();
 
-//          if(All.Ti_Current >= TIMEBASE) /* we reached the final time */
-//            {
-//              mpi_printf("\nFinal time=%g reached. Simulation ends.\n", All.TimeMax);
-//
-//              if(All.Ti_lastoutput != All.Ti_Current) /* make a snapshot at the final time in case none has produced at this time */
-//                produce_dump(); /* this will be overwritten if All.TimeMax is increased and the run is continued */
-//
-//              create_end_file();  // create empty file called end in output directory
-//
-//              break;
-//            }
+          if(All.Ti_Current >= TIMEBASE) /* we reached the final time */
+            {
+              mpi_printf("\nFinal time=%g reached. Simulation ends.\n", All.TimeMax);
 
-//          find_timesteps_without_gravity(); /* find-timesteps */
-//
-//          find_gravity_timesteps_and_do_gravity_step_first_half(); /* gravity half-step for hydrodynamics */
-//                                                                   /* kicks collisionless particles by half a step */
+              if(All.Ti_lastoutput != All.Ti_Current) /* make a snapshot at the final time in case none has produced at this time */
+                produce_dump(); /* this will be overwritten if All.TimeMax is increased and the run is continued */
+
+              create_end_file();  // create empty file called end in output directory
+
+              break;
+            }
+
+
+          find_timesteps_without_gravity(); /* find-timesteps */
+
+          find_gravity_timesteps_and_do_gravity_step_first_half(); /* gravity half-step for hydrodynamics */
+                                                                   /* kicks collisionless particles by half a step */
 
 #if(defined(SELFGRAVITY) || defined(EXTERNALGRAVITY) || defined(EXACT_GRAVITY_FOR_PARTICLE_TYPE)) && !defined(MESHRELAX)
           update_timesteps_from_gravity();
@@ -219,29 +202,22 @@ void run(void)
           exchange_primitive_variables();
 
           /* let's reconstruct gradients for every cell using Green-Gauss gradient estimation */
-//          calculate_gradients();
+          calculate_gradients();
 
           /* determine the speed of the mesh-generating vertices */
           set_vertex_velocities();
 
           /* update the neighbor tree with the new vertex and cell velocities */
-//          ngb_update_velocities();
+          ngb_update_velocities();
 
-//          exchange_primitive_variables_and_gradients();
-
-//          if(ThisTask == 2){
-//              printf("debug: task2 mass %.10e\n",P[11].Mass);
-//            }
+          exchange_primitive_variables_and_gradients();
 
           /* compute intercell flux with Riemann solver and update the cells with the fluxes */
-//          compute_interface_fluxes(&Mesh);
-          compute_residuals(&Mesh);
-
-
-//          if(ThisTask == 2){
-//            printf("debug: task2 mass %.10e\n",P[11].Mass);
-//          }
-//
+#ifdef RESIDUAL_DISTRIBUTION
+//          compute_residuals(&Mesh);
+#else
+          compute_interface_fluxes(&Mesh);
+#endif /*ifdef RESIDUAL_DISTRIBUTION*/
 
 #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT
 #ifndef VORONOI_STATIC_MESH
@@ -253,7 +229,6 @@ void run(void)
           do_derefinements_and_refinements();
 #endif /* #ifdef REFINEMENT */
 
-#ifndef RESIDUAL_DISTRIBUTION
           write_cpu_log(); /* output some CPU usage log-info (accounts for everything needed up to completion of the current
                               sync-point) */
 
@@ -266,7 +241,7 @@ void run(void)
 #if !defined(VORONOI_STATIC_MESH)
 #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT
           free_all_remaining_mesh_structures();
-#else  /* #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT */
+#else /* #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT */
           free_mesh();
 #endif /* #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT #else */
 #endif /* #if !defined(VORONOI_STATIC_MESH) */
@@ -275,7 +250,6 @@ void run(void)
            */
           if(check_for_interruption_of_run())
             return;
-#endif
         }
       else
         RestartFlag = 0;
@@ -313,42 +287,31 @@ void run(void)
       special_particle_update_list();
 #endif /* #ifdef EXACT_GRAVITY_FOR_PARTICLE_TYPE */
 
-//      calculate_non_standard_physics_prior_mesh_construction();
+      calculate_non_standard_physics_prior_mesh_construction();
 
 #if !defined(VORONOI_STATIC_MESH)
       create_mesh();
       mesh_setup_exchange();
 #endif /* #if !defined(VORONOI_STATIC_MESH) */
 
-//      exchange_primitive_variables_and_gradients();
+      exchange_primitive_variables_and_gradients();
 
-//      if(ThisTask == 2){
-//        printf("debug: task2 mass %.10e\n",P[11].Mass);
-//      }
-
-
-//      compute_interface_fluxes(&Mesh);
-
-
-//      if(ThisTask == 2){
-//        printf("debug: task2 mass %.10e\n",P[11].Mass);
-//      }
-
-//      mpi_terminate_program("end debug");
+#ifdef RESIDUAL_DISTRIBUTION
+      compute_residuals(&Mesh);
+#else
+      compute_interface_fluxes(&Mesh);
+#endif /*#ifdef RESIDUAL_DISTRIBUTION*/
 
       update_primitive_variables(); /* these effectively closes off the hydro step */
 
       /* the masses and positions are updated, let's get new forces and potentials */
 
-//      do_second_order_source_terms_second_half();
+      do_second_order_source_terms_second_half();
 
-//      do_gravity_step_second_half(); /* this closes off the gravity half-step */
+      do_gravity_step_second_half(); /* this closes off the gravity half-step */
 
       /* do any extra physics, Strang-split (update both primitive and conserved variables as needed ) */
-//      calculate_non_standard_physics_end_of_step();
-
-
-      N_test += 1; All.Ti_Current += 1;
+      calculate_non_standard_physics_end_of_step();
     }
 
   restart(0); /* write a restart file at final time - can be used to continue simulation beyond final time */
@@ -394,7 +357,7 @@ void set_non_standard_physics_for_current_time(void)
 {
 #if defined(COOLING)
   IonizeParams(); /* set UV background for the current time */
-#endif            /* #if defined(COOLING) */
+#endif /* #if defined(COOLING) */
 }
 
 /*! \brief calls extra modules after the gravitational force is recomputed.
@@ -441,7 +404,7 @@ void calculate_non_standard_physics_end_of_step(void)
 #ifdef COOLING
 #ifdef USE_SFR
   cooling_and_starformation();
-#else  /* #ifdef USE_SFR */
+#else /* #ifdef USE_SFR */
   cooling_only();
 #endif /* #ifdef USE_SFR #else */
 #endif /* #ifdef COOLING */
@@ -611,7 +574,7 @@ integertime find_next_outputtime(integertime ti_curr)
             terminate_program("TimeBetSnapshot > 0.0 required for your simulation.\n");
         }
 
-      mpi_printf("debug: timestep %.10e %.10e %.10e\n",All.TimeOfFirstSnapshot, All.TimeBegin, All.Timebase_interval);
+
 
       time = All.TimeOfFirstSnapshot;
       iter = 0;

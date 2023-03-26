@@ -243,9 +243,6 @@ int main(int argc, char **argv)
       /* init returns a status code, where a value of >=0 means that endrun() should be called. */
       int status = init();
 
-      MPI_Barrier(MPI_COMM_WORLD);
-      endrun();
-
       if(status >= 0)
         {
           if(status > 0)
