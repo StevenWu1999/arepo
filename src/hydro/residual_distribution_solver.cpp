@@ -51,7 +51,7 @@ static struct DualArea_list_data
   double DualArea;
 } * DualArea_list;
 
-static int Nflux, MaxNflux, N_DualArea_export, N_FluxRD_export;
+static int N_DualArea_export, Max_N_FluxRD_export, N_FluxRD_export;
 struct triangle_normals *tri_normals_list;
 extern struct primexch *PrimExch;
 extern struct grad_data *GradExch;
@@ -227,23 +227,17 @@ void compute_residuals(tessellation *T)
   //  face_dt = (((integertime)1) << timeBin) * All.Timebase_interval
   //
 
-  N_FluxRD_export = N_DualArea_export;
+  Max_N_FluxRD_export = N_DualArea_export;
+  N_FluxRD_export     = 0;
   FluxRD_list =
-      (struct FluxRD_list_data *)mymalloc_movable(&FluxRD_list, "FluxRD_list", N_FluxRD_export * sizeof(struct FluxRD_list_data));
-  int FluxRD_list_index = 0;
+      (struct FluxRD_list_data *)mymalloc_movable(&FluxRD_list, "FluxRD_list", Max_N_FluxRD_export * sizeof(struct FluxRD_list_data));
 
   // main loop through triangles this task responsible for
   for(i = 0; i < Ndt_thistask; i++)
     {
-      int timebin_global = -1;
-      int timebin_this_triangle[3];
 
-      // compute residual: set up initial states
-
-      double U_fluid[DIMS + 1][DIMS + 2];  // specific conserved fluid variables
-      double C_sound[DIMS + 1];
-      double Pressure[DIMS + 1];
-
+      //get triangle timebin/timestep and skip inactive triangles
+      int timebin_vertices[DIMS + 1];
       for(j = 0; j < DIMS + 1; j++)
         {
           if(DP[DT[thistask_triangles[i]].p[j]].task == ThisTask)
@@ -252,77 +246,146 @@ void compute_residuals(tessellation *T)
               if(SphP_index > NumGas)
                 SphP_index -= NumGas;
 
-              U_fluid[j][0] = SphP[SphP_index].Density;
-
-              timebin_this_triangle[j] = P[SphP_index].TimeBinHydro;
-
-              for(k = 0; k < DIMS; k++)
-                {
-                  U_fluid[j][k + 1] =
-                      SphP[SphP_index].Momentum[k] / SphP[SphP_index].Volume;  // or P[SphP_index].Vel * SphP[SphP_index].Density
-                }
-              U_fluid[j][DIMS + 1] = SphP[SphP_index].Energy / SphP[SphP_index].Volume;
-
-              if(U_fluid[j][DIMS + 1] <= 0)
-                {
-                  printf("sph energy <= 0 error %d %d   %f  %f\n", ThisTask, thistask_triangles[i], U_fluid[j][DIMS + 1],
-                         SphP[SphP_index].Energy);
-                  terminate_program("sph energy <= 0 error.");
-                }
-
-#ifdef TREE_BASED_TIMESTEPS
-              C_sound[j] = SphP[SphP_index].Csnd;
-#else
-              C_sound[j] = get_sound_speed(SphP_index);
-#endif
-              if(C_sound[j] <= 0)
-                {
-                  terminate_program("sph Cs <= 0 error!");
-                }
-
-              Pressure[j] = SphP[SphP_index].Pressure;
+              timebin_vertices[j] = P[SphP_index].TimeBinHydro;
             }
           else
             {
-              int PrimExch_index       = DP[DT[thistask_triangles[i]].p[j]].index;
-              timebin_this_triangle[j] = PrimExch[PrimExch_index].TimeBinHydro;
-
-              U_fluid[j][0] = PrimExch[PrimExch_index].Density;
-              for(k = 0; k < DIMS; k++)
-                {
-                  U_fluid[j][k + 1] = PrimExch[PrimExch_index].VelGas[k] * U_fluid[j][0];
-                }
-              U_fluid[j][DIMS + 1] = PrimExch[PrimExch_index].Energy / PrimExch[PrimExch_index].Volume;
-              C_sound[j]           = PrimExch[PrimExch_index].Csnd;
-
-              if(C_sound[j] <= 0)
-                {
-                  terminate_program("primexch Cs <= 0 error!");
-                }
-              if(U_fluid[j][DIMS + 1] <= 0)
-                {
-                  printf("primexch energy <= 0 error %d %d  %d %d %d    %f  %f\n", ThisTask, DT[thistask_triangles[i]].p[j],
-                         DP[DT[thistask_triangles[i]].p[j]].task, DP[DT[thistask_triangles[i]].p[j]].originalindex,
-                         DP[DT[thistask_triangles[i]].p[j]].ID, U_fluid[j][DIMS + 1], PrimExch[PrimExch_index].Energy);
-                  terminate_program("primexch energy <= 0 error.");
-                }
-
-              Pressure[j] = PrimExch[PrimExch_index].Pressure;
+              int PrimExch_index  = DP[DT[thistask_triangles[i]].p[j]].index;
+              timebin_vertices[j] = PrimExch[PrimExch_index].TimeBinHydro;
             }
         }
 
-      if((timebin_this_triangle[0] == timebin_this_triangle[1]) && (timebin_this_triangle[0] == timebin_this_triangle[2]))
+      bool is_active = false;
+      int timebin_this_triangle = timebin_vertices[0];
+      
+      for(j = 0; j < DIMS + 1; j++)
         {
-          timebin_global = timebin_this_triangle[0];
-        }
-      else
-        {
-          terminate_program("debug: wrong timebin !");
+          if(TimeBinSynchronized[timebin_vertices[j]])
+            is_active = true;
+
+          if(timebin_vertices[j] < timebin_this_triangle)
+            timebin_this_triangle = timebin_vertices[j];
         }
 
-        double dt_fixed = (((integertime)1) << timebin_global) * All.Timebase_interval;
+      if(is_active == false)
+        continue;
 
-        // compute residuals: Roe Vector Z, Modified fluid state U_hat = \frac{ \partial{U(Z_avg)}}{ \partial Z} * Z
+      double triangle_dt = (((integertime)1) << timebin_this_triangle) * All.Timebase_interval;
+
+      // compute residual: set up initial states
+      double U_fluid[DIMS + 1][DIMS + 2];  // specific conserved fluid variables
+      double C_sound[DIMS + 1];
+      double Pressure[DIMS + 1];
+
+
+      for(j = 0; j < DIMS + 1; j++)
+      {
+        if(DP[DT[thistask_triangles[i]].p[j]].task == ThisTask)
+        {
+          int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
+          if(SphP_index > NumGas)
+            SphP_index -= NumGas;
+
+          //extrapolation to current time
+          struct grad_data *grad = &SphP[SphP_index].Grad;
+
+          struct state_primitive vertex_state;
+          struct state_primitive delta_time;
+          vertex_state.rho = SphP[SphP_index].Density;
+          vertex_state.press = SphP[SphP_index].Pressure;
+          vertex_state.velx = P[SphP_index].Vel[0];
+          vertex_state.vely = P[SphP_index].Vel[1];
+          vertex_state.velz = P[SphP_index].Vel[2];
+
+          double dt_Extrapolation = All.Time - SphP[SphP_index].TimeLastPrimUpdate;
+
+          triangle_vertex_do_time_extrapolation(&delta_time,&vertex_state,grad,dt_Extrapolation);
+          triangle_vertex_add_extrapolation(&delta_time,&vertex_state);
+
+
+#ifdef TWODIMS
+          U_fluid[j][0] = vertex_state.rho;
+          U_fluid[j][1] = U_fluid[j][0]*vertex_state.velx;
+          U_fluid[j][2] = U_fluid[j][0]*vertex_state.vely;
+          Pressure[j] = vertex_state.press;
+          double kinetic_energy = 0.0;
+          kinetic_energy += pow(vertex_state.velx,2)+pow(vertex_state.vely,2);
+          kinetic_energy *= 0.5 * U_fluid[j][0];
+          U_fluid[j][DIMS + 1] = kinetic_energy + Pressure[j] / (GAMMA_MINUS1);
+#endif
+          if(U_fluid[j][DIMS + 1] <= 0)
+          {
+            printf("sph energy <= 0 error %d %d   %f  %f\n", ThisTask, thistask_triangles[i], U_fluid[j][DIMS + 1],
+                   SphP[SphP_index].Energy);
+            terminate_program("sph energy <= 0 error.");
+          }
+
+#ifdef TREE_BASED_TIMESTEPS
+          C_sound[j] = SphP[SphP_index].Csnd;
+#else
+          C_sound[j] = get_sound_speed(SphP_index);
+#endif
+          if(C_sound[j] <= 0)
+          {
+            terminate_program("sph Cs <= 0 error!");
+          }
+        }
+        else
+        {
+          int PrimExch_index  = DP[DT[thistask_triangles[i]].p[j]].index;
+
+
+          struct grad_data *grad = &GradExch[PrimExch_index];
+          struct state_primitive vertex_state;
+          struct state_primitive delta_time;
+
+          vertex_state.rho = PrimExch[PrimExch_index].Density;
+          vertex_state.press = PrimExch[PrimExch_index].Pressure;
+          vertex_state.velx = PrimExch[PrimExch_index].VelGas[0];
+          vertex_state.vely = PrimExch[PrimExch_index].VelGas[1];
+          vertex_state.velz = PrimExch[PrimExch_index].VelGas[2];
+          double dt_Extrapolation = All.Time - PrimExch[PrimExch_index].TimeLastPrimUpdate;
+
+          triangle_vertex_do_time_extrapolation(&delta_time,&vertex_state,grad,dt_Extrapolation);
+          triangle_vertex_add_extrapolation(&delta_time,&vertex_state);
+
+          /*we should only use primitive variables to get U_fluid*/
+
+#ifdef TWODIMS
+          U_fluid[j][0] = vertex_state.rho;
+          U_fluid[j][1] = U_fluid[j][0]*vertex_state.velx;
+          U_fluid[j][2] = U_fluid[j][0]*vertex_state.vely;
+          Pressure[j] = vertex_state.press;
+          double kinetic_energy = 0.0;
+          kinetic_energy += pow(vertex_state.velx,2)+pow(vertex_state.vely,2);
+          kinetic_energy *= 0.5 * U_fluid[j][0];
+          U_fluid[j][DIMS + 1] = kinetic_energy + Pressure[j] / (GAMMA_MINUS1);
+#endif
+
+          C_sound[j]           = PrimExch[PrimExch_index].Csnd;
+
+          if(C_sound[j] <= 0)
+          {
+            terminate_program("primexch Cs <= 0 error!");
+          }
+          if(U_fluid[j][DIMS + 1] <= 0)
+          {
+            printf("primexch energy <= 0 error %d %d  %d %d %d    %f  %f\n", ThisTask, DT[thistask_triangles[i]].p[j],
+                   DP[DT[thistask_triangles[i]].p[j]].task, DP[DT[thistask_triangles[i]].p[j]].originalindex,
+                   DP[DT[thistask_triangles[i]].p[j]].ID, U_fluid[j][DIMS + 1], PrimExch[PrimExch_index].Energy);
+            terminate_program("primexch energy <= 0 error.");
+          }
+        }
+      }  // for(j = 0; j < DIMS + 1; j++) get fluid state for each vertex of this triangle
+
+
+
+
+
+
+
+
+      // compute residuals: Roe Vector Z, Modified fluid state U_hat = \frac{ \partial{U(Z_avg)}}{ \partial Z} * Z
 #ifdef TWODIMS  // for now we only consider 2D. 3D case needs to be included in the future
       double Z_Roe[3][4];
       double Z_avg[4];
@@ -625,25 +688,25 @@ void compute_residuals(tessellation *T)
                 SphP_index -= NumGas;
 
               int P_index = SphP_index;
-              P[P_index].Mass += SphP[SphP_index].Volume * (-1.0) * dt_fixed * Flux_RD[0][j] / SphP[SphP_index].DualArea;
-              SphP[SphP_index].Momentum[0] += SphP[SphP_index].Volume * (-1.0) * dt_fixed * Flux_RD[1][j] / SphP[SphP_index].DualArea;
-              SphP[SphP_index].Momentum[1] += SphP[SphP_index].Volume * (-1.0) * dt_fixed * Flux_RD[2][j] / SphP[SphP_index].DualArea;
-              SphP[SphP_index].Energy += SphP[SphP_index].Volume * (-1.0) * dt_fixed * Flux_RD[3][j] / SphP[SphP_index].DualArea;
+              P[P_index].Mass += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[0][j] / SphP[SphP_index].DualArea;
+              SphP[SphP_index].Momentum[0] += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[1][j] / SphP[SphP_index].DualArea;
+              SphP[SphP_index].Momentum[1] += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[2][j] / SphP[SphP_index].DualArea;
+              SphP[SphP_index].Energy += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[3][j] / SphP[SphP_index].DualArea;
             }
           else
             {
               int PrimExch_index = DP[DT[thistask_triangles[i]].p[j]].index;
 
-              FluxRD_list[FluxRD_list_index].task  = DP[DT[thistask_triangles[i]].p[j]].task;
-              FluxRD_list[FluxRD_list_index].index = DP[DT[thistask_triangles[i]].p[j]].originalindex;
+              FluxRD_list[N_FluxRD_export].task  = DP[DT[thistask_triangles[i]].p[j]].task;
+              FluxRD_list[N_FluxRD_export].index = DP[DT[thistask_triangles[i]].p[j]].originalindex;
 
-              FluxRD_list[FluxRD_list_index].dMass_Dual        = PrimExch[PrimExch_index].Volume * (-1.0) * dt_fixed * Flux_RD[0][j];
-              FluxRD_list[FluxRD_list_index].dMomentum_Dual[0] = PrimExch[PrimExch_index].Volume * (-1.0) * dt_fixed * Flux_RD[1][j];
-              FluxRD_list[FluxRD_list_index].dMomentum_Dual[1] = PrimExch[PrimExch_index].Volume * (-1.0) * dt_fixed * Flux_RD[2][j];
-              FluxRD_list[FluxRD_list_index].dMomentum_Dual[2] = 0.0;
-              FluxRD_list[FluxRD_list_index].dEnergy_Dual      = PrimExch[PrimExch_index].Volume * (-1.0) * dt_fixed * Flux_RD[3][j];
+              FluxRD_list[N_FluxRD_export].dMass_Dual        = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[0][j];
+              FluxRD_list[N_FluxRD_export].dMomentum_Dual[0] = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[1][j];
+              FluxRD_list[N_FluxRD_export].dMomentum_Dual[1] = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[2][j];
+              FluxRD_list[N_FluxRD_export].dMomentum_Dual[2] = 0.0;
+              FluxRD_list[N_FluxRD_export].dEnergy_Dual      = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[3][j];
 
-              FluxRD_list_index += 1;
+              N_FluxRD_export += 1;
             }
         }
 
@@ -784,6 +847,43 @@ void rd_test_func(tessellation *T)
 
    */
 }
+
+void triangle_vertex_do_time_extrapolation(struct state_primitive *delta, struct state_primitive *st, struct grad_data *grad, double dt_Extrapolation){
+  if(st->rho <= 0)
+    return;
+
+  delta->rho = -dt_Extrapolation * (st->velx * grad->drho[0] + st->rho * grad->dvel[0][0] + st->vely * grad->drho[1] +
+                           st->rho * grad->dvel[1][1] + st->velz * grad->drho[2] + st->rho * grad->dvel[2][2]);
+
+  delta->velx = -dt_Extrapolation * (1.0 / st->rho * grad->dpress[0] + st->velx * grad->dvel[0][0] + st->vely * grad->dvel[0][1] +
+                            st->velz * grad->dvel[0][2]);
+
+  delta->vely = -dt_Extrapolation * (1.0 / st->rho * grad->dpress[1] + st->velx * grad->dvel[1][0] + st->vely * grad->dvel[1][1] +
+                            st->velz * grad->dvel[1][2]);
+
+  delta->velz = -dt_Extrapolation * (1.0 / st->rho * grad->dpress[2] + st->velx * grad->dvel[2][0] + st->vely * grad->dvel[2][1] +
+                            st->velz * grad->dvel[2][2]);
+
+  delta->press = -dt_Extrapolation * (GAMMA * st->press * (grad->dvel[0][0] + grad->dvel[1][1] + grad->dvel[2][2]) +
+                             st->velx * grad->dpress[0] + st->vely * grad->dpress[1] + st->velz * grad->dpress[2]);
+
+}
+
+void triangle_vertex_add_extrapolation(struct state_primitive *delta_time, struct state_primitive *st){
+  if(st->rho <= 0)
+    return;
+
+  if(st->rho + delta_time->rho || st->press + delta_time->press< 0)
+    return;
+
+  st->rho += delta_time->rho;
+  st->velx += delta_time->velx;
+  st->vely += delta_time->vely;
+  st->velz += delta_time->velz;
+  st->press += delta_time->press;
+
+}
+
 
 void apply_FluxRD_list(void)
 {

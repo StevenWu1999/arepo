@@ -556,13 +556,11 @@ int init(void)
 
   exchange_primitive_variables();
 
-#ifndef RESIDUAL_DISTRIBUTION
 
   calculate_gradients();
 
   exchange_primitive_variables_and_gradients();
 
-#endif /*ifndef RESIDUAL DISTRIBUTION (We do not need gradients in RD methods) */
 
 
 #if !defined(ONEDIMS) && !defined(TWODIMS)

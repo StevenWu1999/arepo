@@ -201,10 +201,13 @@ void run(void)
 
           exchange_primitive_variables();
 
-          /* let's reconstruct gradients for every cell using Green-Gauss gradient estimation */
+        /* let's reconstruct gradients for every cell using Green-Gauss gradient estimation */
           calculate_gradients();
 
-          /* determine the speed of the mesh-generating vertices */
+
+
+
+        /* determine the speed of the mesh-generating vertices */
           set_vertex_velocities();
 
           /* update the neighbor tree with the new vertex and cell velocities */
@@ -212,9 +215,9 @@ void run(void)
 
           exchange_primitive_variables_and_gradients();
 
-          /* compute intercell flux with Riemann solver and update the cells with the fluxes */
+        /* compute intercell flux with Riemann solver and update the cells with the fluxes */
 #ifdef RESIDUAL_DISTRIBUTION
-//          compute_residuals(&Mesh);
+          compute_residuals(&Mesh);
 #else
           compute_interface_fluxes(&Mesh);
 #endif /*ifdef RESIDUAL_DISTRIBUTION*/
@@ -297,7 +300,7 @@ void run(void)
       exchange_primitive_variables_and_gradients();
 
 #ifdef RESIDUAL_DISTRIBUTION
-      compute_residuals(&Mesh);
+//      compute_residuals(&Mesh);
 #else
       compute_interface_fluxes(&Mesh);
 #endif /*#ifdef RESIDUAL_DISTRIBUTION*/
