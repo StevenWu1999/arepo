@@ -556,11 +556,11 @@ int init(void)
 
   exchange_primitive_variables();
 
+
   calculate_gradients();
 
   exchange_primitive_variables_and_gradients();
 
-  compute_residuals(&Mesh);
 
   MPI_Barrier(MPI_COMM_WORLD);
 

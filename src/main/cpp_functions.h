@@ -16,8 +16,10 @@ void compute_residuals(tessellation*);
 int boundary_triangle_check_responsibility_thistask(tessellation* , int);
 int boundary_triangle_compare(tessellation*T, int, int);
 void rd_test_func(tessellation*);
-void apply_fluxRD_list(void);
-int fluxRD_list_data_compare(const void *, const void *);
+void triangle_vertex_do_time_extrapolation(struct state_primitive *delta, struct state_primitive *st,struct grad_data *grad, double dt_Extrapolation);
+void triangle_vertex_add_extrapolation(struct state_primitive *delta, struct state_primitive *st);
+void apply_FluxRD_list(void);
+int FluxRD_list_data_compare(const void *, const void *);
 void apply_DualArea_list(void);
 int DualArea_list_data_compare(const void *, const void *);
 

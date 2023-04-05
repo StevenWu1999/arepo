@@ -155,15 +155,15 @@ typedef struct face_data
   int p1, p2;
 #ifdef REFINEMENT_MERGE_CELLS
   int t, nr; /* delaunay tetra and edge number that generated this face */
-#endif       /* #ifdef REFINEMENT_MERGE_CELLS */
+#endif /* #ifdef REFINEMENT_MERGE_CELLS */
 
 #ifdef OPTIMIZE_MEMORY_USAGE
   MyFloat area;
   MyFloat cx, cy, cz; /* center-of-mass of face */
-#else                 /* #ifdef OPTIMIZE_MEMORY_USAGE */
+#else /* #ifdef OPTIMIZE_MEMORY_USAGE */
   double area;
   double cx, cy, cz; /* center-of-mass of face */
-#endif                /* #ifdef OPTIMIZE_MEMORY_USAGE #else */
+#endif /* #ifdef OPTIMIZE_MEMORY_USAGE #else */
 
 #ifdef VORONOI_BACKUP_RESTORE_FACE_AREAS
   double area_backup;
@@ -233,6 +233,13 @@ extern struct state_face
 #endif /* #ifdef MAXSCALARS */
 } state_face;
 
+struct state_primitive
+{
+  double rho;
+  double velx, vely, velz;
+  double press;
+};
+
 /*! flux through a face */
 extern struct fluxes
 {
@@ -262,8 +269,8 @@ struct triangle_normals
 {
   double normal[3][2];
   double mag[3];
-  double area;  //area of the triangle
-}; /*2D normal vectors to the edges of Delaunay triangles, used for residual distribution*/
+  double area;  // area of the triangle
+};              /*2D normal vectors to the edges of Delaunay triangles, used for residual distribution*/
 
 struct pv_update_data
 {
@@ -278,5 +285,3 @@ struct fvs_stat
 };
 
 #endif /* MESH_H */
-
-
