@@ -272,6 +272,8 @@ void compute_residuals(tessellation *T)
 
       double triangle_dt = (((integertime)1) << timebin_this_triangle) * All.Timebase_interval;
 
+      triangle_dt *= 0.5;  //RK2 half timestep
+
       // compute residual: set up initial states
       double U_fluid[DIMS + 1][DIMS + 2];  // specific conserved fluid variables
       double C_sound[DIMS + 1];
@@ -315,8 +317,8 @@ void compute_residuals(tessellation *T)
 #endif
           if(U_fluid[j][DIMS + 1] <= 0)
           {
-            printf("sph energy <= 0 error %d %d   %f  %f\n", ThisTask, thistask_triangles[i], U_fluid[j][DIMS + 1],
-                   SphP[SphP_index].Energy);
+            printf("sph energy <= 0 error %d %d   %f  %f  %f  %f\n", ThisTask, thistask_triangles[i], U_fluid[j][DIMS + 1],
+                   SphP[SphP_index].Energy,kinetic_energy,Pressure[j]);
             terminate_program("sph energy <= 0 error.");
           }
 

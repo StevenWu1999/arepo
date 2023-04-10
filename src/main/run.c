@@ -300,7 +300,7 @@ void run(void)
       exchange_primitive_variables_and_gradients();
 
 #ifdef RESIDUAL_DISTRIBUTION
-//      compute_residuals(&Mesh);
+      compute_residuals(&Mesh);
 #else
       compute_interface_fluxes(&Mesh);
 #endif /*#ifdef RESIDUAL_DISTRIBUTION*/
