@@ -182,7 +182,12 @@ void do_validity_checks(struct particle_data *localP, struct sph_particle_data *
 void update_primitive_variables_single(struct particle_data *localP, struct sph_particle_data *localSphP, int i,
                                        struct pv_update_data *pvd)
 {
+
+#ifdef RESIDUAL_DISTRIBUTION
+  localSphP[i].Density = localP[i].Mass / localSphP[i].DualArea;
+#else
   localSphP[i].Density = localP[i].Mass / localSphP[i].Volume;
+#endif
 
   if(localP[i].Mass > 0)
     {

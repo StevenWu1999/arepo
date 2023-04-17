@@ -344,11 +344,17 @@ void output_log_messages(void)
 
       char dustString[13];
       sprintf(dustString, "%s", "");
-      if(write_logs)
+      if(write_logs){
         fprintf(FdTimebin,
                 "Occupied timebins: gravity      hydro     %s     %s     dt              cumul-grav   cumul-sph A D    avg-time  "
                 "cpu-frac\n",
                 tracerString, dustString);
+        printf("Occupied timebins: gravity      hydro     %s     %s     dt              cumul-grav   cumul-sph A D    avg-time  "
+                "cpu-frac\n",
+                tracerString, dustString);
+
+        }
+
 
       for(i = TIMEBINS - 1, tot_grav = tot_sph = 0; i >= 0; i--)
         {
@@ -368,15 +374,26 @@ void output_log_messages(void)
           if(binUsed)
             {
               if(write_logs)
-                fprintf(FdTimebin, " %c  bin=%2d      %10llu  %10llu  %s  %s  %16.12f       %10llu  %10llu %c %c  %10.2f    %5.1f%%\n",
-                        TimeBinSynchronized[i] ? 'X' : ' ', i, tot_count_grav[i], tot_count_sph[i], tracerString, dustString,
-                        i > 0 ? (((integertime)1) << i) * All.Timebase_interval : 0.0, tot_cumulative_grav[i], tot_cumulative_sph[i],
-                        (i == All.HighestActiveTimeBin) ? '<' : ' ',
-                        (All.HighestActiveTimeBin >= All.SmallestTimeBinWithDomainDecomposition && i == All.HighestActiveTimeBin)
-                            ? '*'
-                            : ' ',
-                        avg_CPU_TimeBin[i], 100.0 * frac_CPU_TimeBin[i]);
+                {
+                  fprintf(
+                      FdTimebin, " %c  bin=%2d      %10llu  %10llu  %s  %s  %16.12f       %10llu  %10llu %c %c  %10.2f    %5.1f%%\n",
+                      TimeBinSynchronized[i] ? 'X' : ' ', i, tot_count_grav[i], tot_count_sph[i], tracerString, dustString,
+                      i > 0 ? (((integertime)1) << i) * All.Timebase_interval : 0.0, tot_cumulative_grav[i], tot_cumulative_sph[i],
+                      (i == All.HighestActiveTimeBin) ? '<' : ' ',
+                      (All.HighestActiveTimeBin >= All.SmallestTimeBinWithDomainDecomposition && i == All.HighestActiveTimeBin) ? '*'
+                                                                                                                                : ' ',
+                      avg_CPU_TimeBin[i], 100.0 * frac_CPU_TimeBin[i]);
+                  printf(
+                       " %c  bin=%2d      %10llu  %10llu  %s  %s  %16.12f       %10llu  %10llu %c %c  %10.2f    %5.1f%%\n",
+                      TimeBinSynchronized[i] ? 'X' : ' ', i, tot_count_grav[i], tot_count_sph[i], tracerString, dustString,
+                      i > 0 ? (((integertime)1) << i) * All.Timebase_interval : 0.0, tot_cumulative_grav[i], tot_cumulative_sph[i],
+                      (i == All.HighestActiveTimeBin) ? '<' : ' ',
+                      (All.HighestActiveTimeBin >= All.SmallestTimeBinWithDomainDecomposition && i == All.HighestActiveTimeBin) ? '*'
+                                                                                                                                : ' ',
+                      avg_CPU_TimeBin[i], 100.0 * frac_CPU_TimeBin[i]);
 
+
+                }
               if(TimeBinSynchronized[i])
                 {
                   tot_grav += tot_count_grav[i];
@@ -388,6 +405,7 @@ void output_log_messages(void)
       if(write_logs)
         {
           fprintf(FdTimebin, "               ------------------------\n");
+          printf( "               ------------------------\n");
         }
 
       sprintf(tracerString, "%s", "");
@@ -404,9 +422,12 @@ void output_log_messages(void)
 #endif /* #ifdef PMGRID */
             {
               fprintf(FdTimebin, "Total active:   %10llu  %10llu  %s  %s\n", tot_grav, tot_sph, tracerString, dustString);
+              printf("Total active:   %10llu  %10llu  %s  %s\n", tot_grav, tot_sph, tracerString, dustString);
+
             }
 
           fprintf(FdTimebin, "\n");
+          printf("\n");
         }
 
       myflush(FdTimebin);

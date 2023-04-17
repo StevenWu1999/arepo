@@ -12,6 +12,7 @@ extern "C"{
 
 // functions defined in residual_distribution_solver.cpp, which may be used in other C files
 void cpp_hello_world();
+void reset_dualarea(tessellation *T);
 void compute_residuals(tessellation*);
 int boundary_triangle_check_responsibility_thistask(tessellation* , int);
 int boundary_triangle_compare(tessellation*T, int, int);

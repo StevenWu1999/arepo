@@ -64,6 +64,168 @@ extern struct grad_data *GradExch;
  *
  *  \return void
  */
+
+void reset_dualarea(tessellation *T){
+  point *DP = T->DP;
+  tetra *DT = T->DT;
+  int i, j = 0, k = 0, p;
+  int Ndp = T->Ndp;
+  int Ndt = T->Ndt;
+  char *DT_label;
+  DT_label      = (char *)mymalloc_movable(&DT_label, "DT_label",
+                                           Ndt * sizeof(char)); /* array of labels of the triangles, l = local, b = boundary, o = other*/
+  int Ndt_local = 0, Ndt_boundary = 0, Ndt_other = 0, Ndt_boundary_thistask = 0;
+
+  /* classification of Delaunay triangles*/
+  for(i = 0; i < Ndt; i++)
+  {
+    int pmin = imin_array(DT[i].p, DIMS + 1);
+    int pmax = imax_array(DT[i].p, DIMS + 1);
+
+    if(pmin >= 0 && pmax <= NumGas - 1) /* all vertices are local (excluding local ghost)*/
+    {
+      DT_label[i] = 'l';
+      Ndt_local += 1;
+    }
+    else if(pmin >= 0 && pmin <= NumGas - 1) /*at least one vertex is local (excluding local ghost), but not all of them are local*/
+    {
+      DT_label[i] = 'b';
+      Ndt_boundary += 1;
+      if(boundary_triangle_check_responsibility_thistask(T, i) == ThisTask)
+      {
+        DT_label[i] = 't';
+        Ndt_boundary_thistask += 1;
+      }
+    }
+    else
+    {
+      DT_label[i] = 'o';
+      Ndt_other += 1;
+    }
+  }
+
+  int *local_triangles    = (int *)mymalloc_movable(&local_triangles, "local_triangles", Ndt_local * sizeof(int));
+  int *boundary_triangles = (int *)mymalloc_movable(&boundary_triangles, "boundary_triangles", Ndt_boundary_thistask * sizeof(int));
+
+  for(i = 0; i < Ndt; i++)
+  {
+    if(DT_label[i] == 'l')
+    {
+      local_triangles[j] = i;
+      j += 1;
+    }
+    else if(DT_label[i] == 't')
+    {
+      boundary_triangles[k] = i;
+      k += 1;
+    }
+  }
+  /* check uniqueness of boundary triangles of this task*/
+  int Ndt_boundary_thistask_repeated = 0;
+  for(i = 0; i < Ndt_boundary_thistask; i++)
+  {
+    for(j = 0; j < i; j++)
+    {
+      if(boundary_triangle_compare(T, boundary_triangles[i], boundary_triangles[j]))
+      {
+        DT_label[boundary_triangles[i]] = 'r';
+        boundary_triangles[i]           = -1;
+        Ndt_boundary_thistask_repeated += 1;
+      }
+    }
+  }
+
+  int Ndt_thistask        = Ndt_local + Ndt_boundary_thistask - Ndt_boundary_thistask_repeated;
+  int *thistask_triangles = (int *)mymalloc_movable(&thistask_triangles, "thistask_triangles", Ndt_thistask * sizeof(int));
+  for(i = 0; i < Ndt_local; i++)
+  {
+    thistask_triangles[i] = local_triangles[i];
+  }
+  j = Ndt_local;
+  for(i = 0; i < Ndt_boundary_thistask; i++)
+  {
+    if(boundary_triangles[i] >= 0)
+    {
+      thistask_triangles[j] = boundary_triangles[i];
+      j++;
+    }
+  }
+
+  /* compute residual: calculate normal vectors and triangular area; assign dual area to vertices
+   tri_normals_list is a shorter list compared to DT because it only keeps necessary triangles for
+   this task (Ndt_thistask). tri_normal_list[i]  <-->  DT[thistask_triangles[i]]
+   */
+  tri_normals_list = (struct triangle_normals *)mymalloc_movable(&tri_normals_list, "tri_normals_list",
+                                                                 Ndt_thistask * sizeof(struct triangle_normals));
+
+  for(i = 0; i < Ndt_thistask; i++)
+  {
+#ifdef TWODIMS
+    triangle_get_normals_area(T, thistask_triangles[i], &tri_normals_list[i]);
+#endif
+  }
+
+  for(i = 0; i < NumGas; i++)
+  {
+    SphP[i].DualArea = 0.0;
+  }
+
+  N_DualArea_export = 0;
+  for(i = 0; i < Ndt_thistask; i++)
+  {
+    for(j = 0; j < DIMS + 1; j++)
+    {
+      if(DP[DT[thistask_triangles[i]].p[j]].task == ThisTask)
+      {
+        int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
+        //              if(SphP_index < 0)
+        //                continue;   not necessary here, since the triangles we selected should not contain external points
+        if(SphP_index > NumGas)
+          SphP_index -= NumGas;
+
+        SphP[SphP_index].DualArea += tri_normals_list[i].area / (DIMS + 1);
+      }
+      else
+      {
+        N_DualArea_export += 1;
+      }
+    }
+  }
+
+  DualArea_list = (struct DualArea_list_data *)mymalloc_movable(&DualArea_list, "DualArea_list",
+                                                                N_DualArea_export * sizeof(struct DualArea_list_data));
+  k             = 0;
+  for(i = Ndt_local; i < Ndt_thistask; i++)
+  {
+    for(j = 0; j < DIMS + 1; j++)
+    {
+      if(DP[DT[thistask_triangles[i]].p[j]].task != ThisTask)
+      {
+        DualArea_list[k].task     = DP[DT[thistask_triangles[i]].p[j]].task;
+        DualArea_list[k].index    = DP[DT[thistask_triangles[i]].p[j]].originalindex;
+        DualArea_list[k].DualArea = tri_normals_list[i].area / (DIMS + 1);
+        k += 1;
+      }
+    }
+  }
+  apply_DualArea_list();
+
+
+  myfree_movable(DualArea_list);
+  myfree_movable(tri_normals_list);
+  myfree_movable(thistask_triangles);
+  myfree_movable(boundary_triangles);
+  myfree_movable(local_triangles);
+  myfree_movable(DT_label);
+
+
+}
+
+
+
+
+
+
 void compute_residuals(tessellation *T)
 {
 #ifdef NOHYDRO
@@ -280,7 +442,12 @@ void compute_residuals(tessellation *T)
       double Pressure[DIMS + 1];
 
 
-      for(j = 0; j < DIMS + 1; j++)
+      double Velvertex_avg[3]; //moving mesh: average mesh velocity
+      for (j = 0; j<3;j++){
+          Velvertex_avg[j] = 0.0;
+        }
+
+      for(j = 0; j < DIMS + 1; j++)  // loop through vertices of this triangle
       {
         if(DP[DT[thistask_triangles[i]].p[j]].task == ThisTask)
         {
@@ -301,8 +468,18 @@ void compute_residuals(tessellation *T)
 
           double dt_Extrapolation = All.Time - SphP[SphP_index].TimeLastPrimUpdate;
 
+          vertex_state.velx -= SphP[SphP_index].VelVertex[0];
+          vertex_state.vely -= SphP[SphP_index].VelVertex[1];
+          vertex_state.velz += SphP[SphP_index].VelVertex[2];
           triangle_vertex_do_time_extrapolation(&delta_time,&vertex_state,grad,dt_Extrapolation);
           triangle_vertex_add_extrapolation(&delta_time,&vertex_state);
+          vertex_state.velx += SphP[SphP_index].VelVertex[0];
+          vertex_state.vely += SphP[SphP_index].VelVertex[1];
+          vertex_state.velz += SphP[SphP_index].VelVertex[2];
+
+          Velvertex_avg[0] += SphP[SphP_index].VelVertex[0];
+          Velvertex_avg[1] += SphP[SphP_index].VelVertex[1];
+          Velvertex_avg[2] += SphP[SphP_index].VelVertex[2];
 
 
 #ifdef TWODIMS
@@ -348,8 +525,18 @@ void compute_residuals(tessellation *T)
           vertex_state.velz = PrimExch[PrimExch_index].VelGas[2];
           double dt_Extrapolation = All.Time - PrimExch[PrimExch_index].TimeLastPrimUpdate;
 
+          vertex_state.velx -= PrimExch[PrimExch_index].VelVertex[0];
+          vertex_state.vely -= PrimExch[PrimExch_index].VelVertex[1];
+          vertex_state.velz -= PrimExch[PrimExch_index].VelVertex[2];
           triangle_vertex_do_time_extrapolation(&delta_time,&vertex_state,grad,dt_Extrapolation);
           triangle_vertex_add_extrapolation(&delta_time,&vertex_state);
+          vertex_state.velx -= PrimExch[PrimExch_index].VelVertex[0];
+          vertex_state.vely -= PrimExch[PrimExch_index].VelVertex[1];
+          vertex_state.velz -= PrimExch[PrimExch_index].VelVertex[2];
+
+          Velvertex_avg[0] += PrimExch[PrimExch_index].VelVertex[0];
+          Velvertex_avg[1] += PrimExch[PrimExch_index].VelVertex[1];
+          Velvertex_avg[2] += PrimExch[PrimExch_index].VelVertex[2];
 
           /*we should only use primitive variables to get U_fluid*/
 
@@ -380,9 +567,9 @@ void compute_residuals(tessellation *T)
         }
       }  // for(j = 0; j < DIMS + 1; j++) get fluid state for each vertex of this triangle
 
-
-
-
+      Velvertex_avg[0] /= (DIMS+1);
+      Velvertex_avg[1] /= (DIMS+1);
+      Velvertex_avg[2] /= (DIMS+1);
 
 
 
@@ -452,19 +639,23 @@ void compute_residuals(tessellation *T)
       double alpha_c = alpha / Cs_avg;
 
       // compute residual: Calculate K+,K- and K matrices for each vertex
-      double vel_dot_n;
+      double vel_dot_n, velvertex_dot_n;
       double Lambda[3][4], Lambda_plus[3][4], Lambda_minus[3][4];
       double Value1, Value2, Value3, Value4, Value12, Value123;
       double Kmatrix[4][4][3][3];  // Kmatrix[4][4][j=0,1,2(vertices)][p=0(K+),1(K-),2(K)]
       int kfull = 2, kplus = 0, kminus = 1;
 
+      //moving mesh
+
       for(j = 0; j < 3; j++)
         {
           vel_dot_n    = velx_avg * N_X[j] + vely_avg * N_Y[j];
-          Lambda[j][0] = vel_dot_n + Cs_avg;
-          Lambda[j][1] = vel_dot_n - Cs_avg;
-          Lambda[j][2] = vel_dot_n;
-          Lambda[j][3] = vel_dot_n;
+          velvertex_dot_n = Velvertex_avg[0] * N_X[j] + Velvertex_avg[1] * N_Y[j];
+
+          Lambda[j][0] = vel_dot_n + Cs_avg - velvertex_dot_n;
+          Lambda[j][1] = vel_dot_n - Cs_avg - velvertex_dot_n;
+          Lambda[j][2] = vel_dot_n - velvertex_dot_n;
+          Lambda[j][3] = vel_dot_n - velvertex_dot_n;
 
           for(k = 0; k < 4; k++)
             {
@@ -540,6 +731,7 @@ void compute_residuals(tessellation *T)
                   0.5 * Mag[j] * (GAMMA_MINUS1 * h_c * Value123 / Cs_avg + GAMMA_MINUS1 * vel_dot_n * Value12 / Cs_avg + Value3);
             }
         }
+
       // compute residual: get residual Phi
       double Phi[4];
       for(k = 0; k < 4; k++)
@@ -690,10 +882,20 @@ void compute_residuals(tessellation *T)
                 SphP_index -= NumGas;
 
               int P_index = SphP_index;
+
+              /* debug
               P[P_index].Mass += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[0][j] / SphP[SphP_index].DualArea;
               SphP[SphP_index].Momentum[0] += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[1][j] / SphP[SphP_index].DualArea;
               SphP[SphP_index].Momentum[1] += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[2][j] / SphP[SphP_index].DualArea;
               SphP[SphP_index].Energy += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[3][j] / SphP[SphP_index].DualArea;
+              */
+
+              P[P_index].Mass += (-1.0) * triangle_dt * Flux_RD[0][j];
+              SphP[SphP_index].Momentum[0] += (-1.0) * triangle_dt * Flux_RD[1][j];
+              SphP[SphP_index].Momentum[1] += (-1.0) * triangle_dt * Flux_RD[2][j];
+              SphP[SphP_index].Energy += (-1.0) * triangle_dt * Flux_RD[3][j];
+
+
             }
           else
             {
@@ -702,11 +904,19 @@ void compute_residuals(tessellation *T)
               FluxRD_list[N_FluxRD_export].task  = DP[DT[thistask_triangles[i]].p[j]].task;
               FluxRD_list[N_FluxRD_export].index = DP[DT[thistask_triangles[i]].p[j]].originalindex;
 
+              /* debug
               FluxRD_list[N_FluxRD_export].dMass_Dual        = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[0][j];
               FluxRD_list[N_FluxRD_export].dMomentum_Dual[0] = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[1][j];
               FluxRD_list[N_FluxRD_export].dMomentum_Dual[1] = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[2][j];
               FluxRD_list[N_FluxRD_export].dMomentum_Dual[2] = 0.0;
               FluxRD_list[N_FluxRD_export].dEnergy_Dual      = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[3][j];
+              */
+
+              FluxRD_list[N_FluxRD_export].dMass_Dual        = (-1.0) * triangle_dt * Flux_RD[0][j];
+              FluxRD_list[N_FluxRD_export].dMomentum_Dual[0] = (-1.0) * triangle_dt * Flux_RD[1][j];
+              FluxRD_list[N_FluxRD_export].dMomentum_Dual[1] = (-1.0) * triangle_dt * Flux_RD[2][j];
+              FluxRD_list[N_FluxRD_export].dMomentum_Dual[2] = 0.0;
+              FluxRD_list[N_FluxRD_export].dEnergy_Dual      = (-1.0) * triangle_dt * Flux_RD[3][j];
 
               N_FluxRD_export += 1;
             }
@@ -943,11 +1153,21 @@ void apply_FluxRD_list(void)
     {
       p = FluxListGet[i].index;
 
+      /* debug
       P[p].Mass += FluxListGet[i].dMass_Dual / SphP[p].DualArea;
       SphP[p].Momentum[0] += FluxListGet[i].dMomentum_Dual[0] / SphP[p].DualArea;
       SphP[p].Momentum[1] += FluxListGet[i].dMomentum_Dual[1] / SphP[p].DualArea;
       SphP[p].Momentum[2] += FluxListGet[i].dMomentum_Dual[2] / SphP[p].DualArea;
       SphP[p].Energy += FluxListGet[i].dEnergy_Dual / SphP[p].DualArea;
+      */
+
+      P[p].Mass += FluxListGet[i].dMass_Dual;
+      SphP[p].Momentum[0] += FluxListGet[i].dMomentum_Dual[0];
+      SphP[p].Momentum[1] += FluxListGet[i].dMomentum_Dual[1];
+      SphP[p].Momentum[2] += FluxListGet[i].dMomentum_Dual[2];
+      SphP[p].Energy += FluxListGet[i].dEnergy_Dual;
+
+
     }
   myfree(FluxListGet);
 }

@@ -162,6 +162,7 @@ void run(void)
     }
 #endif /* #if defined(VORONOI_STATIC_MESH) */
 
+  int loop_test = 0;
 
   while(1) /* main loop */
     {
@@ -315,6 +316,9 @@ void run(void)
 
       /* do any extra physics, Strang-split (update both primitive and conserved variables as needed ) */
       calculate_non_standard_physics_end_of_step();
+
+      loop_test += 1;
+
     }
 
   restart(0); /* write a restart file at final time - can be used to continue simulation beyond final time */

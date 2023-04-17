@@ -407,6 +407,10 @@ int init(void)
 
   create_mesh();
   mesh_setup_exchange();
+#ifdef RESIDUAL_DISTRIBUTION
+  reset_dualarea(&Mesh);
+#endif
+
 
   if(RestartFlag == 14)
     {
@@ -425,17 +429,27 @@ int init(void)
       if(RestartFlag == 0)
         {
 #ifdef READ_MASS_AS_DENSITY_IN_INPUT
-          P[i].Mass *= SphP[i].Volume;
+#ifdef RESIDUAL_DISTRIBUTION
+        P[i].Mass *= SphP[i].DualArea;
+        SphP[i].Density = P[i].Mass / SphP[i].DualArea;
+#else
+        P[i].Mass *= SphP[i].Volume;
+        SphP[i].Density = P[i].Mass / SphP[i].Volume;
+#endif
 #endif /* #ifdef READ_MASS_AS_DENSITY_IN_INPUT */
         }
 
-      SphP[i].Density = P[i].Mass / SphP[i].Volume;
 
       if(SphP[i].Density < All.MinimumDensityOnStartUp)
         {
           SphP[i].Density = All.MinimumDensityOnStartUp;
 
+#ifdef RESIDUAL_DISTRIBUTION
+          P[i].Mass = SphP[i].DualArea * SphP[i].Density;
+#else
           P[i].Mass = SphP[i].Volume * SphP[i].Density;
+#endif
+
         }
 
       SphP[i].Momentum[0] = P[i].Mass * P[i].Vel[0];
@@ -558,6 +572,7 @@ int init(void)
 
 
   calculate_gradients();
+
 
   exchange_primitive_variables_and_gradients();
 
