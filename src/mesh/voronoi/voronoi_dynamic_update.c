@@ -81,6 +81,7 @@ int voronoi_get_connected_particles(tessellation *T)
   int ngrp, recvTask;
 
   CPU_Step[CPU_MISC] += measure_time();
+  printf("debug: connect particles line 84 %f %f \n",Mesh.DP[0].x,Mesh.DP[0].y);
 
   /* first, let's add all the primary active points */
   for(idx = 0; idx < TimeBinsHydro.NActiveParticles; idx++)
@@ -151,6 +152,15 @@ int voronoi_get_connected_particles(tessellation *T)
           dp->originalindex = -1;
           dp->timebin       = P[p].TimeBinHydro;
           dp->image_flags   = 1;
+
+          //debug
+//          if(dp->ID == 2049){
+//              printf("debug: get connected particle line 157: %f %f %d %d %d\n",dp->x, dp->y, dp->index,T->Ndp,p);
+//              printf("debug: connect particles line 158 %f %f \n",Mesh.DP[256].x,Mesh.DP[256].y);
+//
+//          }
+
+
 #ifdef DOUBLE_STENCIL
           dp->Hsml             = SphP[p].Hsml;
           dp->first_connection = -1;
@@ -349,6 +359,14 @@ int voronoi_get_connected_particles(tessellation *T)
           q = DC[q].next;
         }
     }
+//
+// for(int test =0;test<Mesh.Ndp;test++){
+//     if(Mesh.DP[test].ID == 2049){
+//         printf("debug: ID2049, %d %f %f \n",test, Mesh.DP[test].x,Mesh.DP[test].y);
+//       }
+//   }
+//
+//  printf("debug: connect particles line 361 %f %f \n",Mesh.DP[256].x,Mesh.DP[256].y);
 
   /* we now compile a list of the foreign neighbors we want in the mesh */
 

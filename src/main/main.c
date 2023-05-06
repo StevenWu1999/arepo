@@ -252,6 +252,14 @@ int main(int argc, char **argv)
         }
     }
 
+  if(ThisTask == 1)
+  {
+    int testindex = 1280;
+    printf("debug task  ***************** start of run *******************: %f %f %f %f   %f %f\n \n\n", P[testindex].Mass,SphP[testindex].Volume,SphP[testindex].DualArea, SphP[testindex].Density, P[testindex].Pos[0],
+           P[testindex].Pos[1]);
+  }
+
+
   begrun2();
 
   run(); /* main simulation loop */

@@ -337,6 +337,9 @@ void set_integers_for_pointer(point *p);
 static inline void set_integers_for_point(tessellation *T, int pp)
 {
   point *p = &T->DP[pp];
+  if (p->index == 4352){
+    printf("debug here %f %f %d %d  %f %f\n",p->x,p->y,pp, T->Ndp, T->DP[pp].x,T->DP[pp].y);
+    }
   set_integers_for_pointer(p);
 }
 #else  /* #ifndef OPTIMIZE_MEMORY_USAGE */

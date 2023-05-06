@@ -187,7 +187,6 @@ void run(void)
               break;
             }
 
-
           find_timesteps_without_gravity(); /* find-timesteps */
 
           find_gravity_timesteps_and_do_gravity_step_first_half(); /* gravity half-step for hydrodynamics */
@@ -202,13 +201,10 @@ void run(void)
 
           exchange_primitive_variables();
 
-        /* let's reconstruct gradients for every cell using Green-Gauss gradient estimation */
+          /* let's reconstruct gradients for every cell using Green-Gauss gradient estimation */
           calculate_gradients();
 
-
-
-
-        /* determine the speed of the mesh-generating vertices */
+          /* determine the speed of the mesh-generating vertices */
           set_vertex_velocities();
 
           /* update the neighbor tree with the new vertex and cell velocities */
@@ -216,11 +212,14 @@ void run(void)
 
           exchange_primitive_variables_and_gradients();
 
-        /* compute intercell flux with Riemann solver and update the cells with the fluxes */
+          /* compute intercell flux with Riemann solver and update the cells with the fluxes */
 #ifdef RESIDUAL_DISTRIBUTION
           compute_residuals(&Mesh);
 #else
+          printf("debug: line 226 ..................\n");
           compute_interface_fluxes(&Mesh);
+          printf("debug: line 228 ..................\n");
+
 #endif /*ifdef RESIDUAL_DISTRIBUTION*/
 
 #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT
@@ -294,7 +293,11 @@ void run(void)
       calculate_non_standard_physics_prior_mesh_construction();
 
 #if !defined(VORONOI_STATIC_MESH)
+
+      printf("debug: line 303 ..................\n");
       create_mesh();
+      printf("debug: line 306 ..................\n");
+
       mesh_setup_exchange();
 #endif /* #if !defined(VORONOI_STATIC_MESH) */
 
@@ -318,7 +321,6 @@ void run(void)
       calculate_non_standard_physics_end_of_step();
 
       loop_test += 1;
-
     }
 
   restart(0); /* write a restart file at final time - can be used to continue simulation beyond final time */
@@ -580,8 +582,6 @@ integertime find_next_outputtime(integertime ti_curr)
           if(All.TimeBetSnapshot <= 0.0)
             terminate_program("TimeBetSnapshot > 0.0 required for your simulation.\n");
         }
-
-
 
       time = All.TimeOfFirstSnapshot;
       iter = 0;

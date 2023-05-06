@@ -1,11 +1,11 @@
 
-#include <lapacke.h>
+#include <iostream>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <lapacke.h>
 
-#include <iostream>
 
 #include "../main/allvars.h"
 #include "../main/cpp_functions.h"
@@ -224,8 +224,6 @@ void reset_dualarea(tessellation *T){
 
 
 
-
-
 void compute_residuals(tessellation *T)
 {
 #ifdef NOHYDRO
@@ -381,13 +379,6 @@ void compute_residuals(tessellation *T)
   //  snprintf(triangulation_name, 100, "%s/triangulation_dual_%03d", All.OutputDir, 0);
   //  write_delaunay_triangulation(T, triangulation_name, 0, NTask - 1);
 
-  // debug
-  //  double *Residual_List;
-  //  Residual_List = (double *)mymalloc_movable(&Residual_List, "Residual_List", Ndt_thistask *4* sizeof(double));
-
-  //
-  //  face_dt = (((integertime)1) << timeBin) * All.Timebase_interval
-  //
 
   Max_N_FluxRD_export = N_DualArea_export;
   N_FluxRD_export     = 0;
@@ -470,7 +461,7 @@ void compute_residuals(tessellation *T)
 
           vertex_state.velx -= SphP[SphP_index].VelVertex[0];
           vertex_state.vely -= SphP[SphP_index].VelVertex[1];
-          vertex_state.velz += SphP[SphP_index].VelVertex[2];
+          vertex_state.velz -= SphP[SphP_index].VelVertex[2];
           triangle_vertex_do_time_extrapolation(&delta_time,&vertex_state,grad,dt_Extrapolation);
           triangle_vertex_add_extrapolation(&delta_time,&vertex_state);
           vertex_state.velx += SphP[SphP_index].VelVertex[0];
@@ -494,9 +485,17 @@ void compute_residuals(tessellation *T)
 #endif
           if(U_fluid[j][DIMS + 1] <= 0)
           {
-            printf("sph energy <= 0 error %d %d   %f  %f  %f  %f\n", ThisTask, thistask_triangles[i], U_fluid[j][DIMS + 1],
-                   SphP[SphP_index].Energy,kinetic_energy,Pressure[j]);
-            terminate_program("sph energy <= 0 error.");
+            printf("Energy <= 0 error: Task = %d, Triangle index = %d, SphP index = %d, ID = %d  \n Coordinates = %f, %f, %f, "
+                   "Energies:  %f  %f  %f  %f\n",
+                   ThisTask, thistask_triangles[i],SphP_index, P[SphP_index].ID,P[SphP_index].Pos[0],P[SphP_index].Pos[1],P[SphP_index].Pos[2],
+                   U_fluid[j][DIMS + 1],SphP[SphP_index].Energy,kinetic_energy,Pressure[j]);
+
+            printf("print info for this particle:  %f %f %f    %f %f %f     %f   %f\n", P[SphP_index].Vel[0],P[SphP_index].Vel[1],P[SphP_index].Vel[2],
+                   vertex_state.velx,vertex_state.vely,vertex_state.velz,vertex_state.rho,kinetic_energy);
+
+            printf("density:  %f \n",SphP[SphP_index].Density);
+
+            terminate_program("Energy <= 0 error.");
           }
 
 #ifdef TREE_BASED_TIMESTEPS
@@ -530,9 +529,9 @@ void compute_residuals(tessellation *T)
           vertex_state.velz -= PrimExch[PrimExch_index].VelVertex[2];
           triangle_vertex_do_time_extrapolation(&delta_time,&vertex_state,grad,dt_Extrapolation);
           triangle_vertex_add_extrapolation(&delta_time,&vertex_state);
-          vertex_state.velx -= PrimExch[PrimExch_index].VelVertex[0];
-          vertex_state.vely -= PrimExch[PrimExch_index].VelVertex[1];
-          vertex_state.velz -= PrimExch[PrimExch_index].VelVertex[2];
+          vertex_state.velx += PrimExch[PrimExch_index].VelVertex[0];
+          vertex_state.vely += PrimExch[PrimExch_index].VelVertex[1];
+          vertex_state.velz += PrimExch[PrimExch_index].VelVertex[2];
 
           Velvertex_avg[0] += PrimExch[PrimExch_index].VelVertex[0];
           Velvertex_avg[1] += PrimExch[PrimExch_index].VelVertex[1];

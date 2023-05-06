@@ -1899,7 +1899,7 @@ void set_integers_for_pointer(point *p)
 
   if(p->xx < 1.0 || p->xx >= 2.0 || p->yy < 1.0 || p->yy >= 2.0)
     {
-      printf("(%g, %g) (%g, %g)\n", p->x, p->y, p->xx, p->yy);
+      printf("(%g, %g) (%g, %g) , %d  %d\n", p->x, p->y, p->xx, p->yy, p->ID, p->index);
       terminate_program("invalid coordinate range");
     }
 

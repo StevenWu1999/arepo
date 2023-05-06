@@ -157,6 +157,7 @@ void create_mesh(void)
 
   initialize_and_create_first_tetra(&Mesh);
 
+//  printf("debug: line 160 ...................................\n");
   CountInSphereTests = CountInSphereTestsExact = 0;
   CountConvexEdgeTest = CountConvexEdgeTestExact = 0;
   CountFlips = Count_1_to_3_Flips2d = Count_2_to_4_Flips2d = 0;
@@ -193,13 +194,16 @@ void create_mesh(void)
       TIMER_STOPSTART(CPU_MESH, CPU_MESH_FIND_DP);
 
       tstart = second();
-
+//      printf("debug: 197 %f %f  \n", Mesh.DP[0].x, Mesh.DP[0].y);
       if(iter == 0)
         {
           MPI_Allreduce(&Nvc, &Largest_Nvc, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 
-          if(Largest_Nvc > 0)
-            n = voronoi_get_connected_particles(&Mesh);
+//          printf("debug: nvc %d\n",Largest_Nvc);
+          if(Largest_Nvc > 0){
+              n = voronoi_get_connected_particles(&Mesh);
+//              printf("debug: 205 %f %f  \n", Mesh.DP[0].x, Mesh.DP[0].y);
+          }
           else
             n = voronoi_get_local_particles();
         }
@@ -207,6 +211,7 @@ void create_mesh(void)
         {
           n = voronoi_ghost_search(&Mesh);
         }
+//      printf("debug: 214 %f %f  \n", Mesh.DP[0].x, Mesh.DP[0].y);
 
       sumup_large_ints(1, &n, &ntot);
 

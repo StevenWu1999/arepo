@@ -412,18 +412,6 @@ int init(void)
 #endif
 
 
-  if(RestartFlag == 14)
-    {
-//      char tess_name[1024];
-//      sprintf(tess_name, "%s/tess_%03d", All.OutputDir, RestartSnapNum);
-//      write_voronoi_mesh(&Mesh, tess_name, 0, NTask - 1);
-      char triangulation_name[1024];
-      sprintf(triangulation_name, "%s/triangulation_%03d", All.OutputDir, RestartSnapNum);
-      write_delaunay_triangulation(&Mesh,triangulation_name,0,NTask - 1);
-
-      return 0;
-    }
-
   for(i = 0, mass = 0; i < NumGas; i++)
     {
       if(RestartFlag == 0)
@@ -575,6 +563,26 @@ int init(void)
 
 
   exchange_primitive_variables_and_gradients();
+
+
+  if(ThisTask == 1)
+  {
+    int testindex = 1279;
+    printf("debug task  ***************** init line 590 *******************: NumGas: %d  index:%d  mass:%f  volume: %f  dual: %f  density: %f  pos: %f %f\n \n\n", NumGas, testindex, P[testindex].Mass,SphP[testindex].Volume,SphP[testindex].DualArea, SphP[testindex].Density, P[testindex].Pos[0],
+           P[testindex].Pos[1]);
+  }
+
+  if(RestartFlag == 14)
+  {
+//      char tess_name[1024];
+//      sprintf(tess_name, "%s/tess_%03d", All.OutputDir, RestartSnapNum);
+//      write_voronoi_mesh(&Mesh, tess_name, 0, NTask - 1);
+    char triangulation_name[1024];
+    sprintf(triangulation_name, "%s/triangulation_%03d", All.OutputDir, RestartSnapNum);
+    write_delaunay_triangulation(&Mesh,triangulation_name,0,NTask - 1);
+
+    return 0;
+  }
 
 
 
