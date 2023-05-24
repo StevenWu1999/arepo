@@ -180,7 +180,7 @@ void reset_dualarea(tessellation *T){
         int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
         //              if(SphP_index < 0)
         //                continue;   not necessary here, since the triangles we selected should not contain external points
-        if(SphP_index > NumGas)
+        if(SphP_index >= NumGas)
           SphP_index -= NumGas;
 
         SphP[SphP_index].DualArea += tri_normals_list[i].area / (DIMS + 1);
@@ -344,7 +344,7 @@ void compute_residuals(tessellation *T)
               int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
               //              if(SphP_index < 0)
               //                continue;   not necessary here, since the triangles we selected should not contain external points
-              if(SphP_index > NumGas)
+              if(SphP_index >= NumGas)
                 SphP_index -= NumGas;
 
               SphP[SphP_index].DualArea += tri_normals_list[i].area / (DIMS + 1);
@@ -396,7 +396,7 @@ void compute_residuals(tessellation *T)
           if(DP[DT[thistask_triangles[i]].p[j]].task == ThisTask)
             {
               int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
-              if(SphP_index > NumGas)
+              if(SphP_index >= NumGas)
                 SphP_index -= NumGas;
 
               timebin_vertices[j] = P[SphP_index].TimeBinHydro;
@@ -443,7 +443,7 @@ void compute_residuals(tessellation *T)
         if(DP[DT[thistask_triangles[i]].p[j]].task == ThisTask)
         {
           int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
-          if(SphP_index > NumGas)
+          if(SphP_index >= NumGas)
             SphP_index -= NumGas;
 
           //extrapolation to current time
@@ -877,7 +877,7 @@ void compute_residuals(tessellation *T)
               int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
               //              if(SphP_index < 0)
               //                continue;   not necessary here, since the triangles we selected should not contain external points
-              if(SphP_index > NumGas)
+              if(SphP_index >= NumGas)
                 SphP_index -= NumGas;
 
               int P_index = SphP_index;

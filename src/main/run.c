@@ -216,10 +216,7 @@ void run(void)
 #ifdef RESIDUAL_DISTRIBUTION
           compute_residuals(&Mesh);
 #else
-          printf("debug: line 226 ..................\n");
           compute_interface_fluxes(&Mesh);
-          printf("debug: line 228 ..................\n");
-
 #endif /*ifdef RESIDUAL_DISTRIBUTION*/
 
 #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT
