@@ -2139,7 +2139,6 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
             fprintf(fdtxt,"%f \t",tmp_float[i]);
           }
           fprintf(fdtxt,"\n");
-          printf("debug: tmp line 2144 task %d %f %f \n",task,tmp_float[0],tmp_float[1]);
 
           myfree(tmp_float);
         }
@@ -2227,11 +2226,6 @@ void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, i
           mpi_terminate_program("Error, invalid DP points!");
       }
   }
-//      mpi_printf("debug: DP-1,  %d %d %d %f %f\n ",DP[-1].task, DP[-1].index, DP[-1].ID, DP[-1].x, DP[-1].y);
-//      mpi_printf("debug: DP-2,  %d %d %d %f %f\n ",DP[-2].task, DP[-2].index, DP[-2].ID, DP[-2].x, DP[-2].y);
-//      mpi_printf("debug: DP-3,  %d %d %d %f %f\n ",DP[-3].task, DP[-3].index, DP[-3].ID, DP[-3].x, DP[-3].y);
-//      mpi_printf("debug: DP-4,  %d %d %d %f %f\n ",DP[-4].task, DP[-4].index, DP[-4].ID, DP[-4].x, DP[-4].y);
-
 
   fprintf(fdtxt,"\nNdt: %d\n", T->Ndt);
   fprintf(fdtxt,"DT[i].p[DIMS+1], DT[i].t[DIMS+1], DT[i].s[DIMS+1]:\n");
@@ -2250,6 +2244,7 @@ void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, i
 //
 //  }
 
+  fclose(fdtxt);
 
   mpi_printf("wrote Delaunay triangulation to file \n");
   CPU_Step[CPU_MAKEIMAGES] += measure_time();
@@ -2257,5 +2252,72 @@ void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, i
 
 
 }
+
+
+void write_only_delaunay_triangulation(tessellation *T, char *fname, int writeTask, int lastTask){
+#ifdef RESIDUAL_DISTRIBUTION
+
+  CPU_Step[CPU_MISC] += measure_time();
+
+  FILE* fdtxt;
+  int i, pindex;
+  char msg[1000], fname_new[1000];
+  tetra *DT         = T->DT;
+  point *DP         = T->DP;
+
+
+
+  sprintf(fname_new,"%s_%d.txt",fname,ThisTask);
+
+  if(!(fdtxt = fopen(fname_new, "w")))
+  {
+    sprintf(msg, "can't open file `%s' for writing snapshot.\n", fname);
+    terminate_program(msg);
+  }
+
+  fprintf(fdtxt,"NumGas: %d \n",NumGas);
+  fprintf(fdtxt,"P[i].ID, P[i].x, P[i].y, P[i].Velx, P[i].Vely, SphP[i].DualArea \n");
+
+  for (i=0;i<NumGas;i++){
+    fprintf(fdtxt,"%d %.10g %.10g    %.10g %.10g    %.10g\n",P[i].ID, P[i].Pos[0], P[i].Pos[1], P[i].Vel[0], P[i].Vel[1], SphP[i].DualArea);
+  }
+  fprintf(fdtxt, "\nNdp: %d \n",T->Ndp);
+  fprintf(fdtxt,"DP[i].task, index, ID, x, y \n");
+  for (i=-3;i<T->Ndp;i++){
+    if (DP[i].index < 0 ){
+      fprintf(fdtxt,"%d %d %d %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y);
+    }else if(DP[i].task == ThisTask && DP[i].index < NumGas) {
+      pindex = DP[i].index;
+      fprintf(fdtxt,"%d %d %d %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y);
+    }else if(DP[i].task == ThisTask && DP[i].index >= NumGas){
+      pindex = DP[i].index - NumGas;
+      fprintf(fdtxt,"%d %d %d %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y);
+    }else if(DP[i].task != ThisTask){
+      pindex = DP[i].index;
+      fprintf(fdtxt,"%d %d %d %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y);
+    }else{
+      mpi_terminate_program("Error, invalid DP points!");
+    }
+  }
+
+  fprintf(fdtxt,"\nNdt: %d\n", T->Ndt);
+  fprintf(fdtxt,"DT[i].p[DIMS+1], DT[i].t[DIMS+1], DT[i].s[DIMS+1]:\n");
+  for (i=0;i<T->Ndt;i++){
+    fprintf(fdtxt,"%d %d %d %d   %d %d %d   %u %u %u\n",i,DT[i].p[0],DT[i].p[1],DT[i].p[2], DT[i].t[0],DT[i].t[1],DT[i].t[2],
+            DT[i].s[0],DT[i].s[1],DT[i].s[2]);
+
+  }
+
+  fclose(fdtxt);
+
+  mpi_printf("wrote Delaunay triangulation to file \n");
+  CPU_Step[CPU_MAKEIMAGES] += measure_time();
+#endif /* #ifdef RESIDUAL_DISTRIBUTION */
+
+
+}
+
+
+
 
 #endif /* #if defined(TWODIMS) && !defined(ONEDIMS) */

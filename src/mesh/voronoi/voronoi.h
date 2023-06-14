@@ -286,6 +286,7 @@ void apply_area_list(void);
 int area_list_data_compare(const void *a, const void *b);
 void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTask);
 void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, int lastTask);
+void write_only_delaunay_triangulation(tessellation *T, char *fname, int writeTask, int lastTask);
 void initialize_and_create_first_tetra(tessellation *T);
 void compute_voronoi_faces_and_volumes(void);
 void get_line_segments(int sphp_index, int dp_index, double *segments, unsigned int *nof_elements, unsigned int max_elements);
