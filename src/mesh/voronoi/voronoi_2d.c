@@ -2040,14 +2040,14 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
         terminate_program(msg);
       }
 
-      fprintf(fdtxt,"ngas_tot: %d\n",ngas_tot);
-      fprintf(fdtxt,"nel_tot: %d\n",nel_tot);
-      fprintf(fdtxt,"ndt_tot: %d\n",ndt_tot);
-
-      printf("ngas_tot: %d\n",ngas_tot);
-      printf("nel_tot: %d\n",nel_tot);
-      printf("ndt_tot: %d\n",ndt_tot);
-
+//      fprintf(fdtxt,"ngas_tot: %d\n",ngas_tot);
+//      fprintf(fdtxt,"nel_tot: %d\n",nel_tot);
+//      fprintf(fdtxt,"ndt_tot: %d\n",ndt_tot);
+//
+//      printf("ngas_tot: %d\n",ngas_tot);
+//      printf("nel_tot: %d\n",nel_tot);
+//      printf("ndt_tot: %d\n",ndt_tot);
+//
 
       my_fwrite(&ngas_tot, sizeof(int), 1, fd);
       my_fwrite(&nel_tot, sizeof(int), 1, fd);
@@ -2057,11 +2057,11 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
 
       my_fwrite(Nedges, sizeof(int), NumGas, fd);
 
-      fprintf(fdtxt,"%s \n","Nedges:");
-      for (i=0;i<NumGas;i++){
-          fprintf(fdtxt,"%d \t",Nedges[i]);
-        }
-      fprintf(fdtxt,"\n");
+//      fprintf(fdtxt,"%s \n","Nedges:");
+//      for (i=0;i<NumGas;i++){
+//          fprintf(fdtxt,"%d \t",Nedges[i]);
+//        }
+//      fprintf(fdtxt,"\n");
 
 
     for(task = writeTask + 1; task <= lastTask; task++)
@@ -2204,10 +2204,10 @@ void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, i
 
   fprintf(fdtxt,"NumGas: %d \n",NumGas);
   fprintf(fdtxt,"P[i].ID, P[i].x, P[i].y, P[i].Velx, P[i].Vely, SphP[i].Pressure, SphP[i].Energy, SphP[i].DualArea \n");
-
   for (i=0;i<NumGas;i++){
-      fprintf(fdtxt,"%d %.10g %.10g    %.10g %.10g    %.10g %.10g   %.10g\n",P[i].ID, P[i].Pos[0], P[i].Pos[1], P[i].Vel[0], P[i].Vel[1], SphP[i].Pressure, SphP[i].Energy, SphP[i].DualArea);
-    }
+    fprintf(fdtxt,"%d %.10g %.10g    %.10g %.10g    %.10g %.10g   %.10g\n",P[i].ID, P[i].Pos[0], P[i].Pos[1], P[i].Vel[0], P[i].Vel[1], SphP[i].Pressure, SphP[i].Energy, SphP[i].DualArea);
+  }
+
   fprintf(fdtxt, "\nNdp: %d \n",T->Ndp);
   fprintf(fdtxt,"DP[i].task, index, ID, x, y, pressure (DP[-3]~DP[Ndp-1]), energy \n");
   for (i=-3;i<T->Ndp;i++){
@@ -2248,23 +2248,24 @@ void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, i
 
   mpi_printf("wrote Delaunay triangulation to file \n");
   CPU_Step[CPU_MAKEIMAGES] += measure_time();
-#endif /* #ifdef RESIDUAL_DISTRIBUTION */
+#endif
 
 
 }
 
 
 void write_only_delaunay_triangulation(tessellation *T, char *fname, int writeTask, int lastTask){
-#ifdef RESIDUAL_DISTRIBUTION
+//#ifdef RESIDUAL_DISTRIBUTION
 
   CPU_Step[CPU_MISC] += measure_time();
 
   FILE* fdtxt;
-  int i, pindex;
+  int i;
   char msg[1000], fname_new[1000];
   tetra *DT         = T->DT;
   point *DP         = T->DP;
-
+  tetra_center *DTC = T->DTC;
+  face *VF  = T->VF;   //loop through Nvf
 
 
   sprintf(fname_new,"%s_%d.txt",fname,ThisTask);
@@ -2274,45 +2275,50 @@ void write_only_delaunay_triangulation(tessellation *T, char *fname, int writeTa
     sprintf(msg, "can't open file `%s' for writing snapshot.\n", fname);
     terminate_program(msg);
   }
-
+  fprintf(fdtxt,"Time: %f, Ti_Current: %d\n",All.Time, All.Ti_Current);
   fprintf(fdtxt,"NumGas: %d \n",NumGas);
-  fprintf(fdtxt,"P[i].ID, P[i].x, P[i].y, P[i].Velx, P[i].Vely, SphP[i].DualArea \n");
 
+#ifdef RESIDUAL_DISTRIBUTION
+  fprintf(fdtxt,"P[i].ID, P[i].x, P[i].y, P[i].Velx, P[i].Vely, SphP[i].DualArea \n");
   for (i=0;i<NumGas;i++){
     fprintf(fdtxt,"%d %.10g %.10g    %.10g %.10g    %.10g\n",P[i].ID, P[i].Pos[0], P[i].Pos[1], P[i].Vel[0], P[i].Vel[1], SphP[i].DualArea);
   }
+#else
+  fprintf(fdtxt,"P[i].ID, P[i].x, P[i].y, P[i].Velx, P[i].Vely, SphP[i].Volume \n");
+  for (i=0;i<NumGas;i++){
+    fprintf(fdtxt,"%d %.10g %.10g    %.10g %.10g    %.10g\n",P[i].ID, P[i].Pos[0], P[i].Pos[1], P[i].Vel[0], P[i].Vel[1], SphP[i].Volume);
+  }
+#endif
+
   fprintf(fdtxt, "\nNdp: %d \n",T->Ndp);
-  fprintf(fdtxt,"DP[i].task, index, ID, x, y \n");
+  fprintf(fdtxt,"DP[i].task, index, ID, TimebinSync[P.TimeBin], x, y \n");
   for (i=-3;i<T->Ndp;i++){
-    if (DP[i].index < 0 ){
-      fprintf(fdtxt,"%d %d %d %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y);
-    }else if(DP[i].task == ThisTask && DP[i].index < NumGas) {
-      pindex = DP[i].index;
-      fprintf(fdtxt,"%d %d %d %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y);
-    }else if(DP[i].task == ThisTask && DP[i].index >= NumGas){
-      pindex = DP[i].index - NumGas;
-      fprintf(fdtxt,"%d %d %d %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y);
-    }else if(DP[i].task != ThisTask){
-      pindex = DP[i].index;
-      fprintf(fdtxt,"%d %d %d %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y);
-    }else{
-      mpi_terminate_program("Error, invalid DP points!");
-    }
+      fprintf(fdtxt,"%d %d %d %d %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, TimeBinSynchronized[P[DP[i].index].TimeBinHydro],
+            DP[i].x, DP[i].y);
   }
 
-  fprintf(fdtxt,"\nNdt: %d\n", T->Ndt);
-  fprintf(fdtxt,"DT[i].p[DIMS+1], DT[i].t[DIMS+1], DT[i].s[DIMS+1]:\n");
+
+  fprintf(fdtxt,"\nNdt: %d \n", T->Ndt);
+  fprintf(fdtxt,"DT[i].p[DIMS+1], DT[i].t[DIMS+1], DT[i].s[DIMS+1],  DTC[i].cx,DTC[i].cy,DTC[i].cz:\n");
   for (i=0;i<T->Ndt;i++){
-    fprintf(fdtxt,"%d %d %d %d   %d %d %d   %u %u %u\n",i,DT[i].p[0],DT[i].p[1],DT[i].p[2], DT[i].t[0],DT[i].t[1],DT[i].t[2],
-            DT[i].s[0],DT[i].s[1],DT[i].s[2]);
+    fprintf(fdtxt,"%d %d %d   %d %d %d   %u %u %u   %.10g %.10g %.10g\n",DT[i].p[0],DT[i].p[1],DT[i].p[2], DT[i].t[0],DT[i].t[1],DT[i].t[2],
+            DT[i].s[0],DT[i].s[1],DT[i].s[2], DTC[i].cx,DTC[i].cy,DTC[i].cz);
 
   }
+
+  fprintf(fdtxt,"\nNvf: %d \n", T->Nvf);
+  fprintf(fdtxt,"VF[i].cx, VF[i].cy, VF[i].cz,  VF[i].area,  VF[i].p1, VF[i].p2, DP[VF[i].p1].x, DP[VF[i].p1].y, DP[VF[i].p2].x, DP[VF[i].p2].y:\n");
+  for (i=0;i<T->Nvf;i++){
+    fprintf(fdtxt,"%.10g %.10g %.10g   %.10g   %d %d  %.10g  %.10g   %.10g  %.10g\n",VF[i].cx,VF[i].cy,VF[i].cz,VF[i].area,
+            VF[i].p1, VF[i].p2, DP[VF[i].p1].x, DP[VF[i].p1].y, DP[VF[i].p2].x, DP[VF[i].p2].y);
+  }
+
 
   fclose(fdtxt);
 
   mpi_printf("wrote Delaunay triangulation to file \n");
   CPU_Step[CPU_MAKEIMAGES] += measure_time();
-#endif /* #ifdef RESIDUAL_DISTRIBUTION */
+//#endif /* #ifdef RESIDUAL_DISTRIBUTION */
 
 
 }

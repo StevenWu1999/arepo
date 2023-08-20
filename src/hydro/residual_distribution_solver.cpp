@@ -1,17 +1,21 @@
 
-#include <iostream>
+#include <float.h>
+#include <lapacke.h>
 #include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <lapacke.h>
 
+#include <iostream>
 
 #include "../main/allvars.h"
 #include "../main/cpp_functions.h"
 #include "../main/proto.h"
 #include "../mesh/mesh.h"
 #include "../mesh/voronoi/voronoi.h"
+#define THRESHOLD 1e-15
+#define REGULARIZATION_CONSTANT 1e-10
 
 using namespace std;
 
@@ -19,16 +23,16 @@ using namespace std;
 //{
 //  int task, index;
 //  double dM, dP[3];
-//#ifdef MHD
+// #ifdef MHD
 //  double dB[3];
-//#endif /* #ifdef MHD */
+// #endif /* #ifdef MHD */
 //
-//#ifndef ISOTHERM_EQS
+// #ifndef ISOTHERM_EQS
 //  double dEnergy;
-//#endif /* #ifndef ISOTHERM_EQS */
-//#ifdef MAXSCALARS
+// #endif /* #ifndef ISOTHERM_EQS */
+// #ifdef MAXSCALARS
 //  double dConservedScalars[MAXSCALARS];
-//#endif /* #ifdef MAXSCALARS */
+// #endif /* #ifdef MAXSCALARS */
 //} * FluxList;
 
 // extern "C" void mpi_printf(const char *fmt, ...);
@@ -43,13 +47,13 @@ static struct FluxRD_list_data
   double dMomentum_Dual[3];
   double dEnergy_Dual;
 
-} * FluxRD_list;
+} *FluxRD_list;
 
 static struct DualArea_list_data
 {
   int task, index;
   double DualArea;
-} * DualArea_list;
+} *DualArea_list;
 
 static int N_DualArea_export, Max_N_FluxRD_export, N_FluxRD_export;
 struct triangle_normals *tri_normals_list;
@@ -65,7 +69,8 @@ extern struct grad_data *GradExch;
  *  \return void
  */
 
-void reset_dualarea(tessellation *T){
+void reset_dualarea(tessellation *T)
+{
   point *DP = T->DP;
   tetra *DT = T->DT;
   int i, j = 0, k = 0, p;
@@ -74,170 +79,6 @@ void reset_dualarea(tessellation *T){
   char *DT_label;
   DT_label      = (char *)mymalloc_movable(&DT_label, "DT_label",
                                            Ndt * sizeof(char)); /* array of labels of the triangles, l = local, b = boundary, o = other*/
-  int Ndt_local = 0, Ndt_boundary = 0, Ndt_other = 0, Ndt_boundary_thistask = 0;
-
-  /* classification of Delaunay triangles*/
-  for(i = 0; i < Ndt; i++)
-  {
-    int pmin = imin_array(DT[i].p, DIMS + 1);
-    int pmax = imax_array(DT[i].p, DIMS + 1);
-
-    if(pmin >= 0 && pmax <= NumGas - 1) /* all vertices are local (excluding local ghost)*/
-    {
-      DT_label[i] = 'l';
-      Ndt_local += 1;
-    }
-    else if(pmin >= 0 && pmin <= NumGas - 1) /*at least one vertex is local (excluding local ghost), but not all of them are local*/
-    {
-      DT_label[i] = 'b';
-      Ndt_boundary += 1;
-      if(boundary_triangle_check_responsibility_thistask(T, i) == ThisTask)
-      {
-        DT_label[i] = 't';
-        Ndt_boundary_thistask += 1;
-      }
-    }
-    else
-    {
-      DT_label[i] = 'o';
-      Ndt_other += 1;
-    }
-  }
-
-  int *local_triangles    = (int *)mymalloc_movable(&local_triangles, "local_triangles", Ndt_local * sizeof(int));
-  int *boundary_triangles = (int *)mymalloc_movable(&boundary_triangles, "boundary_triangles", Ndt_boundary_thistask * sizeof(int));
-
-  for(i = 0; i < Ndt; i++)
-  {
-    if(DT_label[i] == 'l')
-    {
-      local_triangles[j] = i;
-      j += 1;
-    }
-    else if(DT_label[i] == 't')
-    {
-      boundary_triangles[k] = i;
-      k += 1;
-    }
-  }
-  /* check uniqueness of boundary triangles of this task*/
-  int Ndt_boundary_thistask_repeated = 0;
-  for(i = 0; i < Ndt_boundary_thistask; i++)
-  {
-    for(j = 0; j < i; j++)
-    {
-      if(boundary_triangle_compare(T, boundary_triangles[i], boundary_triangles[j]))
-      {
-        DT_label[boundary_triangles[i]] = 'r';
-        boundary_triangles[i]           = -1;
-        Ndt_boundary_thistask_repeated += 1;
-      }
-    }
-  }
-
-  int Ndt_thistask        = Ndt_local + Ndt_boundary_thistask - Ndt_boundary_thistask_repeated;
-  int *thistask_triangles = (int *)mymalloc_movable(&thistask_triangles, "thistask_triangles", Ndt_thistask * sizeof(int));
-  for(i = 0; i < Ndt_local; i++)
-  {
-    thistask_triangles[i] = local_triangles[i];
-  }
-  j = Ndt_local;
-  for(i = 0; i < Ndt_boundary_thistask; i++)
-  {
-    if(boundary_triangles[i] >= 0)
-    {
-      thistask_triangles[j] = boundary_triangles[i];
-      j++;
-    }
-  }
-
-  /* compute residual: calculate normal vectors and triangular area; assign dual area to vertices
-   tri_normals_list is a shorter list compared to DT because it only keeps necessary triangles for
-   this task (Ndt_thistask). tri_normal_list[i]  <-->  DT[thistask_triangles[i]]
-   */
-  tri_normals_list = (struct triangle_normals *)mymalloc_movable(&tri_normals_list, "tri_normals_list",
-                                                                 Ndt_thistask * sizeof(struct triangle_normals));
-
-  for(i = 0; i < Ndt_thistask; i++)
-  {
-#ifdef TWODIMS
-    triangle_get_normals_area(T, thistask_triangles[i], &tri_normals_list[i]);
-#endif
-  }
-
-  for(i = 0; i < NumGas; i++)
-  {
-    SphP[i].DualArea = 0.0;
-  }
-
-  N_DualArea_export = 0;
-  for(i = 0; i < Ndt_thistask; i++)
-  {
-    for(j = 0; j < DIMS + 1; j++)
-    {
-      if(DP[DT[thistask_triangles[i]].p[j]].task == ThisTask)
-      {
-        int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
-        //              if(SphP_index < 0)
-        //                continue;   not necessary here, since the triangles we selected should not contain external points
-        if(SphP_index >= NumGas)
-          SphP_index -= NumGas;
-
-        SphP[SphP_index].DualArea += tri_normals_list[i].area / (DIMS + 1);
-      }
-      else
-      {
-        N_DualArea_export += 1;
-      }
-    }
-  }
-
-  DualArea_list = (struct DualArea_list_data *)mymalloc_movable(&DualArea_list, "DualArea_list",
-                                                                N_DualArea_export * sizeof(struct DualArea_list_data));
-  k             = 0;
-  for(i = Ndt_local; i < Ndt_thistask; i++)
-  {
-    for(j = 0; j < DIMS + 1; j++)
-    {
-      if(DP[DT[thistask_triangles[i]].p[j]].task != ThisTask)
-      {
-        DualArea_list[k].task     = DP[DT[thistask_triangles[i]].p[j]].task;
-        DualArea_list[k].index    = DP[DT[thistask_triangles[i]].p[j]].originalindex;
-        DualArea_list[k].DualArea = tri_normals_list[i].area / (DIMS + 1);
-        k += 1;
-      }
-    }
-  }
-  apply_DualArea_list();
-
-
-  myfree_movable(DualArea_list);
-  myfree_movable(tri_normals_list);
-  myfree_movable(thistask_triangles);
-  myfree_movable(boundary_triangles);
-  myfree_movable(local_triangles);
-  myfree_movable(DT_label);
-
-
-}
-
-
-
-
-void compute_residuals(tessellation *T)
-{
-#ifdef NOHYDRO
-  return;
-#endif /* #ifdef NOHYDRO */
-  TIMER_START(CPU_RESIDUAL_DISTRIBUTION);
-  point *DP = T->DP;
-  tetra *DT = T->DT;
-  int i, j = 0, k = 0, p;
-  int Ndp = T->Ndp;
-  int Ndt = T->Ndt;
-  char *DT_label;
-  DT_label      = (char *)mymalloc_movable(&DT_label, "DT_label",
-                                      Ndt * sizeof(char)); /* array of labels of the triangles, l = local, b = boundary, o = other*/
   int Ndt_local = 0, Ndt_boundary = 0, Ndt_other = 0, Ndt_boundary_thistask = 0;
 
   /* classification of Delaunay triangles*/
@@ -359,6 +200,198 @@ void compute_residuals(tessellation *T)
   DualArea_list = (struct DualArea_list_data *)mymalloc_movable(&DualArea_list, "DualArea_list",
                                                                 N_DualArea_export * sizeof(struct DualArea_list_data));
   k             = 0;
+
+  // debug: i=0 or i=Ndt_local?
+  for(i = 0; i < Ndt_thistask; i++)
+    {
+      for(j = 0; j < DIMS + 1; j++)
+        {
+          if(DP[DT[thistask_triangles[i]].p[j]].task != ThisTask)
+            {
+              DualArea_list[k].task     = DP[DT[thistask_triangles[i]].p[j]].task;
+              DualArea_list[k].index    = DP[DT[thistask_triangles[i]].p[j]].originalindex;
+              DualArea_list[k].DualArea = tri_normals_list[i].area / (DIMS + 1);
+              k += 1;
+            }
+        }
+    }
+  apply_DualArea_list();
+
+  myfree_movable(DualArea_list);
+  myfree_movable(tri_normals_list);
+  myfree_movable(thistask_triangles);
+  myfree_movable(boundary_triangles);
+  myfree_movable(local_triangles);
+  myfree_movable(DT_label);
+}
+
+void compute_residuals(tessellation *T)
+{
+#ifdef NOHYDRO
+  return;
+#endif /* #ifdef NOHYDRO */
+  TIMER_START(CPU_RESIDUAL_DISTRIBUTION);
+  point *DP = T->DP;
+  tetra *DT = T->DT;
+  int i, j = 0, k = 0, p;
+  int Ndp = T->Ndp;
+  int Ndt = T->Ndt;
+  char *DT_label;
+  DT_label      = (char *)mymalloc_movable(&DT_label, "DT_label",
+                                           Ndt * sizeof(char)); /* array of labels of the triangles, l = local, b = boundary, o = other*/
+  int Ndt_local = 0, Ndt_boundary = 0, Ndt_other = 0, Ndt_boundary_thistask = 0;
+
+  /* classification of Delaunay triangles*/
+  for(i = 0; i < Ndt; i++)
+    {
+      int pmin = DP[DT[i].p[0]].index;
+      int pmax = pmin;
+      for(j = 1; j < DIMS + 1; j++)
+        {
+          int p_index = DP[DT[i].p[j]].index;
+          if(p_index > pmax)
+            {
+              pmax = p_index;
+            };
+          if(p_index < pmin)
+            {
+              pmin = p_index;
+            };
+        }
+
+      if(pmin >= 0 && pmax <= NumGas - 1) /* all vertices are local (excluding local ghost)*/
+        {
+          DT_label[i] = 'l';
+          Ndt_local += 1;
+        }
+      else if(pmin >= 0 && pmin <= NumGas - 1) /*at least one vertex is local (excluding local ghost), but not all of them are local*/
+        {
+          DT_label[i] = 'b';
+          Ndt_boundary += 1;
+          if(boundary_triangle_check_responsibility_thistask(T, i) == ThisTask)
+            {
+              DT_label[i] = 't';
+              Ndt_boundary_thistask += 1;
+            }
+        }
+      else
+        {
+          DT_label[i] = 'o';
+          Ndt_other += 1;
+        }
+    }
+
+  int *local_triangles    = (int *)mymalloc_movable(&local_triangles, "local_triangles", Ndt_local * sizeof(int));
+  int *boundary_triangles = (int *)mymalloc_movable(&boundary_triangles, "boundary_triangles", Ndt_boundary_thistask * sizeof(int));
+
+  for(i = 0; i < Ndt; i++)
+    {
+      if(DT_label[i] == 'l')
+        {
+          local_triangles[j] = i;
+          j += 1;
+        }
+      else if(DT_label[i] == 't')
+        {
+          boundary_triangles[k] = i;
+          k += 1;
+        }
+    }
+
+//  // debug
+//  for(i = 0; i < Ndt_local; i++)
+//    {
+//      for(j = 0; j < 3; j++)
+//        {
+//          if(DP[DT[local_triangles[i]].p[j]].task != ThisTask)
+//            {
+//              int pmin = imin_array(DT[local_triangles[i]].p, DIMS + 1);
+//              int pmax = imax_array(DT[local_triangles[i]].p, DIMS + 1);
+//
+//              printf("line 296 debug: possibly wrong task for local triangles: %d %d %d %d %d      pindex:%d %d %d\n", ThisTask,
+//                     DP[DT[local_triangles[i]].p[j]].task, i, j, Ndt_local, pmin, pmax, NumGas);
+//            }
+//        }
+//    }
+
+  /* check uniqueness of boundary triangles of this task*/
+  int Ndt_boundary_thistask_repeated = 0;
+  for(i = 0; i < Ndt_boundary_thistask; i++)
+    {
+      for(j = 0; j < i; j++)
+        {
+          if(boundary_triangle_compare(T, boundary_triangles[i], boundary_triangles[j]))
+            {
+              DT_label[boundary_triangles[i]] = 'r';
+              boundary_triangles[i]           = -1;
+              Ndt_boundary_thistask_repeated += 1;
+            }
+        }
+    }
+
+  int Ndt_thistask        = Ndt_local + Ndt_boundary_thistask - Ndt_boundary_thistask_repeated;
+  int *thistask_triangles = (int *)mymalloc_movable(&thistask_triangles, "thistask_triangles", Ndt_thistask * sizeof(int));
+  for(i = 0; i < Ndt_local; i++)
+    {
+      thistask_triangles[i] = local_triangles[i];
+    }
+  j = Ndt_local;
+  for(i = 0; i < Ndt_boundary_thistask; i++)
+    {
+      if(boundary_triangles[i] >= 0)
+        {
+          thistask_triangles[j] = boundary_triangles[i];
+          j++;
+        }
+    }
+
+  /* compute residual: calculate normal vectors and triangular area; assign dual area to vertices
+   tri_normals_list is a shorter list compared to DT because it only keeps necessary triangles for
+   this task (Ndt_thistask). tri_normal_list[i]  <-->  DT[thistask_triangles[i]]
+   */
+  tri_normals_list = (struct triangle_normals *)mymalloc_movable(&tri_normals_list, "tri_normals_list",
+                                                                 Ndt_thistask * sizeof(struct triangle_normals));
+
+  for(i = 0; i < Ndt_thistask; i++)
+    {
+#ifdef TWODIMS
+      triangle_get_normals_area(T, thistask_triangles[i], &tri_normals_list[i]);
+#endif
+    }
+
+  for(i = 0; i < NumGas; i++)
+    {
+      SphP[i].DualArea = 0.0;
+    }
+
+  N_DualArea_export = 0;
+  for(i = 0; i < Ndt_thistask; i++)
+    {
+      for(j = 0; j < DIMS + 1; j++)
+        {
+          if(DP[DT[thistask_triangles[i]].p[j]].task == ThisTask)
+            {
+              int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
+              //              if(SphP_index < 0)
+              //                continue;   not necessary here, since the triangles we selected should not contain external points
+              if(SphP_index >= NumGas)
+                SphP_index -= NumGas;
+
+              SphP[SphP_index].DualArea += tri_normals_list[i].area / (DIMS + 1);
+            }
+          else
+            {
+              N_DualArea_export += 1;
+            }
+        }
+    }
+
+  DualArea_list = (struct DualArea_list_data *)mymalloc_movable(&DualArea_list, "DualArea_list",
+                                                                N_DualArea_export * sizeof(struct DualArea_list_data));
+  k             = 0;
+  // from i=0 or i=Ndt_local???
+  // debug
+
   for(i = Ndt_local; i < Ndt_thistask; i++)
     {
       for(j = 0; j < DIMS + 1; j++)
@@ -374,11 +407,6 @@ void compute_residuals(tessellation *T)
     }
 
   apply_DualArea_list();
-  //  MPI_Barrier(MPI_COMM_WORLD);
-  //  char triangulation_name[1024];
-  //  snprintf(triangulation_name, 100, "%s/triangulation_dual_%03d", All.OutputDir, 0);
-  //  write_delaunay_triangulation(T, triangulation_name, 0, NTask - 1);
-
 
   Max_N_FluxRD_export = N_DualArea_export;
   N_FluxRD_export     = 0;
@@ -388,8 +416,7 @@ void compute_residuals(tessellation *T)
   // main loop through triangles this task responsible for
   for(i = 0; i < Ndt_thistask; i++)
     {
-
-      //get triangle timebin/timestep and skip inactive triangles
+      // get triangle timebin/timestep and skip inactive triangles
       int timebin_vertices[DIMS + 1];
       for(j = 0; j < DIMS + 1; j++)
         {
@@ -408,9 +435,9 @@ void compute_residuals(tessellation *T)
             }
         }
 
-      bool is_active = false;
+      bool is_active            = false;
       int timebin_this_triangle = timebin_vertices[0];
-      
+
       for(j = 0; j < DIMS + 1; j++)
         {
           if(TimeBinSynchronized[timebin_vertices[j]])
@@ -425,153 +452,150 @@ void compute_residuals(tessellation *T)
 
       double triangle_dt = (((integertime)1) << timebin_this_triangle) * All.Timebase_interval;
 
-      triangle_dt *= 0.5;  //RK2 half timestep
+      triangle_dt *= 0.5;  // RK2 half timestep
 
       // compute residual: set up initial states
       double U_fluid[DIMS + 1][DIMS + 2];  // specific conserved fluid variables
       double C_sound[DIMS + 1];
       double Pressure[DIMS + 1];
 
-
-      double Velvertex_avg[3]; //moving mesh: average mesh velocity
-      for (j = 0; j<3;j++){
+      double Velvertex_avg[3];  // moving mesh: average mesh velocity
+      for(j = 0; j < 3; j++)
+        {
           Velvertex_avg[j] = 0.0;
         }
 
       for(j = 0; j < DIMS + 1; j++)  // loop through vertices of this triangle
-      {
-        if(DP[DT[thistask_triangles[i]].p[j]].task == ThisTask)
         {
-          int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
-          if(SphP_index >= NumGas)
-            SphP_index -= NumGas;
+          if(DP[DT[thistask_triangles[i]].p[j]].task == ThisTask)
+            {
+              int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
+              if(SphP_index >= NumGas)
+                SphP_index -= NumGas;
 
-          //extrapolation to current time
-          struct grad_data *grad = &SphP[SphP_index].Grad;
+              // extrapolation to current time
+              struct grad_data *grad = &SphP[SphP_index].Grad;
 
-          struct state_primitive vertex_state;
-          struct state_primitive delta_time;
-          vertex_state.rho = SphP[SphP_index].Density;
-          vertex_state.press = SphP[SphP_index].Pressure;
-          vertex_state.velx = P[SphP_index].Vel[0];
-          vertex_state.vely = P[SphP_index].Vel[1];
-          vertex_state.velz = P[SphP_index].Vel[2];
+              struct state_primitive vertex_state;
+              struct state_primitive delta_time;
+              vertex_state.rho   = SphP[SphP_index].Density;
+              vertex_state.press = SphP[SphP_index].Pressure;
+              vertex_state.velx  = P[SphP_index].Vel[0];
+              vertex_state.vely  = P[SphP_index].Vel[1];
+              vertex_state.velz  = P[SphP_index].Vel[2];
 
-          double dt_Extrapolation = All.Time - SphP[SphP_index].TimeLastPrimUpdate;
+              double dt_Extrapolation = All.Time - SphP[SphP_index].TimeLastPrimUpdate;
 
-          vertex_state.velx -= SphP[SphP_index].VelVertex[0];
-          vertex_state.vely -= SphP[SphP_index].VelVertex[1];
-          vertex_state.velz -= SphP[SphP_index].VelVertex[2];
-          triangle_vertex_do_time_extrapolation(&delta_time,&vertex_state,grad,dt_Extrapolation);
-          triangle_vertex_add_extrapolation(&delta_time,&vertex_state);
-          vertex_state.velx += SphP[SphP_index].VelVertex[0];
-          vertex_state.vely += SphP[SphP_index].VelVertex[1];
-          vertex_state.velz += SphP[SphP_index].VelVertex[2];
+              vertex_state.velx -= SphP[SphP_index].VelVertex[0];
+              vertex_state.vely -= SphP[SphP_index].VelVertex[1];
+              vertex_state.velz -= SphP[SphP_index].VelVertex[2];
+              triangle_vertex_do_time_extrapolation(&delta_time, &vertex_state, grad, dt_Extrapolation);
+              triangle_vertex_add_extrapolation(&delta_time, &vertex_state);
+              vertex_state.velx += SphP[SphP_index].VelVertex[0];
+              vertex_state.vely += SphP[SphP_index].VelVertex[1];
+              vertex_state.velz += SphP[SphP_index].VelVertex[2];
 
-          Velvertex_avg[0] += SphP[SphP_index].VelVertex[0];
-          Velvertex_avg[1] += SphP[SphP_index].VelVertex[1];
-          Velvertex_avg[2] += SphP[SphP_index].VelVertex[2];
-
+              Velvertex_avg[0] += SphP[SphP_index].VelVertex[0];
+              Velvertex_avg[1] += SphP[SphP_index].VelVertex[1];
+              Velvertex_avg[2] += SphP[SphP_index].VelVertex[2];
 
 #ifdef TWODIMS
-          U_fluid[j][0] = vertex_state.rho;
-          U_fluid[j][1] = U_fluid[j][0]*vertex_state.velx;
-          U_fluid[j][2] = U_fluid[j][0]*vertex_state.vely;
-          Pressure[j] = vertex_state.press;
-          double kinetic_energy = 0.0;
-          kinetic_energy += pow(vertex_state.velx,2)+pow(vertex_state.vely,2);
-          kinetic_energy *= 0.5 * U_fluid[j][0];
-          U_fluid[j][DIMS + 1] = kinetic_energy + Pressure[j] / (GAMMA_MINUS1);
+              U_fluid[j][0]         = vertex_state.rho;
+              U_fluid[j][1]         = U_fluid[j][0] * vertex_state.velx;
+              U_fluid[j][2]         = U_fluid[j][0] * vertex_state.vely;
+              Pressure[j]           = vertex_state.press;
+              double kinetic_energy = 0.0;
+              kinetic_energy += pow(vertex_state.velx, 2) + pow(vertex_state.vely, 2);
+              kinetic_energy *= 0.5 * U_fluid[j][0];
+              U_fluid[j][DIMS + 1] = kinetic_energy + Pressure[j] / (GAMMA_MINUS1);
 #endif
-          if(U_fluid[j][DIMS + 1] <= 0)
-          {
-            printf("Energy <= 0 error: Task = %d, Triangle index = %d, SphP index = %d, ID = %d  \n Coordinates = %f, %f, %f, "
-                   "Energies:  %f  %f  %f  %f\n",
-                   ThisTask, thistask_triangles[i],SphP_index, P[SphP_index].ID,P[SphP_index].Pos[0],P[SphP_index].Pos[1],P[SphP_index].Pos[2],
-                   U_fluid[j][DIMS + 1],SphP[SphP_index].Energy,kinetic_energy,Pressure[j]);
+              if(U_fluid[j][DIMS + 1] <= 0)
+                {
+                  printf(
+                      "Energy <= 0 error: Task = %d, Triangle index = %d, SphP index = %d, ID = %d  \n Coordinates = %f, %f, %f, "
+                      "Energies:  %f  %f  %f  %f\n",
+                      ThisTask, thistask_triangles[i], SphP_index, P[SphP_index].ID, P[SphP_index].Pos[0], P[SphP_index].Pos[1],
+                      P[SphP_index].Pos[2], U_fluid[j][DIMS + 1], SphP[SphP_index].Energy, kinetic_energy, Pressure[j]);
 
-            printf("print info for this particle:  %f %f %f    %f %f %f     %f   %f\n", P[SphP_index].Vel[0],P[SphP_index].Vel[1],P[SphP_index].Vel[2],
-                   vertex_state.velx,vertex_state.vely,vertex_state.velz,vertex_state.rho,kinetic_energy);
+                  printf("print info for this particle:  %f %f %f    %f %f %f     %f   %f\n", P[SphP_index].Vel[0],
+                         P[SphP_index].Vel[1], P[SphP_index].Vel[2], vertex_state.velx, vertex_state.vely, vertex_state.velz,
+                         vertex_state.rho, kinetic_energy);
 
-            printf("density:  %f \n",SphP[SphP_index].Density);
+                  printf("density:  %f \n", SphP[SphP_index].Density);
 
-            terminate_program("Energy <= 0 error.");
-          }
+                  terminate_program("Energy <= 0 error.");
+                }
 
 #ifdef TREE_BASED_TIMESTEPS
-          C_sound[j] = SphP[SphP_index].Csnd;
+              C_sound[j] = SphP[SphP_index].Csnd;
 #else
-          C_sound[j] = get_sound_speed(SphP_index);
+              C_sound[j] = get_sound_speed(SphP_index);
 #endif
-          if(C_sound[j] <= 0)
-          {
-            terminate_program("sph Cs <= 0 error!");
-          }
-        }
-        else
-        {
-          int PrimExch_index  = DP[DT[thistask_triangles[i]].p[j]].index;
+              if(C_sound[j] <= 0)
+                {
+                  terminate_program("sph Cs <= 0 error!");
+                }
+            }
+          else
+            {
+              int PrimExch_index = DP[DT[thistask_triangles[i]].p[j]].index;
 
+              struct grad_data *grad = &GradExch[PrimExch_index];
+              struct state_primitive vertex_state;
+              struct state_primitive delta_time;
 
-          struct grad_data *grad = &GradExch[PrimExch_index];
-          struct state_primitive vertex_state;
-          struct state_primitive delta_time;
+              vertex_state.rho        = PrimExch[PrimExch_index].Density;
+              vertex_state.press      = PrimExch[PrimExch_index].Pressure;
+              vertex_state.velx       = PrimExch[PrimExch_index].VelGas[0];
+              vertex_state.vely       = PrimExch[PrimExch_index].VelGas[1];
+              vertex_state.velz       = PrimExch[PrimExch_index].VelGas[2];
+              double dt_Extrapolation = All.Time - PrimExch[PrimExch_index].TimeLastPrimUpdate;
 
-          vertex_state.rho = PrimExch[PrimExch_index].Density;
-          vertex_state.press = PrimExch[PrimExch_index].Pressure;
-          vertex_state.velx = PrimExch[PrimExch_index].VelGas[0];
-          vertex_state.vely = PrimExch[PrimExch_index].VelGas[1];
-          vertex_state.velz = PrimExch[PrimExch_index].VelGas[2];
-          double dt_Extrapolation = All.Time - PrimExch[PrimExch_index].TimeLastPrimUpdate;
+              vertex_state.velx -= PrimExch[PrimExch_index].VelVertex[0];
+              vertex_state.vely -= PrimExch[PrimExch_index].VelVertex[1];
+              vertex_state.velz -= PrimExch[PrimExch_index].VelVertex[2];
+              triangle_vertex_do_time_extrapolation(&delta_time, &vertex_state, grad, dt_Extrapolation);
+              triangle_vertex_add_extrapolation(&delta_time, &vertex_state);
+              vertex_state.velx += PrimExch[PrimExch_index].VelVertex[0];
+              vertex_state.vely += PrimExch[PrimExch_index].VelVertex[1];
+              vertex_state.velz += PrimExch[PrimExch_index].VelVertex[2];
 
-          vertex_state.velx -= PrimExch[PrimExch_index].VelVertex[0];
-          vertex_state.vely -= PrimExch[PrimExch_index].VelVertex[1];
-          vertex_state.velz -= PrimExch[PrimExch_index].VelVertex[2];
-          triangle_vertex_do_time_extrapolation(&delta_time,&vertex_state,grad,dt_Extrapolation);
-          triangle_vertex_add_extrapolation(&delta_time,&vertex_state);
-          vertex_state.velx += PrimExch[PrimExch_index].VelVertex[0];
-          vertex_state.vely += PrimExch[PrimExch_index].VelVertex[1];
-          vertex_state.velz += PrimExch[PrimExch_index].VelVertex[2];
+              Velvertex_avg[0] += PrimExch[PrimExch_index].VelVertex[0];
+              Velvertex_avg[1] += PrimExch[PrimExch_index].VelVertex[1];
+              Velvertex_avg[2] += PrimExch[PrimExch_index].VelVertex[2];
 
-          Velvertex_avg[0] += PrimExch[PrimExch_index].VelVertex[0];
-          Velvertex_avg[1] += PrimExch[PrimExch_index].VelVertex[1];
-          Velvertex_avg[2] += PrimExch[PrimExch_index].VelVertex[2];
-
-          /*we should only use primitive variables to get U_fluid*/
+              /*we should only use primitive variables to get U_fluid*/
 
 #ifdef TWODIMS
-          U_fluid[j][0] = vertex_state.rho;
-          U_fluid[j][1] = U_fluid[j][0]*vertex_state.velx;
-          U_fluid[j][2] = U_fluid[j][0]*vertex_state.vely;
-          Pressure[j] = vertex_state.press;
-          double kinetic_energy = 0.0;
-          kinetic_energy += pow(vertex_state.velx,2)+pow(vertex_state.vely,2);
-          kinetic_energy *= 0.5 * U_fluid[j][0];
-          U_fluid[j][DIMS + 1] = kinetic_energy + Pressure[j] / (GAMMA_MINUS1);
+              U_fluid[j][0]         = vertex_state.rho;
+              U_fluid[j][1]         = U_fluid[j][0] * vertex_state.velx;
+              U_fluid[j][2]         = U_fluid[j][0] * vertex_state.vely;
+              Pressure[j]           = vertex_state.press;
+              double kinetic_energy = 0.0;
+              kinetic_energy += pow(vertex_state.velx, 2) + pow(vertex_state.vely, 2);
+              kinetic_energy *= 0.5 * U_fluid[j][0];
+              U_fluid[j][DIMS + 1] = kinetic_energy + Pressure[j] / (GAMMA_MINUS1);
 #endif
 
-          C_sound[j]           = PrimExch[PrimExch_index].Csnd;
+              C_sound[j] = PrimExch[PrimExch_index].Csnd;
 
-          if(C_sound[j] <= 0)
-          {
-            terminate_program("primexch Cs <= 0 error!");
-          }
-          if(U_fluid[j][DIMS + 1] <= 0)
-          {
-            printf("primexch energy <= 0 error %d %d  %d %d %d    %f  %f\n", ThisTask, DT[thistask_triangles[i]].p[j],
-                   DP[DT[thistask_triangles[i]].p[j]].task, DP[DT[thistask_triangles[i]].p[j]].originalindex,
-                   DP[DT[thistask_triangles[i]].p[j]].ID, U_fluid[j][DIMS + 1], PrimExch[PrimExch_index].Energy);
-            terminate_program("primexch energy <= 0 error.");
-          }
-        }
-      }  // for(j = 0; j < DIMS + 1; j++) get fluid state for each vertex of this triangle
+              if(C_sound[j] <= 0)
+                {
+                  terminate_program("primexch Cs <= 0 error!");
+                }
+              if(U_fluid[j][DIMS + 1] <= 0)
+                {
+                  printf("primexch energy <= 0 error %d %d  %d %d %d    %f  %f\n", ThisTask, DT[thistask_triangles[i]].p[j],
+                         DP[DT[thistask_triangles[i]].p[j]].task, DP[DT[thistask_triangles[i]].p[j]].originalindex,
+                         DP[DT[thistask_triangles[i]].p[j]].ID, U_fluid[j][DIMS + 1], PrimExch[PrimExch_index].Energy);
+                  terminate_program("primexch energy <= 0 error.");
+                }
+            }
+        }  // for(j = 0; j < DIMS + 1; j++) get fluid state for each vertex of this triangle
 
-      Velvertex_avg[0] /= (DIMS+1);
-      Velvertex_avg[1] /= (DIMS+1);
-      Velvertex_avg[2] /= (DIMS+1);
-
-
-
+      Velvertex_avg[0] /= (DIMS + 1);
+      Velvertex_avg[1] /= (DIMS + 1);
+      Velvertex_avg[2] /= (DIMS + 1);
 
       // compute residuals: Roe Vector Z, Modified fluid state U_hat = \frac{ \partial{U(Z_avg)}}{ \partial Z} * Z
 #ifdef TWODIMS  // for now we only consider 2D. 3D case needs to be included in the future
@@ -644,11 +668,11 @@ void compute_residuals(tessellation *T)
       double Kmatrix[4][4][3][3];  // Kmatrix[4][4][j=0,1,2(vertices)][p=0(K+),1(K-),2(K)]
       int kfull = 2, kplus = 0, kminus = 1;
 
-      //moving mesh
+      // moving mesh
 
       for(j = 0; j < 3; j++)
         {
-          vel_dot_n    = velx_avg * N_X[j] + vely_avg * N_Y[j];
+          vel_dot_n       = velx_avg * N_X[j] + vely_avg * N_Y[j];
           velvertex_dot_n = Velvertex_avg[0] * N_X[j] + Velvertex_avg[1] * N_Y[j];
 
           Lambda[j][0] = vel_dot_n + Cs_avg - velvertex_dot_n;
@@ -742,12 +766,6 @@ void compute_residuals(tessellation *T)
                         Kmatrix[k][2][j][kfull] * U_hat[2][j] + Kmatrix[k][3][j][kfull] * U_hat[3][j];
             }
         }
-      // debug
-      //      for(k=0;k<4;k++){
-      //          if(isnan(Phi[k])){
-      //              printf("phi nan error! %d %d   %f %f %f %f\n",ThisTask,i,vel_dot_n,Cs_avg,Kmatrix[0][0][0][kfull],Value123);
-      //            }
-      //        }
 
       //      for(k = 0; k < 4; k++)
       //        {
@@ -768,8 +786,36 @@ void compute_residuals(tessellation *T)
             }
         }
 
+      // use matrix inversion
+      regularize_matrix(4, 4, (double *)Kmatrix_minus_sum);
       mat_inv(&Kmatrix_minus_sum[0][0], 4);
 
+      // use LU decomposition
+      // #ifdef LDA_SCHEME
+      //      int ipiv[4];
+      //      int info = solve_system(4, &Kmatrix_minus_sum[0][0], Phi);
+      //
+      //      if(test_in_tri)
+      //        {
+      //          printf("debug: tri No. %d, print sum_Kminus_inv*phi = %f %f %f %f\n", i, Phi[0], Phi[1], Phi[2], Phi[3]);
+      //        }
+      // #endif
+      //
+      // #ifdef N_SCHEME
+      //      double KU_Sum[4];
+      //      for(k = 0; k < 4; k++)
+      //        {
+      //          KU_Sum[k] = 0.0;
+      //          for(j = 0; j < 3; j++)
+      //            {
+      //              KU_Sum[k] += Kmatrix[k][0][j][kminus] * U_hat[0][j] + Kmatrix[k][1][j][kminus] * U_hat[1][j] +
+      //                           Kmatrix[k][2][j][kminus] * U_hat[2][j] + Kmatrix[k][3][j][kminus] * U_hat[3][j];
+      //            }
+      //        }
+      //      int ipiv[4];
+      //      int info = solve_system(4, &Kmatrix_minus_sum[0][0], KU_Sum);
+      //
+      // #endif
       // residual distribution:
       double Flux_RD[4][3];
 #ifdef B_SCHEME
@@ -805,6 +851,22 @@ void compute_residuals(tessellation *T)
             }
         }
 
+        // use LU decomposition
+        //      for(k = 0; k < 4; k++)
+        //        {
+        //          for(j = 0; j < 3; j++)
+        //            {
+        // #ifdef LDA_SCHEME
+        //              Flux_RD[k][j] = -Kmatrix[k][0][j][kplus] * Phi[0] - Kmatrix[k][1][j][kplus] * Phi[1] - Kmatrix[k][2][j][kplus]
+        //              * Phi[2] -
+        //                              Kmatrix[k][3][j][kplus] * Phi[3];
+        // #else
+        //              Flux_LDA[k][j] = -Kmatrix[k][0][j][kplus] * Phi[0] - Kmatrix[k][1][j][kplus] * Phi[1] -
+        //                               Kmatrix[k][2][j][kplus] * Phi[2] - Kmatrix[k][3][j][kplus] * Phi[3];
+        // #endif
+        //            }
+        //        }
+
 #endif  // LDA scheme or B scheme
 
 #if(defined(N_SCHEME) || defined(B_SCHEME))
@@ -831,6 +893,15 @@ void compute_residuals(tessellation *T)
             }
         }
 
+      //      double UminusX[4][3];
+      //      for(k = 0; k < 4; k++)
+      //        {
+      //          for(j = 0; j < 3; j++)
+      //            {
+      //              UminusX[k][j] = U_hat[k][j] - KU_Sum[k];
+      //            }
+      //        }
+
       for(k = 0; k < 4; k++)
         {
           for(j = 0; j < 3; j++)
@@ -842,6 +913,13 @@ void compute_residuals(tessellation *T)
               Flux_N[k][j] = Kmatrix[k][0][j][kplus] * Bracket[0][j] + Kmatrix[k][1][j][kplus] * Bracket[1][j] +
                              Kmatrix[k][2][j][kplus] * Bracket[2][j] + Kmatrix[k][3][j][kplus] * Bracket[3][j];
 #endif
+              // #ifdef N_SCHEME
+              //               Flux_RD[k][j] = Kmatrix[k][0][j][kplus] * UminusX[0][j] + Kmatrix[k][1][j][kplus] * UminusX[1][j] +
+              //                               Kmatrix[k][2][j][kplus] * UminusX[2][j] + Kmatrix[k][3][j][kplus] * UminusX[3][j];
+              // #else
+              //               Flux_N[k][j] = Kmatrix[k][0][j][kplus] * UminusX[0][j] + Kmatrix[k][1][j][kplus] * UminusX[1][j] +
+              //                              Kmatrix[k][2][j][kplus] * UminusX[2][j] + Kmatrix[k][3][j][kplus] * UminusX[3][j];
+              // #endif
             }
         }
 #endif  // N scheme or B scheme
@@ -884,17 +962,16 @@ void compute_residuals(tessellation *T)
 
               /* debug
               P[P_index].Mass += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[0][j] / SphP[SphP_index].DualArea;
-              SphP[SphP_index].Momentum[0] += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[1][j] / SphP[SphP_index].DualArea;
-              SphP[SphP_index].Momentum[1] += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[2][j] / SphP[SphP_index].DualArea;
-              SphP[SphP_index].Energy += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[3][j] / SphP[SphP_index].DualArea;
+              SphP[SphP_index].Momentum[0] += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[1][j] /
+              SphP[SphP_index].DualArea; SphP[SphP_index].Momentum[1] += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[2][j]
+              / SphP[SphP_index].DualArea; SphP[SphP_index].Energy += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[3][j] /
+              SphP[SphP_index].DualArea;
               */
 
               P[P_index].Mass += (-1.0) * triangle_dt * Flux_RD[0][j];
               SphP[SphP_index].Momentum[0] += (-1.0) * triangle_dt * Flux_RD[1][j];
               SphP[SphP_index].Momentum[1] += (-1.0) * triangle_dt * Flux_RD[2][j];
               SphP[SphP_index].Energy += (-1.0) * triangle_dt * Flux_RD[3][j];
-
-
             }
           else
             {
@@ -922,7 +999,7 @@ void compute_residuals(tessellation *T)
         }
 
 #endif  // TWO_DIMS
-    }  // for loop of triangles, i= 0~ Ndt_thistask
+    }   // for loop of triangles, i= 0~ Ndt_thistask
 
   apply_FluxRD_list();
 
@@ -1059,32 +1136,34 @@ void rd_test_func(tessellation *T)
    */
 }
 
-void triangle_vertex_do_time_extrapolation(struct state_primitive *delta, struct state_primitive *st, struct grad_data *grad, double dt_Extrapolation){
+void triangle_vertex_do_time_extrapolation(struct state_primitive *delta, struct state_primitive *st, struct grad_data *grad,
+                                           double dt_Extrapolation)
+{
   if(st->rho <= 0)
     return;
 
   delta->rho = -dt_Extrapolation * (st->velx * grad->drho[0] + st->rho * grad->dvel[0][0] + st->vely * grad->drho[1] +
-                           st->rho * grad->dvel[1][1] + st->velz * grad->drho[2] + st->rho * grad->dvel[2][2]);
+                                    st->rho * grad->dvel[1][1] + st->velz * grad->drho[2] + st->rho * grad->dvel[2][2]);
 
   delta->velx = -dt_Extrapolation * (1.0 / st->rho * grad->dpress[0] + st->velx * grad->dvel[0][0] + st->vely * grad->dvel[0][1] +
-                            st->velz * grad->dvel[0][2]);
+                                     st->velz * grad->dvel[0][2]);
 
   delta->vely = -dt_Extrapolation * (1.0 / st->rho * grad->dpress[1] + st->velx * grad->dvel[1][0] + st->vely * grad->dvel[1][1] +
-                            st->velz * grad->dvel[1][2]);
+                                     st->velz * grad->dvel[1][2]);
 
   delta->velz = -dt_Extrapolation * (1.0 / st->rho * grad->dpress[2] + st->velx * grad->dvel[2][0] + st->vely * grad->dvel[2][1] +
-                            st->velz * grad->dvel[2][2]);
+                                     st->velz * grad->dvel[2][2]);
 
   delta->press = -dt_Extrapolation * (GAMMA * st->press * (grad->dvel[0][0] + grad->dvel[1][1] + grad->dvel[2][2]) +
-                             st->velx * grad->dpress[0] + st->vely * grad->dpress[1] + st->velz * grad->dpress[2]);
-
+                                      st->velx * grad->dpress[0] + st->vely * grad->dpress[1] + st->velz * grad->dpress[2]);
 }
 
-void triangle_vertex_add_extrapolation(struct state_primitive *delta_time, struct state_primitive *st){
+void triangle_vertex_add_extrapolation(struct state_primitive *delta_time, struct state_primitive *st)
+{
   if(st->rho <= 0)
     return;
 
-  if(st->rho + delta_time->rho || st->press + delta_time->press< 0)
+  if(st->rho + delta_time->rho || st->press + delta_time->press < 0)
     return;
 
   st->rho += delta_time->rho;
@@ -1092,9 +1171,7 @@ void triangle_vertex_add_extrapolation(struct state_primitive *delta_time, struc
   st->vely += delta_time->vely;
   st->velz += delta_time->velz;
   st->press += delta_time->press;
-
 }
-
 
 void apply_FluxRD_list(void)
 {
@@ -1165,8 +1242,6 @@ void apply_FluxRD_list(void)
       SphP[p].Momentum[1] += FluxListGet[i].dMomentum_Dual[1];
       SphP[p].Momentum[2] += FluxListGet[i].dMomentum_Dual[2];
       SphP[p].Energy += FluxListGet[i].dEnergy_Dual;
-
-
     }
   myfree(FluxListGet);
 }
@@ -1202,6 +1277,7 @@ void apply_DualArea_list(void)
       if(DualArea_list[i].task == ThisTask)
         {
           printf("bug: thistask, i_inDualAreaList %d %d %d\n", ThisTask, i, N_DualArea_export);
+          printf("DualArea_list[i].task: %d\n", DualArea_list[i].task);
         }
     }
 
@@ -1267,11 +1343,11 @@ lapack_int mat_inv(double *A, unsigned n)
   int ipiv[n + 1];
   lapack_int ret;
 
-  ret = LAPACKE_dgetrf(LAPACK_COL_MAJOR, n, n, A, n, ipiv);
+  ret = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, n, n, A, n, ipiv);
 
-  //#ifdef DEBUG
-  //  std::cout << "ret =\t" << ret << "\t(0 = done, <0 = illegal arguement, >0 = singular)" << std::endl;
-  //#endif
+  // #ifdef DEBUG
+  //   std::cout << "ret =\t" << ret << "\t(0 = done, <0 = illegal arguement, >0 = singular)" << std::endl;
+  // #endif
 
   if(ret != 0)
     {
@@ -1286,12 +1362,60 @@ lapack_int mat_inv(double *A, unsigned n)
         }
       exit(0);
     }
-  ret = LAPACKE_dgetri(LAPACK_COL_MAJOR, n, A, n, ipiv);
+  ret = LAPACKE_dgetri(LAPACK_ROW_MAJOR, n, A, n, ipiv);
 
   return ret;
 }
 
-#endif  //#ifdef RESIDUAL_DISTRIBUTION
+lapack_int solve_system(int n, double *A, double *b)
+{
+  lapack_int nrhs  = 1;
+  lapack_int *ipiv = (lapack_int *)malloc(n * sizeof(lapack_int));
+
+  // Solve the system
+  lapack_int info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, n, nrhs, A, n, ipiv, b, n);
+
+  free(ipiv);
+  if(info != 0)
+    {
+      mpi_printf("solution failed.\n");
+    }
+
+  // Return the status code
+  return info;
+}
+
+int needs_regularization(int rows, int cols, double *A)
+{
+  double min_value = DBL_MAX;
+
+  for(int i = 0; i < rows; i++)
+    {
+      for(int j = 0; j < cols; j++)
+        {
+          double value = *(A + i * cols + j);
+          if(fabs(value) < min_value)
+            {
+              min_value = fabs(value);
+            }
+        }
+    }
+
+  return min_value < THRESHOLD;
+}
+
+void regularize_matrix(int rows, int cols, double *A)
+{
+  if(needs_regularization(rows, cols, A))
+    {
+      for(int i = 0; i < rows; i++)
+        {
+          *(A + i * cols + i) += REGULARIZATION_CONSTANT;
+        }
+    }
+}
+
+#endif  // #ifdef RESIDUAL_DISTRIBUTION
 
 /*
  void write_residual(char* fname,int Ndt_thistask, int* thistask_triangles,double* Residual_List){

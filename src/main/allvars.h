@@ -1342,7 +1342,6 @@ extern struct sph_particle_data
   MySingle SurfaceArea;
 #ifdef RESIDUAL_DISTRIBUTION
   MyDouble DualArea;
-
 #endif
 
 

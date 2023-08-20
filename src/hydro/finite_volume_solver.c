@@ -188,7 +188,6 @@ void compute_interface_fluxes(tessellation *T)
   face *VF  = T->VF;
   point *DP = T->DP;
 
-  printf("test Nvf: %f %d %d \n",All.Time, ThisTask, T->Nvf);
 
   for(i = 0; i < T->Nvf; i++)
     {

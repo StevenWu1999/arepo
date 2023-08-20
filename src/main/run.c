@@ -96,6 +96,7 @@ void run(void)
     {
       mark_active_timebins();
 
+      mpi_printf("debug: this is ine 99 in run.c\n");
       output_log_messages();
 
       set_non_standard_physics_for_current_time();
@@ -112,6 +113,10 @@ void run(void)
       create_mesh();
 
       mesh_setup_exchange();
+
+      char triangulation_name[1024];
+      sprintf(triangulation_name, "%s/triangulation_sync0_%03d", All.OutputDir, RestartSnapNum);
+      write_only_delaunay_triangulation(&Mesh, triangulation_name, 0, NTask - 1);
 
       update_primitive_variables();
 
@@ -236,12 +241,13 @@ void run(void)
 
           make_list_of_active_particles();
 
+          mpi_printf("debug: this is line 239 in run.c\n");
           output_log_messages(); /* write some info to log-files */
 
 #if !defined(VORONOI_STATIC_MESH)
 #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT
           free_all_remaining_mesh_structures();
-#else /* #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT */
+#else  /* #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT */
           free_mesh();
 #endif /* #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT #else */
 #endif /* #if !defined(VORONOI_STATIC_MESH) */
@@ -288,17 +294,30 @@ void run(void)
 #endif /* #ifdef EXACT_GRAVITY_FOR_PARTICLE_TYPE */
 
       calculate_non_standard_physics_prior_mesh_construction();
+      // debug
+      int testindex = 58;
 
 #if !defined(VORONOI_STATIC_MESH)
 
       printf("debug: line 303 ..................\n");
       create_mesh();
       printf("debug: line 306 ..................\n");
-
       mesh_setup_exchange();
+
+      if(loop_test == 0)
+        {
+          char triangulation_name[1024];
+          sprintf(triangulation_name, "%s/triangulation_sync1_%03d", All.OutputDir, RestartSnapNum);
+          write_only_delaunay_triangulation(&Mesh, triangulation_name, 0, NTask - 1);
+        }
+
+      mpi_printf("debug: line 309 ID = %d, mass = %f\n\n", P[testindex].ID, P[testindex].Mass);
+
 #endif /* #if !defined(VORONOI_STATIC_MESH) */
 
       exchange_primitive_variables_and_gradients();
+
+      mpi_printf("debug: line 315 ID = %d, mass = %f\n\n", P[testindex].ID, P[testindex].Mass);
 
 #ifdef RESIDUAL_DISTRIBUTION
       compute_residuals(&Mesh);
@@ -306,7 +325,11 @@ void run(void)
       compute_interface_fluxes(&Mesh);
 #endif /*#ifdef RESIDUAL_DISTRIBUTION*/
 
+      mpi_printf("debug: line 323 ID = %d, mass = %f\n\n", P[testindex].ID, P[testindex].Mass);
+
       update_primitive_variables(); /* these effectively closes off the hydro step */
+      // debug
+      // mpi_terminate_program("end debug");
 
       /* the masses and positions are updated, let's get new forces and potentials */
 
@@ -318,7 +341,7 @@ void run(void)
       calculate_non_standard_physics_end_of_step();
 
       loop_test += 1;
-    }
+    } /*while loop */
 
   restart(0); /* write a restart file at final time - can be used to continue simulation beyond final time */
 
@@ -363,7 +386,7 @@ void set_non_standard_physics_for_current_time(void)
 {
 #if defined(COOLING)
   IonizeParams(); /* set UV background for the current time */
-#endif /* #if defined(COOLING) */
+#endif            /* #if defined(COOLING) */
 }
 
 /*! \brief calls extra modules after the gravitational force is recomputed.
@@ -410,7 +433,7 @@ void calculate_non_standard_physics_end_of_step(void)
 #ifdef COOLING
 #ifdef USE_SFR
   cooling_and_starformation();
-#else /* #ifdef USE_SFR */
+#else  /* #ifdef USE_SFR */
   cooling_only();
 #endif /* #ifdef USE_SFR #else */
 #endif /* #ifdef COOLING */
