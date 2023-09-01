@@ -244,27 +244,45 @@ void compute_residuals(tessellation *T)
   /* classification of Delaunay triangles*/
   for(i = 0; i < Ndt; i++)
     {
-      int pmin = DP[DT[i].p[0]].index;
-      int pmax = pmin;
-      for(j = 1; j < DIMS + 1; j++)
-        {
-          int p_index = DP[DT[i].p[j]].index;
-          if(p_index > pmax)
-            {
-              pmax = p_index;
-            };
-          if(p_index < pmin)
-            {
-              pmin = p_index;
-            };
+
+      int has_one_active_local = 0, all_local = 0, num_local = 0;
+      for (j= 0;j<DIMS+1;j++){
+          if(DP[DT[i].p[j]].task == ThisTask && DP[DT[i].p[j]].index >= 0 && DP[DT[i].p[j]].index < NumGas){
+              num_local += 1;
+              if(TimeBinSynchronized[P[DP[DT[i].p[j]].index].TimeBinHydro]){
+                  has_one_active_local = 1;
+                }
+            }
         }
 
-      if(pmin >= 0 && pmax <= NumGas - 1) /* all vertices are local (excluding local ghost)*/
+      if (num_local == DIMS +1){
+          all_local = 1;
+        }
+
+//      int p_index;
+//      int pmin = DP[DT[i].p[0]].index;
+//      int pmax = pmin;
+//      int pmin = imin_array(DT[i].p, DIMS + 1);
+//      int pmax = imax_array(DT[i].p, DIMS + 1);
+
+//      for(j = 1; j < DIMS + 1; j++)
+//        {
+//          p_index = DP[DT[i].p[j]].index;
+//          if(p_index > pmax)
+//            {
+//              pmax = p_index;
+//            };
+//          if(p_index < pmin)
+//            {
+//              pmin = p_index;
+//            };
+//        }
+      if(has_one_active_local && all_local) /* all vertices are local (excluding local ghost)*/
         {
           DT_label[i] = 'l';
           Ndt_local += 1;
         }
-      else if(pmin >= 0 && pmin <= NumGas - 1) /*at least one vertex is local (excluding local ghost), but not all of them are local*/
+      else if(has_one_active_local) /*at least one vertex is local (excluding local ghost), but not all of them are local*/
         {
           DT_label[i] = 'b';
           Ndt_boundary += 1;
@@ -284,6 +302,7 @@ void compute_residuals(tessellation *T)
   int *local_triangles    = (int *)mymalloc_movable(&local_triangles, "local_triangles", Ndt_local * sizeof(int));
   int *boundary_triangles = (int *)mymalloc_movable(&boundary_triangles, "boundary_triangles", Ndt_boundary_thistask * sizeof(int));
 
+  j = 0; k =0;
   for(i = 0; i < Ndt; i++)
     {
       if(DT_label[i] == 'l')

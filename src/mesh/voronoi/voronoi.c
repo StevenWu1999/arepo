@@ -1141,6 +1141,8 @@ void triangle_get_normals_area(tessellation *T, int i, struct triangle_normals *
   tetra *DT = T->DT;
   point *DP = T->DP;
 
+//  printf("debug line 1144: i = %d, p0 = %d, p1 = %d, p2 = %d\n",i, DT[i].p[0],DT[i].p[1],DT[i].p[2]);
+
   double x0 = DP[DT[i].p[0]].x;
   double y0 = DP[DT[i].p[0]].y;
   double x1 = DP[DT[i].p[1]].x;
