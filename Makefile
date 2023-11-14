@@ -99,9 +99,9 @@ OPTIMIZE  =  -std=c11 -ggdb -O3 -Wall -Wno-format-security -Wno-unknown-pragmas 
 # overwrite default:
 MPICH_LIB = -lmpi
 GSL_INCL  = -I/usr/local/include
-LAPACK_INCL = -I/usr/local/Cellar/lapack/3.10.1/include
+LAPACK_INCL = -I/usr/local/Cellar/lapack/3.11/include
 GSL_LIB   = -L/usr/local/lib -lgsl -lgslcblas 
-LAPACK_LIB = -L/usr/local/Cellar/lapack/3.10.1/lib -llapacke -llapack
+LAPACK_LIB = -L/usr/local/Cellar/lapack/3.11/lib -llapacke -llapack
 HWLOC_LIB = -L/usr/local/lib -lhwloc
 
 # libraries that are included on demand, depending on Config.sh options

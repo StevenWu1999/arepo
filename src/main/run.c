@@ -304,11 +304,12 @@ void run(void)
       printf("debug: line 306 ..................\n");
       mesh_setup_exchange();
 
-      if(loop_test == 0)
+      if(loop_test == 0 && All.TotNumPart == TimeBinsHydro.GlobalNActiveParticles)
         {
           char triangulation_name[1024];
           sprintf(triangulation_name, "%s/triangulation_sync1_%03d", All.OutputDir, RestartSnapNum);
           write_only_delaunay_triangulation(&Mesh, triangulation_name, 0, NTask - 1);
+          loop_test += 1;
         }
 
       mpi_printf("debug: line 309 ID = %d, mass = %f\n\n", P[testindex].ID, P[testindex].Mass);
@@ -340,7 +341,6 @@ void run(void)
       /* do any extra physics, Strang-split (update both primitive and conserved variables as needed ) */
       calculate_non_standard_physics_end_of_step();
 
-      loop_test += 1;
     } /*while loop */
 
   restart(0); /* write a restart file at final time - can be used to continue simulation beyond final time */

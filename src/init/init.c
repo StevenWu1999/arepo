@@ -563,7 +563,7 @@ int init(void)
 #ifdef RESIDUAL_DISTRIBUTION
       char triangulation_name[1024];
       sprintf(triangulation_name, "%s/triangulation_%03d", All.OutputDir, RestartSnapNum);
-      write_delaunay_triangulation(&Mesh, triangulation_name, 0, NTask - 1);
+      write_only_delaunay_triangulation(&Mesh, triangulation_name, 0, NTask - 1);
 #else
       char tess_name[1024];
       sprintf(tess_name, "%s/tess_%03d", All.OutputDir, RestartSnapNum);
