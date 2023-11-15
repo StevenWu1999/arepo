@@ -40,11 +40,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../main/allvars.h"
-#include "../main/proto.h"
-#include "../main/cpp_functions.h"
-
 #include "../domain/domain.h"
+#include "../main/allvars.h"
+#include "../main/cpp_functions.h"
+#include "../main/proto.h"
 #include "../mesh/voronoi/voronoi.h"
 
 /*! \brief Prepares the loaded initial conditions for the run.
@@ -166,7 +165,7 @@ int init(void)
     for(j = 0; j < GRAVCOSTLEVELS; j++)
       P[i].GravCost[j] = 0;
 
-      /* set unused coordinate values in 1d and 2d simulations to zero; this is needed for correct interfaces */
+  /* set unused coordinate values in 1d and 2d simulations to zero; this is needed for correct interfaces */
   int nonzero_vel = 0;
 #ifdef ONEDIMS
   for(i = 0; i < NumPart; i++)
@@ -175,14 +174,14 @@ int init(void)
       P[i].Pos[2] = 0.0;
 
       if(P[i].Vel[1] != 0.0 || P[i].Vel[2] != 0.0)
-      {
-   	    nonzero_vel = 1;
-      }
+        {
+          nonzero_vel = 1;
+        }
     }
   if(nonzero_vel > 0)
-  {
-    warn("Initial y or z velocity nonzero in 1d simulation! Make sure you really want this!");
-  }
+    {
+      warn("Initial y or z velocity nonzero in 1d simulation! Make sure you really want this!");
+    }
 #endif /* #ifdef ONEDIMS */
 
 #ifdef TWODIMS
@@ -191,14 +190,14 @@ int init(void)
       P[i].Pos[2] = 0;
 
       if(P[i].Vel[2] != 0.0)
-      {
-        nonzero_vel = 1;
-      }
+        {
+          nonzero_vel = 1;
+        }
     }
   if(nonzero_vel > 0)
-  {
-	warn("Initial z velocity nonzero in 2d simulation! Make sure you really want this!");
-  }
+    {
+      warn("Initial z velocity nonzero in 2d simulation! Make sure you really want this!");
+    }
 #endif /* #ifdef TWODIMS */
 
   if(All.ComovingIntegrationOn) /*  change to new velocity variable */
@@ -323,8 +322,8 @@ int init(void)
       mvol = boxSize_X * boxSize_Y / All.TotNumGas;
 #else /* #ifdef TWODIMS */
 #ifdef ONEDIMS
-      mvol                  = boxSize_X / All.TotNumGas;
-#else  /* #ifdef ONEDIMS */
+      mvol = boxSize_X / All.TotNumGas;
+#else /* #ifdef ONEDIMS */
       mvol = boxSize_X * boxSize_Y * boxSize_Z / All.TotNumGas;
 #endif /* #ifdef ONEDIMS #else */
 #endif /* #ifdef TWODIMS #else */
@@ -407,35 +406,34 @@ int init(void)
 
   create_mesh();
   mesh_setup_exchange();
-
-  if(RestartFlag == 14)
-    {
-//      char tess_name[1024];
-//      sprintf(tess_name, "%s/tess_%03d", All.OutputDir, RestartSnapNum);
-//      write_voronoi_mesh(&Mesh, tess_name, 0, NTask - 1);
-      char triangulation_name[1024];
-      sprintf(triangulation_name, "%s/triangulation_%03d", All.OutputDir, RestartSnapNum);
-      write_delaunay_triangulation(&Mesh,triangulation_name,0,NTask - 1);
-
-      return 0;
-    }
+#ifdef RESIDUAL_DISTRIBUTION
+  reset_dualarea(&Mesh);
+#endif
 
   for(i = 0, mass = 0; i < NumGas; i++)
     {
       if(RestartFlag == 0)
         {
 #ifdef READ_MASS_AS_DENSITY_IN_INPUT
+#ifdef RESIDUAL_DISTRIBUTION
+          P[i].Mass *= SphP[i].DualArea;
+          SphP[i].Density = P[i].Mass / SphP[i].DualArea;
+#else
           P[i].Mass *= SphP[i].Volume;
+          SphP[i].Density = P[i].Mass / SphP[i].Volume;
+#endif
 #endif /* #ifdef READ_MASS_AS_DENSITY_IN_INPUT */
         }
-
-      SphP[i].Density = P[i].Mass / SphP[i].Volume;
 
       if(SphP[i].Density < All.MinimumDensityOnStartUp)
         {
           SphP[i].Density = All.MinimumDensityOnStartUp;
 
+#ifdef RESIDUAL_DISTRIBUTION
+          P[i].Mass = SphP[i].DualArea * SphP[i].Density;
+#else
           P[i].Mass = SphP[i].Volume * SphP[i].Density;
+#endif
         }
 
       SphP[i].Momentum[0] = P[i].Mass * P[i].Vel[0];
@@ -500,7 +498,7 @@ int init(void)
         /* utherm has been loaded from IC file */
 #ifdef MESHRELAX
       SphP[i].Energy = P[i].Mass * SphP[i].Utherm;
-#else  /* #ifdef MESHRELAX */
+#else /* #ifdef MESHRELAX */
       SphP[i].Energy = P[i].Mass * All.cf_atime * All.cf_atime * SphP[i].Utherm +
                        0.5 * P[i].Mass * (P[i].Vel[0] * P[i].Vel[0] + P[i].Vel[1] * P[i].Vel[1] + P[i].Vel[2] * P[i].Vel[2]);
 #endif /* #ifdef MESHRELAX #else */
@@ -712,7 +710,7 @@ void setup_smoothinglengths(void)
         }
 #ifndef TWODIMS
       SphP[i].Hsml = pow(3.0 / (4 * M_PI) * All.DesNumNgb * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 3) * Nodes[no].len;
-#else  /* #ifndef TWODIMS */
+#else /* #ifndef TWODIMS */
       SphP[i].Hsml = pow(1.0 / (M_PI)*All.DesNumNgb * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 2) * Nodes[no].len;
 #endif /* #ifndef TWODIMS #else */
 #ifdef NO_GAS_SELFGRAVITY

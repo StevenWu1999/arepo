@@ -41,7 +41,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "./arepoconfig.h"
+#include "./../../build/arepoconfig.h"
 
 #ifdef IMPOSE_PINNING
 #include <hwloc.h>
@@ -1343,6 +1343,7 @@ extern struct sph_particle_data
 #ifdef RESIDUAL_DISTRIBUTION
   MyDouble DualArea;
 #endif
+
 
 #if defined(REGULARIZE_MESH_FACE_ANGLE) || defined(OUTPUT_MESH_FACE_ANGLE)
   MySingle MaxFaceAngle;

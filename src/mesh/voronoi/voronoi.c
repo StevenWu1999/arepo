@@ -193,13 +193,13 @@ void create_mesh(void)
       TIMER_STOPSTART(CPU_MESH, CPU_MESH_FIND_DP);
 
       tstart = second();
-
       if(iter == 0)
         {
           MPI_Allreduce(&Nvc, &Largest_Nvc, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 
-          if(Largest_Nvc > 0)
-            n = voronoi_get_connected_particles(&Mesh);
+          if(Largest_Nvc > 0){
+              n = voronoi_get_connected_particles(&Mesh);
+          }
           else
             n = voronoi_get_local_particles();
         }
@@ -1132,7 +1132,7 @@ int face_get_normals(tessellation *T, int i, struct geometry *geom)
 /*! \brief Calculates the normals to Delaunay triangles (2D, possibly moved to voronoi_2d.c in the future).
  *
  *  \param[in] T Pointer to tesslation data.
- *  \param[in] i Index of Delaunay triangle.
+ *  \param[in] i Index of Delaunay triangle array DT.
  *  \param[out] tri_normals Pointer to structure to which normal data is written.
  *
  */
@@ -1140,6 +1140,8 @@ void triangle_get_normals_area(tessellation *T, int i, struct triangle_normals *
 {
   tetra *DT = T->DT;
   point *DP = T->DP;
+
+//  printf("debug line 1144: i = %d, p0 = %d, p1 = %d, p2 = %d\n",i, DT[i].p[0],DT[i].p[1],DT[i].p[2]);
 
   double x0 = DP[DT[i].p[0]].x;
   double y0 = DP[DT[i].p[0]].y;

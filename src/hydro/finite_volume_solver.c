@@ -188,6 +188,7 @@ void compute_interface_fluxes(tessellation *T)
   face *VF  = T->VF;
   point *DP = T->DP;
 
+
   for(i = 0; i < T->Nvf; i++)
     {
       struct state state_L, state_center_L, delta_time_L, delta_space_L;

@@ -324,7 +324,7 @@ void find_gravity_timesteps_and_do_gravity_step_first_half(void)
 #endif /* #ifdef HIERARCHICAL_GRAVITY #else */
 
   TIMER_STOP(CPU_DRIFTS);
-#endif
+#endif /* #if(defined(SELFGRAVITY) || defined(EXTERNALGRAVITY) || defined(EXACT_GRAVITY_FOR_PARTICLE_TYPE)) && !defined(MESHRELAX)*/
 }
 
 /*! \brief Performs the second half step kick operator.

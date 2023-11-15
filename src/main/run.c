@@ -48,10 +48,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../main/allvars.h"
-#include "../main/proto.h"
-
 #include "../domain/domain.h"
+#include "../main/allvars.h"
+#include "../main/cpp_functions.h"
+#include "../main/proto.h"
 #include "../mesh/voronoi/voronoi.h"
 
 static void do_second_order_source_terms_first_half(void);
@@ -96,6 +96,7 @@ void run(void)
     {
       mark_active_timebins();
 
+      mpi_printf("debug: this is ine 99 in run.c\n");
       output_log_messages();
 
       set_non_standard_physics_for_current_time();
@@ -112,6 +113,10 @@ void run(void)
       create_mesh();
 
       mesh_setup_exchange();
+
+      char triangulation_name[1024];
+      sprintf(triangulation_name, "%s/triangulation_sync0_%03d", All.OutputDir, RestartSnapNum);
+      write_only_delaunay_triangulation(&Mesh, triangulation_name, 0, NTask - 1);
 
       update_primitive_variables();
 
@@ -161,6 +166,8 @@ void run(void)
       free(hydro_particles);
     }
 #endif /* #if defined(VORONOI_STATIC_MESH) */
+
+  int loop_test = 0;
 
   while(1) /* main loop */
     {
@@ -218,11 +225,7 @@ void run(void)
           compute_residuals(&Mesh);
 #else
           compute_interface_fluxes(&Mesh);
-
-//          if(ThisTask == 2){
-//            printf("debug: task2 mass %.10e\n",P[11].Mass);
-//          }
-//
+#endif /*ifdef RESIDUAL_DISTRIBUTION*/
 
 #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT
 #ifndef VORONOI_STATIC_MESH
@@ -241,6 +244,7 @@ void run(void)
 
           make_list_of_active_particles();
 
+          mpi_printf("debug: this is line 239 in run.c\n");
           output_log_messages(); /* write some info to log-files */
 
 #if !defined(VORONOI_STATIC_MESH)
@@ -293,27 +297,43 @@ void run(void)
 #endif /* #ifdef EXACT_GRAVITY_FOR_PARTICLE_TYPE */
 
       calculate_non_standard_physics_prior_mesh_construction();
+      // debug
+      int testindex = 58;
 
 #if !defined(VORONOI_STATIC_MESH)
+
+      printf("debug: line 303 ..................\n");
       create_mesh();
+      printf("debug: line 306 ..................\n");
       mesh_setup_exchange();
+
+      if(loop_test == 0 && All.TotNumPart == TimeBinsHydro.GlobalNActiveParticles)
+        {
+          char triangulation_name[1024];
+          sprintf(triangulation_name, "%s/triangulation_sync1_%03d", All.OutputDir, RestartSnapNum);
+          write_only_delaunay_triangulation(&Mesh, triangulation_name, 0, NTask - 1);
+          loop_test += 1;
+        }
+
+      mpi_printf("debug: line 309 ID = %d, mass = %f\n\n", P[testindex].ID, P[testindex].Mass);
+
 #endif /* #if !defined(VORONOI_STATIC_MESH) */
 
       exchange_primitive_variables_and_gradients();
 
+      mpi_printf("debug: line 315 ID = %d, mass = %f\n\n", P[testindex].ID, P[testindex].Mass);
+
 #ifdef RESIDUAL_DISTRIBUTION
-//      compute_residuals(&Mesh);
+      compute_residuals(&Mesh);
 #else
       compute_interface_fluxes(&Mesh);
+#endif /*#ifdef RESIDUAL_DISTRIBUTION*/
 
-
-//      if(ThisTask == 2){
-//        printf("debug: task2 mass %.10e\n",P[11].Mass);
-//      }
-
-//      mpi_terminate_program("end debug");
+      mpi_printf("debug: line 323 ID = %d, mass = %f\n\n", P[testindex].ID, P[testindex].Mass);
 
       update_primitive_variables(); /* these effectively closes off the hydro step */
+      // debug
+      // mpi_terminate_program("end debug");
 
       /* the masses and positions are updated, let's get new forces and potentials */
 
@@ -323,7 +343,8 @@ void run(void)
 
       /* do any extra physics, Strang-split (update both primitive and conserved variables as needed ) */
       calculate_non_standard_physics_end_of_step();
-    }
+
+    } /*while loop */
 
   restart(0); /* write a restart file at final time - can be used to continue simulation beyond final time */
 

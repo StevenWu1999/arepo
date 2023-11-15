@@ -1899,7 +1899,7 @@ void set_integers_for_pointer(point *p)
 
   if(p->xx < 1.0 || p->xx >= 2.0 || p->yy < 1.0 || p->yy >= 2.0)
     {
-      printf("(%g, %g) (%g, %g)\n", p->x, p->y, p->xx, p->yy);
+      printf("(%g, %g) (%g, %g) , %d  %d\n", p->x, p->y, p->xx, p->yy, p->ID, p->index);
       terminate_program("invalid coordinate range");
     }
 
@@ -2040,14 +2040,14 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
         terminate_program(msg);
       }
 
-      fprintf(fdtxt,"ngas_tot: %d\n",ngas_tot);
-      fprintf(fdtxt,"nel_tot: %d\n",nel_tot);
-      fprintf(fdtxt,"ndt_tot: %d\n",ndt_tot);
-
-      printf("ngas_tot: %d\n",ngas_tot);
-      printf("nel_tot: %d\n",nel_tot);
-      printf("ndt_tot: %d\n",ndt_tot);
-
+//      fprintf(fdtxt,"ngas_tot: %d\n",ngas_tot);
+//      fprintf(fdtxt,"nel_tot: %d\n",nel_tot);
+//      fprintf(fdtxt,"ndt_tot: %d\n",ndt_tot);
+//
+//      printf("ngas_tot: %d\n",ngas_tot);
+//      printf("nel_tot: %d\n",nel_tot);
+//      printf("ndt_tot: %d\n",ndt_tot);
+//
 
       my_fwrite(&ngas_tot, sizeof(int), 1, fd);
       my_fwrite(&nel_tot, sizeof(int), 1, fd);
@@ -2057,11 +2057,11 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
 
       my_fwrite(Nedges, sizeof(int), NumGas, fd);
 
-      fprintf(fdtxt,"%s \n","Nedges:");
-      for (i=0;i<NumGas;i++){
-          fprintf(fdtxt,"%d \t",Nedges[i]);
-        }
-      fprintf(fdtxt,"\n");
+//      fprintf(fdtxt,"%s \n","Nedges:");
+//      for (i=0;i<NumGas;i++){
+//          fprintf(fdtxt,"%d \t",Nedges[i]);
+//        }
+//      fprintf(fdtxt,"\n");
 
 
     for(task = writeTask + 1; task <= lastTask; task++)
@@ -2139,7 +2139,6 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
             fprintf(fdtxt,"%f \t",tmp_float[i]);
           }
           fprintf(fdtxt,"\n");
-          printf("debug: tmp line 2144 task %d %f %f \n",task,tmp_float[0],tmp_float[1]);
 
           myfree(tmp_float);
         }
@@ -2182,6 +2181,8 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
 }
 
 void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, int lastTask){
+#ifdef RESIDUAL_DISTRIBUTION
+
   CPU_Step[CPU_MISC] += measure_time();
 
   FILE* fdtxt;
@@ -2202,36 +2203,29 @@ void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, i
 
 
   fprintf(fdtxt,"NumGas: %d \n",NumGas);
-  fprintf(fdtxt,"P[i].ID, P[i].x, P[i].y, P[i].Velx, P[i].Vely, SphP[i].Pressure, SphP[i].DualArea \n");
-
-
+  fprintf(fdtxt,"P[i].ID, P[i].x, P[i].y, P[i].Velx, P[i].Vely, SphP[i].Pressure, SphP[i].Energy, SphP[i].DualArea \n");
   for (i=0;i<NumGas;i++){
-      fprintf(fdtxt,"%d %f %f    %f %f    %f  %.10e\n",P[i].ID, P[i].Pos[0], P[i].Pos[1], P[i].Vel[0], P[i].Vel[1], SphP[i].Pressure, SphP[i].DualArea);
-    }
+    fprintf(fdtxt,"%d %.10g %.10g    %.10g %.10g    %.10g %.10g   %.10g\n",P[i].ID, P[i].Pos[0], P[i].Pos[1], P[i].Vel[0], P[i].Vel[1], SphP[i].Pressure, SphP[i].Energy, SphP[i].DualArea);
+  }
 
   fprintf(fdtxt, "\nNdp: %d \n",T->Ndp);
-  fprintf(fdtxt,"DP[i].task, index, ID, x, y, pressure (DP[-3]~DP[Ndp-1]) \n");
+  fprintf(fdtxt,"DP[i].task, index, ID, x, y, pressure (DP[-3]~DP[Ndp-1]), energy \n");
   for (i=-3;i<T->Ndp;i++){
       if (DP[i].index < 0 ){
-          fprintf(fdtxt,"%d %d %d %f %f   %f\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, -999.0);
+          fprintf(fdtxt,"%d %d %d %.10g %.10g   %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, -999.0, -999.0);
       }else if(DP[i].task == ThisTask && DP[i].index < NumGas) {
           pindex = DP[i].index;
-          fprintf(fdtxt,"%d %d %d %f %f   %f\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, SphP[pindex].Pressure);
+          fprintf(fdtxt,"%d %d %d %.10g %.10g   %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, SphP[pindex].Pressure, SphP[pindex].Energy);
       }else if(DP[i].task == ThisTask && DP[i].index >= NumGas){
           pindex = DP[i].index - NumGas;
-          fprintf(fdtxt,"%d %d %d %f %f   %f\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, SphP[pindex].Pressure);
+          fprintf(fdtxt,"%d %d %d %.10g %.10g   %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, SphP[pindex].Pressure,SphP[pindex].Energy);
       }else if(DP[i].task != ThisTask){
           pindex = DP[i].index;
-          fprintf(fdtxt,"%d %d %d %f %f   %f\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, PrimExch[pindex].Pressure);
+          fprintf(fdtxt,"%d %d %d %.10g %.10g   %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, DP[i].x, DP[i].y, PrimExch[pindex].Pressure, PrimExch[pindex].Energy);
       }else{
           mpi_terminate_program("Error, invalid DP points!");
       }
   }
-//      mpi_printf("debug: DP-1,  %d %d %d %f %f\n ",DP[-1].task, DP[-1].index, DP[-1].ID, DP[-1].x, DP[-1].y);
-//      mpi_printf("debug: DP-2,  %d %d %d %f %f\n ",DP[-2].task, DP[-2].index, DP[-2].ID, DP[-2].x, DP[-2].y);
-//      mpi_printf("debug: DP-3,  %d %d %d %f %f\n ",DP[-3].task, DP[-3].index, DP[-3].ID, DP[-3].x, DP[-3].y);
-//      mpi_printf("debug: DP-4,  %d %d %d %f %f\n ",DP[-4].task, DP[-4].index, DP[-4].ID, DP[-4].x, DP[-4].y);
-
 
   fprintf(fdtxt,"\nNdt: %d\n", T->Ndt);
   fprintf(fdtxt,"DT[i].p[DIMS+1], DT[i].t[DIMS+1], DT[i].s[DIMS+1]:\n");
@@ -2250,9 +2244,86 @@ void write_delaunay_triangulation(tessellation *T, char *fname, int writeTask, i
 //
 //  }
 
+  fclose(fdtxt);
 
   mpi_printf("wrote Delaunay triangulation to file \n");
   CPU_Step[CPU_MAKEIMAGES] += measure_time();
+#endif
+
+
 }
+
+
+void write_only_delaunay_triangulation(tessellation *T, char *fname, int writeTask, int lastTask){
+//#ifdef RESIDUAL_DISTRIBUTION
+
+  CPU_Step[CPU_MISC] += measure_time();
+
+  FILE* fdtxt;
+  int i;
+  char msg[1000], fname_new[1000];
+  tetra *DT         = T->DT;
+  point *DP         = T->DP;
+  tetra_center *DTC = T->DTC;
+  face *VF  = T->VF;   //loop through Nvf
+
+
+  sprintf(fname_new,"%s_%d.txt",fname,ThisTask);
+
+  if(!(fdtxt = fopen(fname_new, "w")))
+  {
+    sprintf(msg, "can't open file `%s' for writing snapshot.\n", fname);
+    terminate_program(msg);
+  }
+  fprintf(fdtxt,"Time: %f, Ti_Current: %d\n",All.Time, All.Ti_Current);
+  fprintf(fdtxt,"NumGas: %d \n",NumGas);
+
+#ifdef RESIDUAL_DISTRIBUTION
+  fprintf(fdtxt,"P[i].ID, P[i].x, P[i].y, P[i].Velx, P[i].Vely, SphP[i].DualArea \n");
+  for (i=0;i<NumGas;i++){
+    fprintf(fdtxt,"%d %.10g %.10g    %.10g %.10g    %.10g\n",P[i].ID, P[i].Pos[0], P[i].Pos[1], P[i].Vel[0], P[i].Vel[1], SphP[i].DualArea);
+  }
+#else
+  fprintf(fdtxt,"P[i].ID, P[i].x, P[i].y, P[i].Velx, P[i].Vely, SphP[i].Volume \n");
+  for (i=0;i<NumGas;i++){
+    fprintf(fdtxt,"%d %.10g %.10g    %.10g %.10g    %.10g\n",P[i].ID, P[i].Pos[0], P[i].Pos[1], P[i].Vel[0], P[i].Vel[1], SphP[i].Volume);
+  }
+#endif
+
+  fprintf(fdtxt, "\nNdp: %d \n",T->Ndp);
+  fprintf(fdtxt,"DP[i].task, index, ID, TimebinSync[P.TimeBin], x, y \n");
+  for (i=-3;i<T->Ndp;i++){
+      fprintf(fdtxt,"%d %d %d %d %.10g %.10g\n",DP[i].task, DP[i].index, DP[i].ID, TimeBinSynchronized[P[DP[i].index].TimeBinHydro],
+            DP[i].x, DP[i].y);
+  }
+
+
+  fprintf(fdtxt,"\nNdt: %d \n", T->Ndt);
+  fprintf(fdtxt,"DT[i].p[DIMS+1], DT[i].t[DIMS+1], DT[i].s[DIMS+1],  DTC[i].cx,DTC[i].cy,DTC[i].cz:\n");
+  for (i=0;i<T->Ndt;i++){
+    fprintf(fdtxt,"%d %d %d   %d %d %d   %u %u %u   %.10g %.10g %.10g\n",DT[i].p[0],DT[i].p[1],DT[i].p[2], DT[i].t[0],DT[i].t[1],DT[i].t[2],
+            DT[i].s[0],DT[i].s[1],DT[i].s[2], DTC[i].cx,DTC[i].cy,DTC[i].cz);
+
+  }
+
+  fprintf(fdtxt,"\nNvf: %d \n", T->Nvf);
+  fprintf(fdtxt,"VF[i].cx, VF[i].cy, VF[i].cz,  VF[i].area,  VF[i].p1, VF[i].p2, DP[VF[i].p1].x, DP[VF[i].p1].y, DP[VF[i].p2].x, DP[VF[i].p2].y:\n");
+  for (i=0;i<T->Nvf;i++){
+    fprintf(fdtxt,"%.10g %.10g %.10g   %.10g   %d %d  %.10g  %.10g   %.10g  %.10g\n",VF[i].cx,VF[i].cy,VF[i].cz,VF[i].area,
+            VF[i].p1, VF[i].p2, DP[VF[i].p1].x, DP[VF[i].p1].y, DP[VF[i].p2].x, DP[VF[i].p2].y);
+  }
+
+
+  fclose(fdtxt);
+
+  mpi_printf("wrote Delaunay triangulation to file \n");
+  CPU_Step[CPU_MAKEIMAGES] += measure_time();
+//#endif /* #ifdef RESIDUAL_DISTRIBUTION */
+
+
+}
+
+
+
 
 #endif /* #if defined(TWODIMS) && !defined(ONEDIMS) */

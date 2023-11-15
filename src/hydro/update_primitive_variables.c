@@ -182,13 +182,21 @@ void do_validity_checks(struct particle_data *localP, struct sph_particle_data *
 void update_primitive_variables_single(struct particle_data *localP, struct sph_particle_data *localSphP, int i,
                                        struct pv_update_data *pvd)
 {
+
+#ifdef RESIDUAL_DISTRIBUTION
+  localSphP[i].Density = localP[i].Mass / localSphP[i].DualArea;
+#else
   localSphP[i].Density = localP[i].Mass / localSphP[i].Volume;
+#endif
 
   if(localP[i].Mass > 0)
     {
       localP[i].Vel[0] = localSphP[i].Momentum[0] / localP[i].Mass;
       localP[i].Vel[1] = localSphP[i].Momentum[1] / localP[i].Mass;
       localP[i].Vel[2] = localSphP[i].Momentum[2] / localP[i].Mass;
+
+//#ifdef RESIDUAL_DISTRIBUTION   //zero velocity problem
+//#endif
 
 #ifdef MAXSCALARS
       for(int k = 0; k < N_Scalar; k++)

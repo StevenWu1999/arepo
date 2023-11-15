@@ -38,7 +38,6 @@
 
 #include "../main/allvars.h"
 #include "../main/proto.h"
-
 #include "../mesh/voronoi/voronoi.h"
 
 #ifdef ONEDIMS_SPHERICAL
@@ -79,7 +78,7 @@ void set_vertex_velocities(void)
 #ifdef MESHRELAX
       for(j = 0; j < 3; j++)
         SphP[i].VelVertex[j] = 0;
-#else  /* #ifdef MESHRELAX */
+#else /* #ifdef MESHRELAX */
       for(j = 0; j < 3; j++)
         SphP[i].VelVertex[j] = P[i].Vel[j]; /* make cell velocity equal to fluid's velocity */
 #endif /* #ifdef MESHRELAX #else */
@@ -114,7 +113,7 @@ void set_vertex_velocities(void)
           SphP[i].VelVertex[1] += 0.5 * dt * acc[1];
           SphP[i].VelVertex[2] += 0.5 * dt * acc[2];
         }
-    }
+    } /* for loop of active particles */
 
   for(idx = 0; idx < TimeBinsHydro.NActiveParticles; idx++)
     {
@@ -171,7 +170,7 @@ void set_vertex_velocities(void)
           else
             fraction = All.CellShapingSpeed * (d - 0.75 * All.CellShapingFactor * cellrad) / (0.25 * All.CellShapingFactor * cellrad);
         }
-#else  /* #if !defined(REGULARIZE_MESH_FACE_ANGLE) */
+#else /* #if !defined(REGULARIZE_MESH_FACE_ANGLE) */
       if(SphP[i].MaxFaceAngle > 0.75 * All.CellMaxAngleFactor && dt > 0)
         {
           if(SphP[i].MaxFaceAngle > All.CellMaxAngleFactor)
@@ -195,7 +194,7 @@ void set_vertex_velocities(void)
           ax = SphP[i].FullGravAccel[0];
           ay = SphP[i].FullGravAccel[1];
           az = SphP[i].FullGravAccel[2];
-#else  /* #ifdef HIERARCHICAL_GRAVITY */
+#else /* #ifdef HIERARCHICAL_GRAVITY */
           ax = P[i].GravAccel[0];
           ay = P[i].GravAccel[1];
           az = P[i].GravAccel[2];
@@ -215,7 +214,7 @@ void set_vertex_velocities(void)
           if(v < vcurl)
             v = vcurl;
 
-#else  /* #ifdef REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED */
+#else /* #ifdef REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED */
           v = All.cf_atime * All.cf_atime * d / dt; /* use fiducial velocity */
 
           double vel  = sqrt(P[i].Vel[0] * P[i].Vel[0] + P[i].Vel[1] * P[i].Vel[1] + P[i].Vel[2] * P[i].Vel[2]);
@@ -246,8 +245,10 @@ void set_vertex_velocities(void)
 #endif /* #ifdef REGULARIZE_MESH_CM_DRIFT */
 
       for(j = NUMDIMS; j < 3; j++)
-        SphP[i].VelVertex[j] = 0; /* vertex velocities for unused dimensions set to zero */
-    }
+        {
+          SphP[i].VelVertex[j] = 0; /* vertex velocities for unused dimensions set to zero */
+        }
+    } /* for loop of active particles */
 
 #ifdef OUTPUT_VERTEX_VELOCITY_DIVERGENCE
   voronoi_exchange_primitive_variables();
