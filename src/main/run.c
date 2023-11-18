@@ -94,9 +94,9 @@ void run(void)
 
   if(RestartFlag != 1) /* if we have restarted from restart files, no need to do the setup sequence */
     {
+
       mark_active_timebins();
 
-      mpi_printf("debug: this is ine 99 in run.c\n");
       output_log_messages();
 
       set_non_standard_physics_for_current_time();
@@ -244,7 +244,6 @@ void run(void)
 
           make_list_of_active_particles();
 
-          mpi_printf("debug: this is line 239 in run.c\n");
           output_log_messages(); /* write some info to log-files */
 
 #if !defined(VORONOI_STATIC_MESH)
@@ -297,14 +296,10 @@ void run(void)
 #endif /* #ifdef EXACT_GRAVITY_FOR_PARTICLE_TYPE */
 
       calculate_non_standard_physics_prior_mesh_construction();
-      // debug
-      int testindex = 58;
 
 #if !defined(VORONOI_STATIC_MESH)
 
-      printf("debug: line 303 ..................\n");
       create_mesh();
-      printf("debug: line 306 ..................\n");
       mesh_setup_exchange();
 
       if(loop_test == 0 && All.TotNumPart == TimeBinsHydro.GlobalNActiveParticles)
@@ -315,13 +310,9 @@ void run(void)
           loop_test += 1;
         }
 
-      mpi_printf("debug: line 309 ID = %d, mass = %f\n\n", P[testindex].ID, P[testindex].Mass);
-
 #endif /* #if !defined(VORONOI_STATIC_MESH) */
 
       exchange_primitive_variables_and_gradients();
-
-      mpi_printf("debug: line 315 ID = %d, mass = %f\n\n", P[testindex].ID, P[testindex].Mass);
 
 #ifdef RESIDUAL_DISTRIBUTION
       compute_residuals(&Mesh);
@@ -329,11 +320,7 @@ void run(void)
       compute_interface_fluxes(&Mesh);
 #endif /*#ifdef RESIDUAL_DISTRIBUTION*/
 
-      mpi_printf("debug: line 323 ID = %d, mass = %f\n\n", P[testindex].ID, P[testindex].Mass);
-
       update_primitive_variables(); /* these effectively closes off the hydro step */
-      // debug
-      // mpi_terminate_program("end debug");
 
       /* the masses and positions are updated, let's get new forces and potentials */
 

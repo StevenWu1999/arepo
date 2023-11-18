@@ -16,7 +16,6 @@ void reset_dualarea(tessellation *T);
 void compute_residuals(tessellation*);
 int boundary_triangle_check_responsibility_thistask(tessellation* , int);
 int boundary_triangle_compare(tessellation*T, int, int);
-void rd_test_func(tessellation*);
 void triangle_vertex_do_time_extrapolation(struct state_primitive *delta, struct state_primitive *st,struct grad_data *grad, double dt_Extrapolation);
 void triangle_vertex_add_extrapolation(struct state_primitive *delta, struct state_primitive *st);
 void apply_FluxRD_list(void);
@@ -27,9 +26,6 @@ lapack_int mat_inv(double *A, unsigned n);
 lapack_int solve_system(int n, double* A, double* b);
 int needs_regularization(int rows, int cols, double* A);
 void regularize_matrix(int rows, int cols, double* A);
-//void write_residual(char* fname,int Ndt_thistask, int* thistask_triangles,double* Residual_List);
-// functions defined in C files, which may be used in the CPP file residual_distribution_solver.cpp
-//void write_delaunay_triangulation(tessellation *, char *, int, int);
 
 
 

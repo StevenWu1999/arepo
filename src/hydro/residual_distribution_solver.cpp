@@ -183,8 +183,7 @@ void reset_dualarea(tessellation *T)
           if(DP[DT[thistask_triangles[i]].p[j]].task == ThisTask)
             {
               int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
-              //              if(SphP_index < 0)
-              //                continue;   not necessary here, since the triangles we selected should not contain external points
+
               if(SphP_index >= NumGas)
                 SphP_index -= NumGas;
 
@@ -201,7 +200,6 @@ void reset_dualarea(tessellation *T)
                                                                 N_DualArea_export * sizeof(struct DualArea_list_data));
   k             = 0;
 
-  // debug: i=0 or i=Ndt_local?
   for(i = 0; i < Ndt_thistask; i++)
     {
       for(j = 0; j < DIMS + 1; j++)
@@ -259,24 +257,6 @@ void compute_residuals(tessellation *T)
           all_local = 1;
         }
 
-//      int p_index;
-//      int pmin = DP[DT[i].p[0]].index;
-//      int pmax = pmin;
-//      int pmin = imin_array(DT[i].p, DIMS + 1);
-//      int pmax = imax_array(DT[i].p, DIMS + 1);
-
-//      for(j = 1; j < DIMS + 1; j++)
-//        {
-//          p_index = DP[DT[i].p[j]].index;
-//          if(p_index > pmax)
-//            {
-//              pmax = p_index;
-//            };
-//          if(p_index < pmin)
-//            {
-//              pmin = p_index;
-//            };
-//        }
       if(has_one_active_local && all_local) /* all vertices are local (excluding local ghost)*/
         {
           DT_label[i] = 'l';
@@ -316,22 +296,6 @@ void compute_residuals(tessellation *T)
           k += 1;
         }
     }
-
-//  // debug
-//  for(i = 0; i < Ndt_local; i++)
-//    {
-//      for(j = 0; j < 3; j++)
-//        {
-//          if(DP[DT[local_triangles[i]].p[j]].task != ThisTask)
-//            {
-//              int pmin = imin_array(DT[local_triangles[i]].p, DIMS + 1);
-//              int pmax = imax_array(DT[local_triangles[i]].p, DIMS + 1);
-//
-//              printf("line 296 debug: possibly wrong task for local triangles: %d %d %d %d %d      pindex:%d %d %d\n", ThisTask,
-//                     DP[DT[local_triangles[i]].p[j]].task, i, j, Ndt_local, pmin, pmax, NumGas);
-//            }
-//        }
-//    }
 
   /* check uniqueness of boundary triangles of this task*/
   int Ndt_boundary_thistask_repeated = 0;
@@ -408,8 +372,6 @@ void compute_residuals(tessellation *T)
   DualArea_list = (struct DualArea_list_data *)mymalloc_movable(&DualArea_list, "DualArea_list",
                                                                 N_DualArea_export * sizeof(struct DualArea_list_data));
   k             = 0;
-  // from i=0 or i=Ndt_local???
-  // debug
 
   for(i = Ndt_local; i < Ndt_thistask; i++)
     {
@@ -786,11 +748,6 @@ void compute_residuals(tessellation *T)
             }
         }
 
-      //      for(k = 0; k < 4; k++)
-      //        {
-      //          Residual_List[i*4+k] = Phi[k];
-      //        }
-
       double Kmatrix_minus_sum[4][4];
 
       for(k = 0; k < 4; k++)
@@ -809,33 +766,6 @@ void compute_residuals(tessellation *T)
       regularize_matrix(4, 4, (double *)Kmatrix_minus_sum);
       mat_inv(&Kmatrix_minus_sum[0][0], 4);
 
-      // use LU decomposition
-      // #ifdef LDA_SCHEME
-      //      int ipiv[4];
-      //      int info = solve_system(4, &Kmatrix_minus_sum[0][0], Phi);
-      //
-      //      if(test_in_tri)
-      //        {
-      //          printf("debug: tri No. %d, print sum_Kminus_inv*phi = %f %f %f %f\n", i, Phi[0], Phi[1], Phi[2], Phi[3]);
-      //        }
-      // #endif
-      //
-      // #ifdef N_SCHEME
-      //      double KU_Sum[4];
-      //      for(k = 0; k < 4; k++)
-      //        {
-      //          KU_Sum[k] = 0.0;
-      //          for(j = 0; j < 3; j++)
-      //            {
-      //              KU_Sum[k] += Kmatrix[k][0][j][kminus] * U_hat[0][j] + Kmatrix[k][1][j][kminus] * U_hat[1][j] +
-      //                           Kmatrix[k][2][j][kminus] * U_hat[2][j] + Kmatrix[k][3][j][kminus] * U_hat[3][j];
-      //            }
-      //        }
-      //      int ipiv[4];
-      //      int info = solve_system(4, &Kmatrix_minus_sum[0][0], KU_Sum);
-      //
-      // #endif
-      // residual distribution:
       double Flux_RD[4][3];
 #ifdef B_SCHEME
       double Flux_LDA[4][3], Flux_N[4][3];
@@ -870,22 +800,6 @@ void compute_residuals(tessellation *T)
             }
         }
 
-        // use LU decomposition
-        //      for(k = 0; k < 4; k++)
-        //        {
-        //          for(j = 0; j < 3; j++)
-        //            {
-        // #ifdef LDA_SCHEME
-        //              Flux_RD[k][j] = -Kmatrix[k][0][j][kplus] * Phi[0] - Kmatrix[k][1][j][kplus] * Phi[1] - Kmatrix[k][2][j][kplus]
-        //              * Phi[2] -
-        //                              Kmatrix[k][3][j][kplus] * Phi[3];
-        // #else
-        //              Flux_LDA[k][j] = -Kmatrix[k][0][j][kplus] * Phi[0] - Kmatrix[k][1][j][kplus] * Phi[1] -
-        //                               Kmatrix[k][2][j][kplus] * Phi[2] - Kmatrix[k][3][j][kplus] * Phi[3];
-        // #endif
-        //            }
-        //        }
-
 #endif  // LDA scheme or B scheme
 
 #if(defined(N_SCHEME) || defined(B_SCHEME))
@@ -911,15 +825,6 @@ void compute_residuals(tessellation *T)
                                              Kmatrix_minus_sum[k][2] * KU_Sum[2] + Kmatrix_minus_sum[k][3] * KU_Sum[3]);
             }
         }
-
-      //      double UminusX[4][3];
-      //      for(k = 0; k < 4; k++)
-      //        {
-      //          for(j = 0; j < 3; j++)
-      //            {
-      //              UminusX[k][j] = U_hat[k][j] - KU_Sum[k];
-      //            }
-      //        }
 
       for(k = 0; k < 4; k++)
         {
@@ -979,14 +884,6 @@ void compute_residuals(tessellation *T)
 
               int P_index = SphP_index;
 
-              /* debug
-              P[P_index].Mass += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[0][j] / SphP[SphP_index].DualArea;
-              SphP[SphP_index].Momentum[0] += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[1][j] /
-              SphP[SphP_index].DualArea; SphP[SphP_index].Momentum[1] += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[2][j]
-              / SphP[SphP_index].DualArea; SphP[SphP_index].Energy += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[3][j] /
-              SphP[SphP_index].DualArea;
-              */
-
               P[P_index].Mass += (-1.0) * triangle_dt * Flux_RD[0][j];
               SphP[SphP_index].Momentum[0] += (-1.0) * triangle_dt * Flux_RD[1][j];
               SphP[SphP_index].Momentum[1] += (-1.0) * triangle_dt * Flux_RD[2][j];
@@ -999,14 +896,6 @@ void compute_residuals(tessellation *T)
               FluxRD_list[N_FluxRD_export].task  = DP[DT[thistask_triangles[i]].p[j]].task;
               FluxRD_list[N_FluxRD_export].index = DP[DT[thistask_triangles[i]].p[j]].originalindex;
 
-              /* debug
-              FluxRD_list[N_FluxRD_export].dMass_Dual        = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[0][j];
-              FluxRD_list[N_FluxRD_export].dMomentum_Dual[0] = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[1][j];
-              FluxRD_list[N_FluxRD_export].dMomentum_Dual[1] = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[2][j];
-              FluxRD_list[N_FluxRD_export].dMomentum_Dual[2] = 0.0;
-              FluxRD_list[N_FluxRD_export].dEnergy_Dual      = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[3][j];
-              */
-
               FluxRD_list[N_FluxRD_export].dMass_Dual        = (-1.0) * triangle_dt * Flux_RD[0][j];
               FluxRD_list[N_FluxRD_export].dMomentum_Dual[0] = (-1.0) * triangle_dt * Flux_RD[1][j];
               FluxRD_list[N_FluxRD_export].dMomentum_Dual[1] = (-1.0) * triangle_dt * Flux_RD[2][j];
@@ -1016,167 +905,11 @@ void compute_residuals(tessellation *T)
               N_FluxRD_export += 1;
             }
         }
-
-      double Kmatrix_minus_sum[4][4];
-
-      for(k = 0; k < 4; k++)
-        {
-          for(p = 0; p < 4; p++)
-            {
-              Kmatrix_minus_sum[k][p] = 0.0;
-              for(j = 0; j < 3; j++)
-                {
-                  Kmatrix_minus_sum[k][p] += Kmatrix[k][p][j][kminus];
-                }
-            }
-        }
-
-      mat_inv(&Kmatrix_minus_sum[0][0], 4);
-
-      // residual distribution:
-      double Flux_RD[4][3];
-#ifdef B_SCHEME
-      double Flux_LDA[4][3], Flux_N[4][3];
-#endif
-
-#if(defined(LDA_SCHEME) || defined(B_SCHEME))
-      double BetaLDA[4][4][3]; /* distributed residual phi_j= BetaLDA_j * phi_total */
-      for(k = 0; k < 4; k++)
-        {
-          for(p = 0; p < 4; p++)
-            {
-              for(j = 0; j < 3; j++)
-                {
-                  BetaLDA[k][p][j] =
-                      -1.0 * (Kmatrix[k][0][j][kplus] * Kmatrix_minus_sum[0][p] + Kmatrix[k][1][j][kplus] * Kmatrix_minus_sum[1][p] +
-                              Kmatrix[k][2][j][kplus] * Kmatrix_minus_sum[2][p] + Kmatrix[k][3][j][kplus] * Kmatrix_minus_sum[3][p]);
-                }
-            }
-        }
-
-      for(k = 0; k < 4; k++)
-        {
-          for(j = 0; j < 3; j++)
-            {
-#ifdef LDA_SCHEME
-              Flux_RD[k][j] =
-                  BetaLDA[k][0][j] * Phi[0] + BetaLDA[k][1][j] * Phi[1] + BetaLDA[k][2][j] * Phi[2] + BetaLDA[k][3][j] * Phi[3];
-#else
-              Flux_LDA[k][j] =
-                  BetaLDA[k][0][j] * Phi[0] + BetaLDA[k][1][j] * Phi[1] + BetaLDA[k][2][j] * Phi[2] + BetaLDA[k][3][j] * Phi[3];
-#endif
-            }
-        }
-
-#endif  // LDA scheme or B scheme
-
-#if(defined(N_SCHEME) || defined(B_SCHEME))
-
-      double Bracket[4][3];
-      double KU_Sum[4];
-
-      for(k = 0; k < 4; k++)
-        {
-          KU_Sum[k] = 0.0;
-          for(j = 0; j < 3; j++)
-            {
-              KU_Sum[k] += Kmatrix[k][0][j][kminus] * U_hat[0][j] + Kmatrix[k][1][j][kminus] * U_hat[1][j] +
-                           Kmatrix[k][2][j][kminus] * U_hat[2][j] + Kmatrix[k][3][j][kminus] * U_hat[3][j];
-            }
-        }
-
-      for(k = 0; k < 4; k++)
-        {
-          for(j = 0; j < 3; j++)
-            {
-              Bracket[k][j] = U_hat[k][j] - (Kmatrix_minus_sum[k][0] * KU_Sum[0] + Kmatrix_minus_sum[k][1] * KU_Sum[1] +
-                                             Kmatrix_minus_sum[k][2] * KU_Sum[2] + Kmatrix_minus_sum[k][3] * KU_Sum[3]);
-            }
-        }
-
-      for(k = 0; k < 4; k++)
-        {
-          for(j = 0; j < 3; j++)
-            {
-#ifdef N_SCHEME
-              Flux_RD[k][j] = Kmatrix[k][0][j][kplus] * Bracket[0][j] + Kmatrix[k][1][j][kplus] * Bracket[1][j] +
-                              Kmatrix[k][2][j][kplus] * Bracket[2][j] + Kmatrix[k][3][j][kplus] * Bracket[3][j];
-#else
-              Flux_N[k][j] = Kmatrix[k][0][j][kplus] * Bracket[0][j] + Kmatrix[k][1][j][kplus] * Bracket[1][j] +
-                             Kmatrix[k][2][j][kplus] * Bracket[2][j] + Kmatrix[k][3][j][kplus] * Bracket[3][j];
-#endif
-            }
-        }
-#endif  // N scheme or B scheme
-
-#ifdef B_SCHEME
-      double Sum_Flux_N[4];
-      double Theta_E[4];
-
-      for(k = 0; k < 4; k++)
-        {
-          Sum_Flux_N[k] = abs(Flux_N[k][0]) + abs(Flux_N[k][1]) + abs(Flux_N[k][2]);
-          if(Sum_Flux_N[i] == 0)
-            {
-              Theta_E[k] = 0.0;
-            }
-          else
-            {
-              Theta_E[k] = abs(Phi[k]) / Sum_Flux_N[k];
-            }
-          Flux_RD[k][0] = Theta_E[k] * Flux_N[k][0] + (1.0 - Theta_E[k]) * Flux_LDA[k][0];
-          Flux_RD[k][1] = Theta_E[k] * Flux_N[k][1] + (1.0 - Theta_E[k]) * Flux_LDA[k][1];
-          Flux_RD[k][2] = Theta_E[k] * Flux_N[k][2] + (1.0 - Theta_E[k]) * Flux_LDA[k][2];
-        }
-
-#endif  // B scheme
-
-      /*use residuals to update fluid state of local points or export to other tasks*/
-
-      for(j = 0; j < 3; j++)
-        {
-          if(DP[DT[thistask_triangles[i]].p[j]].task == ThisTask)
-            {
-              int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
-              //              if(SphP_index < 0)
-              //                continue;   not necessary here, since the triangles we selected should not contain external points
-              if(SphP_index > NumGas)
-                SphP_index -= NumGas;
-
-              int P_index = SphP_index;
-              P[P_index].Mass += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[0][j] / SphP[SphP_index].DualArea;
-              SphP[SphP_index].Momentum[0] += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[1][j] / SphP[SphP_index].DualArea;
-              SphP[SphP_index].Momentum[1] += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[2][j] / SphP[SphP_index].DualArea;
-              SphP[SphP_index].Energy += SphP[SphP_index].Volume * (-1.0) * triangle_dt * Flux_RD[3][j] / SphP[SphP_index].DualArea;
-            }
-          else
-            {
-              int PrimExch_index = DP[DT[thistask_triangles[i]].p[j]].index;
-
-              FluxRD_list[N_FluxRD_export].task  = DP[DT[thistask_triangles[i]].p[j]].task;
-              FluxRD_list[N_FluxRD_export].index = DP[DT[thistask_triangles[i]].p[j]].originalindex;
-
-              FluxRD_list[N_FluxRD_export].dMass_Dual        = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[0][j];
-              FluxRD_list[N_FluxRD_export].dMomentum_Dual[0] = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[1][j];
-              FluxRD_list[N_FluxRD_export].dMomentum_Dual[1] = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[2][j];
-              FluxRD_list[N_FluxRD_export].dMomentum_Dual[2] = 0.0;
-              FluxRD_list[N_FluxRD_export].dEnergy_Dual      = PrimExch[PrimExch_index].Volume * (-1.0) * triangle_dt * Flux_RD[3][j];
-
-              N_FluxRD_export += 1;
-            }
-        }
-
 #endif  // TWO_DIMS
     }   // for loop of triangles, i= 0~ Ndt_thistask
 
   apply_FluxRD_list();
 
-  // debug
-  //  char res_filename[100];
-  //  snprintf(res_filename, 100, "%s/residual_%03d", All.OutputDir, 0);
-  //  write_residual(res_filename,Ndt_thistask, thistask_triangles,Residual_List);
-
-  //  myfree_movable(Residual_List);
   myfree_movable(FluxRD_list);
   myfree_movable(DualArea_list);
   myfree_movable(tri_normals_list);
@@ -1236,72 +969,6 @@ int boundary_triangle_compare(tessellation *T, int DTindex1, int DTindex2)
     }
 
   return 1;
-}
-
-void rd_test_func(tessellation *T)
-{
-  //    cout <<"test"<<endl;
-  mpi_printf("numsph: %d %d %d\n", NumGas, All.MaxPart, All.MaxPartSph);
-
-  //  output triangulation & access data
-  char triangulation_name[1024];
-  snprintf(triangulation_name, 100, "%s/triangulation_%03d", All.OutputDir, 0);
-  write_delaunay_triangulation(T, triangulation_name, 0, 2);
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  // transfer residual between tasks
-  double delta_pressure = 100.0;
-  SphP[10].Pressure += delta_pressure;
-
-  point *DP = T->DP;
-  //  int i = 950;
-  //  int pindex = DP[i].index;
-  //  if (DP[i].task != ThisTask){
-  //    printf("debug: test PrimExch %d %d %d %d %d %f\n",ThisTask, DP[i].task, DP[i].index, DP[i].originalindex, DP[i].ID,
-  //    PrimExch[pindex].Pressure);
-  //  }
-
-  /*
-  FluxListRD = (struct fluxRD_list_data *)mymalloc_movable(&FluxListRD, "FluxListRD", 1 * sizeof(struct fluxRD_list_data));
-
-  if(ThisTask == 0)
-    {
-      FluxListRD[0].task      = 1;
-      FluxListRD[0].index     = 15;
-      FluxListRD[0].dPressure = 500;
-    }
-  else if(ThisTask == 1)
-    {
-      FluxListRD[0].task      = 2;
-      FluxListRD[0].index     = 20;
-      FluxListRD[0].dPressure = 600;
-    }
-  else if(ThisTask == 2)
-    {
-      FluxListRD[0].task      = 0;
-      FluxListRD[0].index     = 25;
-      FluxListRD[0].dPressure = 700;
-    }
-
-  if(ThisTask == 0)
-    {
-      cout << DP[25].ID << " " << DP[25].index << " " << SphP[DP[25].index].Pressure << endl;
-    }
-
-  apply_fluxRD_list();
-
-  if(ThisTask == 0)
-    {
-      cout << DP[25].ID << " " << DP[25].index << " " << SphP[DP[25].index].Pressure << endl;
-    }
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  snprintf(triangulation_name, 100, "%s/triangulation_new_%03d", All.OutputDir, 0);
-  write_delaunay_triangulation(T, triangulation_name, 0, 2);
-  MPI_Barrier(MPI_COMM_WORLD);
-  myfree_movable(FluxListRD);
-
-   */
 }
 
 void triangle_vertex_do_time_extrapolation(struct state_primitive *delta, struct state_primitive *st, struct grad_data *grad, double dt_Extrapolation)
@@ -1395,14 +1062,6 @@ void apply_FluxRD_list(void)
   for(i = 0; i < nimport; i++)
     {
       p = FluxListGet[i].index;
-
-      /* debug
-      P[p].Mass += FluxListGet[i].dMass_Dual / SphP[p].DualArea;
-      SphP[p].Momentum[0] += FluxListGet[i].dMomentum_Dual[0] / SphP[p].DualArea;
-      SphP[p].Momentum[1] += FluxListGet[i].dMomentum_Dual[1] / SphP[p].DualArea;
-      SphP[p].Momentum[2] += FluxListGet[i].dMomentum_Dual[2] / SphP[p].DualArea;
-      SphP[p].Energy += FluxListGet[i].dEnergy_Dual / SphP[p].DualArea;
-      */
 
       P[p].Mass += FluxListGet[i].dMass_Dual;
       SphP[p].Momentum[0] += FluxListGet[i].dMomentum_Dual[0];
@@ -1583,31 +1242,3 @@ void regularize_matrix(int rows, int cols, double *A)
 }
 
 #endif  // #ifdef RESIDUAL_DISTRIBUTION
-
-/*
- void write_residual(char* fname,int Ndt_thistask, int* thistask_triangles,double* Residual_List){
-
-//   DT[thistask_triangles[i]] Res[i]
-//
-   FILE* fdtxt;
-   char msg[1000], fname_new[1000];
-
-
-   snprintf(fname_new,1000,"%s_%d.txt",fname,ThisTask);
-
-   if(!(fdtxt = fopen(fname_new, "w")))
-   {
-     snprintf(msg,1000,"can't open file `%s' for writing snapshot.\n", fname);
-     terminate_program("%s",msg);
-   }
-
-   fprintf(fdtxt,"thistask_triangles[i](i.e. triangle index of DT),  Residual \n");
-   for (int i = 0;i< Ndt_thistask;i++){
-       fprintf(fdtxt, "%d   %.10g %.10g %.10g %.10g \n",
-               thistask_triangles[i],Residual_List[i*4],Residual_List[i*4+1],Residual_List[i*4+2],Residual_List[i*4+3]);
-     }
-   fclose(fdtxt);
-
- }
-
-*/
