@@ -259,24 +259,6 @@ void compute_residuals(tessellation *T)
           all_local = 1;
         }
 
-//      int p_index;
-//      int pmin = DP[DT[i].p[0]].index;
-//      int pmax = pmin;
-//      int pmin = imin_array(DT[i].p, DIMS + 1);
-//      int pmax = imax_array(DT[i].p, DIMS + 1);
-
-//      for(j = 1; j < DIMS + 1; j++)
-//        {
-//          p_index = DP[DT[i].p[j]].index;
-//          if(p_index > pmax)
-//            {
-//              pmax = p_index;
-//            };
-//          if(p_index < pmin)
-//            {
-//              pmin = p_index;
-//            };
-//        }
       if(has_one_active_local && all_local) /* all vertices are local (excluding local ghost)*/
         {
           DT_label[i] = 'l';
@@ -317,21 +299,7 @@ void compute_residuals(tessellation *T)
         }
     }
 
-//  // debug
-//  for(i = 0; i < Ndt_local; i++)
-//    {
-//      for(j = 0; j < 3; j++)
-//        {
-//          if(DP[DT[local_triangles[i]].p[j]].task != ThisTask)
-//            {
-//              int pmin = imin_array(DT[local_triangles[i]].p, DIMS + 1);
-//              int pmax = imax_array(DT[local_triangles[i]].p, DIMS + 1);
-//
-//              printf("line 296 debug: possibly wrong task for local triangles: %d %d %d %d %d      pindex:%d %d %d\n", ThisTask,
-//                     DP[DT[local_triangles[i]].p[j]].task, i, j, Ndt_local, pmin, pmax, NumGas);
-//            }
-//        }
-//    }
+
 
   /* check uniqueness of boundary triangles of this task*/
   int Ndt_boundary_thistask_repeated = 0;
@@ -502,6 +470,25 @@ void compute_residuals(tessellation *T)
               vertex_state.velx  = P[SphP_index].Vel[0];
               vertex_state.vely  = P[SphP_index].Vel[1];
               vertex_state.velz  = P[SphP_index].Vel[2];
+
+              //debug
+              // #ifdef REFLECTIVE_X
+              // if(DP[DT[thistask_triangles[i]].p[j]].image_flags & REFL_X_FLAGS){
+              //     vertex_state.velx = -vertex_state.velx;
+              //   }
+              // #endif
+              // #ifdef REFLECTIVE_Y
+              // if(DP[DT[thistask_triangles[i]].p[j]].image_flags & REFL_Y_FLAGS){
+              //     vertex_state.vely = -vertex_state.vely;
+              //   }
+              // #endif
+              // #ifdef REFLECTIVE_Z
+              // if(DP[DT[thistask_triangles[i]].p[j]].image_flags & REFL_Z_FLAGS){
+              //     vertex_state.velz = -vertex_state.velz;
+
+              // }
+              // #endif
+              
 
               double dt_Extrapolation = All.Time - SphP[SphP_index].TimeLastPrimUpdate;
 

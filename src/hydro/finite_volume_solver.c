@@ -936,7 +936,10 @@ void face_boundary_check_vertex(tessellation *T, int p, MyFloat *velx, MyFloat *
   /* check for reflecting or outflowing boundaries */
 #if defined(REFLECTIVE_X)
   if((T->DP[p].image_flags & REFL_X_FLAGS))
-    *velx *= -1;
+    {*velx *= -1;
+      //debug
+      printf("x position: %f\n", T->DP[p].x);
+    }
 #endif /* #if defined(REFLECTIVE_X) */
 #if defined(REFLECTIVE_Y)
   if((T->DP[p].image_flags & REFL_Y_FLAGS))
@@ -967,7 +970,6 @@ void face_boundary_check(point *p, double *velx, double *vely, double *velz)
   /* check for reflecting or outflowing boundaries */
 #if defined(REFLECTIVE_X)
   if((p->image_flags & REFL_X_FLAGS) && !(p->image_flags & OUTFLOW_X))
-    *velx *= -1;
 #endif /* #if defined(REFLECTIVE_X) */
 #if defined(REFLECTIVE_Y)
   if((p->image_flags & REFL_Y_FLAGS) && !(p->image_flags & OUTFLOW_Y))

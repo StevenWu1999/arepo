@@ -9,11 +9,8 @@ import sys    # system specific calls
 import numpy as np    # scientific computing package
 import h5py    # hdf5 format
 
-simulation_directory = str(sys.argv[1])
-print("examples/Noh_2d/create.py: creating ICs in directory " + simulation_directory)
 
 """ initial condition parameters """
-FilePath = simulation_directory + '/IC.hdf5'
 
 FloatType = np.float64  # double precision: np.float64, for single use np.float32
 IntType = np.int32
@@ -21,6 +18,9 @@ IntType = np.int32
 Boxsize = FloatType(6.0)
 CellsPerDimension = IntType(150)
 NumberOfCells = CellsPerDimension * CellsPerDimension
+
+FilePath = './IC_Noh_Cartesian'+str(CellsPerDimension)+'.hdf5'
+
 
 ## initial state
 density_0 = 1.0
@@ -57,7 +57,7 @@ Velocity[:,1] = velocity_radial_0 * yPosFromCenter / Radius
 Uthermal = np.full(NumberOfCells, utherm_0, dtype=FloatType)
 
 """ write *.hdf5 file; minimum number of fields required by Arepo """
-IC = h5py.File(simulation_directory+'/IC.hdf5', 'w')
+IC = h5py.File(FilePath, 'w')
 
 ## create hdf5 groups
 header = IC.create_group("Header")

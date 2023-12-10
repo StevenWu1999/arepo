@@ -9,6 +9,7 @@ TWODIMS                                  # 2d simulation
 READ_MASS_AS_DENSITY_IN_INPUT            # Reads the mass field in the IC as density
 
 #--------------------------------------- Mesh motion and regularization
+VORONOI_STATIC_MESH                      # static mesh
 REGULARIZE_MESH_CM_DRIFT                 # Mesh regularization; Move mesh generating point towards center of mass to make cells rounder.
 REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED  # Limit mesh regularization speed by local sound speed
 REGULARIZE_MESH_FACE_ANGLE               # Use maximum face angle as roundness criterion in mesh regularization

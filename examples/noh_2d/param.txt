@@ -1,10 +1,10 @@
 %% examples/Noh_2d/param.txt
 % parameter file for 2d Noh problem
 
-InitCondFile                          ./IC
+InitCondFile                          ./examples/noh_2d/IC_Noh_Cartesian150
 ICFormat                              3
 
-OutputDir                             ./output/
+OutputDir                             ./output_Noh2D_N2_Cartesian150/
 SnapshotFileBase                      snap
 SnapFormat                            3
 NumFilesPerSnapshot                   1
@@ -90,5 +90,5 @@ MinGasTemp                            0.0
 MinEgySpec                            0.0
 MinimumDensityOnStartUp               0.0
 
-CellShapingSpeed                      0.5
-CellMaxAngleFactor                    2.25
+% CellShapingSpeed                      0.5
+% CellMaxAngleFactor                    2.25

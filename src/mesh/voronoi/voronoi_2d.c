@@ -1927,7 +1927,6 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
   CPU_Step[CPU_MISC] += measure_time();
 
   FILE *fd;
-  FILE *fdtxt;
   char msg[1000];
   MPI_Status status;
   int i, j, k, MaxNel, Nel;
@@ -2032,119 +2031,54 @@ void write_voronoi_mesh(tessellation *T, char *fname, int writeTask, int lastTas
           terminate_program(msg);
         }
 
-
-
-      if(!(fdtxt = fopen("tess0.txt", "w")))
-      {
-        sprintf(msg, "can't open file `%s' for writing snapshot.\n", fname);
-        terminate_program(msg);
-      }
-
-//      fprintf(fdtxt,"ngas_tot: %d\n",ngas_tot);
-//      fprintf(fdtxt,"nel_tot: %d\n",nel_tot);
-//      fprintf(fdtxt,"ndt_tot: %d\n",ndt_tot);
-//
-//      printf("ngas_tot: %d\n",ngas_tot);
-//      printf("nel_tot: %d\n",nel_tot);
-//      printf("ndt_tot: %d\n",ndt_tot);
-//
-
       my_fwrite(&ngas_tot, sizeof(int), 1, fd);
       my_fwrite(&nel_tot, sizeof(int), 1, fd);
       my_fwrite(&ndt_tot, sizeof(int), 1, fd);
 
 
-
       my_fwrite(Nedges, sizeof(int), NumGas, fd);
-
-//      fprintf(fdtxt,"%s \n","Nedges:");
-//      for (i=0;i<NumGas;i++){
-//          fprintf(fdtxt,"%d \t",Nedges[i]);
-//        }
-//      fprintf(fdtxt,"\n");
-
 
     for(task = writeTask + 1; task <= lastTask; task++)
         {
           tmp = mymalloc("tmp", sizeof(int) * ngas_list[task]);
           MPI_Recv(tmp, ngas_list[task], MPI_INT, task, TAG_N + 2, MPI_COMM_WORLD, &status);
           my_fwrite(tmp, sizeof(int), ngas_list[task], fd);
-          fprintf(fdtxt,"task: %d tmp: \n",task);
-          for (i=0;i<ngas_list[task];i++){
-            fprintf(fdtxt,"%d \t",tmp[i]);
-          }
-         fprintf(fdtxt,"\n");
-
-
           myfree(tmp);
         }
 
       my_fwrite(NedgesOffset, sizeof(int), NumGas, fd);
-      fprintf(fdtxt,"%s \n","NedgesOffset:");
-      for (i=0;i<NumGas;i++){
-        fprintf(fdtxt,"%d \t",NedgesOffset[i]);
-      }
-      fprintf(fdtxt,"\n");
-
-
+      
       for(task = writeTask + 1; task <= lastTask; task++)
         {
           tmp = mymalloc("tmp", sizeof(int) * ngas_list[task]);
           MPI_Recv(tmp, ngas_list[task], MPI_INT, task, TAG_N + 3, MPI_COMM_WORLD, &status);
           my_fwrite(tmp, sizeof(int), ngas_list[task], fd);
-          fprintf(fdtxt,"task: %d tmp: \n",task);
-          for (i=0;i<ngas_list[task];i++){
-            fprintf(fdtxt,"%d \t",tmp[i]);
-          }
-          fprintf(fdtxt,"\n");
           myfree(tmp);
 
 
       }
 
       my_fwrite(EdgeList, sizeof(int), Nel, fd);
-      fprintf(fdtxt,"%s \n","EdgeList:");
-      for (i=0;i<Nel;i++){
-        fprintf(fdtxt,"%d \t",EdgeList[i]);
-      }
-      fprintf(fdtxt,"\n");
 
       for(task = writeTask + 1; task <= lastTask; task++)
         {
           tmp = mymalloc("tmp", sizeof(int) * nel_list[task]);
           MPI_Recv(tmp, nel_list[task], MPI_INT, task, TAG_N + 4, MPI_COMM_WORLD, &status);
           my_fwrite(tmp, sizeof(int), nel_list[task], fd);
-          fprintf(fdtxt,"task: %d tmp: \n",task);
-          for (i=0;i<nel_list[task];i++){
-            fprintf(fdtxt,"%d \t",tmp[i]);
-          }
-          fprintf(fdtxt,"\n");
-
           myfree(tmp);
         }
 
       my_fwrite(xyz_edges, sizeof(float), T->Ndt * DIMS, fd);
-      fprintf(fdtxt,"%s \n","xyz_edges:");
-      for (i=0;i<T->Ndt*DIMS;i++){
-        fprintf(fdtxt,"%f \t",xyz_edges[i]);
-      }
-      fprintf(fdtxt,"\n");
+
       for(task = writeTask + 1; task <= lastTask; task++)
         {
           tmp_float = mymalloc("tmp", sizeof(float) * DIMS * ndt_list[task]);
           MPI_Recv(tmp_float, sizeof(float) * DIMS * ndt_list[task], MPI_BYTE, task, TAG_N + 5, MPI_COMM_WORLD, &status);
           my_fwrite(tmp_float, sizeof(float), DIMS * ndt_list[task], fd);
-          fprintf(fdtxt,"task: %d tmp: \n",task);
-          for (i=0;i<DIMS*ndt_list[task];i++){
-            fprintf(fdtxt,"%f \t",tmp_float[i]);
-          }
-          fprintf(fdtxt,"\n");
-
           myfree(tmp_float);
         }
 
       fclose(fd);
-      fclose(fdtxt);
     }
   else
     {
