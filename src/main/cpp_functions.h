@@ -15,6 +15,7 @@ void cpp_hello_world();
 void reset_dualarea(tessellation *T);
 void compute_residuals(tessellation*);
 int boundary_triangle_check_responsibility_thistask(tessellation* , int);
+int triangle_check_responsibility_this_task(tessellation* , int);
 int boundary_triangle_compare(tessellation*T, int, int);
 void rd_test_func(tessellation*);
 void triangle_vertex_do_time_extrapolation(struct state_primitive *delta, struct state_primitive *st,struct grad_data *grad, double dt_Extrapolation);

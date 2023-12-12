@@ -236,12 +236,16 @@ void compute_residuals(tessellation *T)
   int i, j = 0, k = 0, p;
   int Ndp = T->Ndp;
   int Ndt = T->Ndt;
+  
+  int* flag_thistask_triangles;
+  /* old algorithm for assigning task responsibility
   char *DT_label;
   DT_label      = (char *)mymalloc_movable(&DT_label, "DT_label",
-                                           Ndt * sizeof(char)); /* array of labels of the triangles, l = local, b = boundary, o = other*/
+                                           Ndt * sizeof(char)); // array of labels of the triangles, l = local, b = boundary, o = other
   int Ndt_local = 0, Ndt_boundary = 0, Ndt_other = 0, Ndt_boundary_thistask = 0;
 
-  /* classification of Delaunay triangles*/
+
+  // classification of Delaunay triangles
   for(i = 0; i < Ndt; i++)
     {
 
@@ -259,12 +263,12 @@ void compute_residuals(tessellation *T)
           all_local = 1;
         }
 
-      if(has_one_active_local && all_local) /* all vertices are local (excluding local ghost)*/
+      if(has_one_active_local && all_local) // all vertices are local (excluding local ghost)
         {
           DT_label[i] = 'l';
           Ndt_local += 1;
         }
-      else if(has_one_active_local) /*at least one vertex is local (excluding local ghost), but not all of them are local*/
+      else if(has_one_active_local) // at least one vertex is local (excluding local ghost), but not all of them are local
         {
           DT_label[i] = 'b';
           Ndt_boundary += 1;
@@ -301,7 +305,7 @@ void compute_residuals(tessellation *T)
 
 
 
-  /* check uniqueness of boundary triangles of this task*/
+  // check uniqueness of boundary triangles of this task
   int Ndt_boundary_thistask_repeated = 0;
   for(i = 0; i < Ndt_boundary_thistask; i++)
     {
@@ -331,6 +335,52 @@ void compute_residuals(tessellation *T)
           j++;
         }
     }
+  */
+
+  int Ndt_thistask = 0;
+  //flag: this task = 1, other task = 0
+  flag_thistask_triangles = (int*)  mymalloc_movable(&flag_thistask_triangles, "flag_thistask_triangles", Ndt * sizeof(int));
+
+  for(i = 0; i > Ndt; i++)
+    {
+      flag_thistask_triangles[i] = 0;
+
+      bool contain_local_active = false;
+      for(j = 0; j < DIMS + 1; j++)
+        {
+          if(DP[DT[i].p[j]].task == ThisTask && DP[DT[i].p[j]].index >= 0 && DP[DT[i].p[j]].index < NumGas)
+            {
+              if(TimeBinSynchronized[P[DP[DT[i].p[j]].index].TimeBinHydro])
+                {
+                  contain_local_active = true;
+                  break;
+                }
+            }
+        }
+      if(contain_local_active == false)
+        {
+          continue;
+        }
+
+      if(triangle_check_responsibility_this_task(T, i))
+        {
+          continue;
+        }
+
+      flag_thistask_triangles[i] = 1;
+      Ndt_thistask += 1;
+    }
+
+  int *thistask_triangles = (int *)mymalloc_movable(&thistask_triangles, "thistask_triangles", Ndt_thistask * sizeof(int));
+  j = 0;
+  for (i = 0; i < Ndt; i++){
+      if (flag_thistask_triangles[i] == 1){
+          thistask_triangles[j] = i;
+          j += 1;
+        }
+    }
+
+
 
   /* compute residual: calculate normal vectors and triangular area; assign dual area to vertices
    tri_normals_list is a shorter list compared to DT because it only keeps necessary triangles for
@@ -359,8 +409,6 @@ void compute_residuals(tessellation *T)
           if(DP[DT[thistask_triangles[i]].p[j]].task == ThisTask)
             {
               int SphP_index = DP[DT[thistask_triangles[i]].p[j]].index;
-              //              if(SphP_index < 0)
-              //                continue;   not necessary here, since the triangles we selected should not contain external points
               if(SphP_index >= NumGas)
                 SphP_index -= NumGas;
 
@@ -376,10 +424,8 @@ void compute_residuals(tessellation *T)
   DualArea_list = (struct DualArea_list_data *)mymalloc_movable(&DualArea_list, "DualArea_list",
                                                                 N_DualArea_export * sizeof(struct DualArea_list_data));
   k             = 0;
-  // from i=0 or i=Ndt_local???
-  // debug
-
-  for(i = Ndt_local; i < Ndt_thistask; i++)
+  // from i = Ndt_local in old algorithm
+  for(i = 0; i < Ndt_thistask; i++)
     {
       for(j = 0; j < DIMS + 1; j++)
         {
@@ -403,6 +449,8 @@ void compute_residuals(tessellation *T)
   // main loop through triangles this task responsible for
   for(i = 0; i < Ndt_thistask; i++)
     {
+      
+      
       // get triangle timebin/timestep and skip inactive triangles
       int timebin_vertices[DIMS + 1];
       for(j = 0; j < DIMS + 1; j++)
@@ -422,6 +470,7 @@ void compute_residuals(tessellation *T)
             }
         }
 
+      
       bool is_active            = false;
       int timebin_this_triangle = timebin_vertices[0];
 
@@ -433,10 +482,12 @@ void compute_residuals(tessellation *T)
           if(timebin_vertices[j] < timebin_this_triangle)
             timebin_this_triangle = timebin_vertices[j];
         }
-
+        
+      /* The new algorithm has already skipped inactive triangles
       if(is_active == false)
         continue;
-
+      */  
+      
       double triangle_dt = (((integertime)1) << timebin_this_triangle) * All.Timebase_interval;
 
       triangle_dt *= 0.5;  // RK2 half timestep
@@ -471,24 +522,23 @@ void compute_residuals(tessellation *T)
               vertex_state.vely  = P[SphP_index].Vel[1];
               vertex_state.velz  = P[SphP_index].Vel[2];
 
-              //debug
-              // #ifdef REFLECTIVE_X
-              // if(DP[DT[thistask_triangles[i]].p[j]].image_flags & REFL_X_FLAGS){
-              //     vertex_state.velx = -vertex_state.velx;
-              //   }
-              // #endif
-              // #ifdef REFLECTIVE_Y
-              // if(DP[DT[thistask_triangles[i]].p[j]].image_flags & REFL_Y_FLAGS){
-              //     vertex_state.vely = -vertex_state.vely;
-              //   }
-              // #endif
-              // #ifdef REFLECTIVE_Z
-              // if(DP[DT[thistask_triangles[i]].p[j]].image_flags & REFL_Z_FLAGS){
-              //     vertex_state.velz = -vertex_state.velz;
+              // debug
+              //  #ifdef REFLECTIVE_X
+              //  if(DP[DT[thistask_triangles[i]].p[j]].image_flags & REFL_X_FLAGS){
+              //      vertex_state.velx = -vertex_state.velx;
+              //    }
+              //  #endif
+              //  #ifdef REFLECTIVE_Y
+              //  if(DP[DT[thistask_triangles[i]].p[j]].image_flags & REFL_Y_FLAGS){
+              //      vertex_state.vely = -vertex_state.vely;
+              //    }
+              //  #endif
+              //  #ifdef REFLECTIVE_Z
+              //  if(DP[DT[thistask_triangles[i]].p[j]].image_flags & REFL_Z_FLAGS){
+              //      vertex_state.velz = -vertex_state.velz;
 
               // }
               // #endif
-              
 
               double dt_Extrapolation = All.Time - SphP[SphP_index].TimeLastPrimUpdate;
 
@@ -1019,12 +1069,118 @@ void compute_residuals(tessellation *T)
   myfree_movable(DualArea_list);
   myfree_movable(tri_normals_list);
   myfree_movable(thistask_triangles);
-  myfree_movable(boundary_triangles);
-  myfree_movable(local_triangles);
-  myfree_movable(DT_label);
+  // myfree_movable(boundary_triangles);
+  // myfree_movable(local_triangles);
+  // myfree_movable(DT_label);
+  myfree_movable(flag_thistask_triangles);
 
   TIMER_STOP(CPU_RESIDUAL_DISTRIBUTION);
 }
+
+/*! \brief Checks whether local task is responsible for a triangle/tetrahedron.
+ *  \param T tessellation
+ *  \param DTindex index of the triangle/tetrahedron
+ *  \return -1 if not local responsibility, 0 if it is.
+ */
+int triangle_check_responsibility_this_task(tessellation *T, int DTindex)
+{
+  point *DP = T->DP;
+  tetra *DT = T->DT;
+
+  int responsible_task;
+  int ID_list[DIMS + 1]; /* IDs of the vertices in this triangle */
+  for(int i = 0; i < DIMS + 1; i++)
+    {
+      ID_list[i] = DP[DT[DTindex].p[i]].ID;
+    }
+
+  // Find the minimum ID
+  int min_id       = ID_list[0];
+  int min_id_index = 0;
+  for(int i = 1; i < DIMS + 1; i++)
+    {
+      if(ID_list[i] < min_id)
+        {
+          min_id       = ID_list[i];
+          min_id_index = i;
+        }
+    }
+
+  // Count the number of occurrences of the minimum ID
+  int count_min_id = 0;
+  for(int i = 0; i < DIMS + 1; i++)
+    {
+      if(ID_list[i] == min_id)
+        {
+          count_min_id++;
+        }
+    }
+
+  // reflective boundary, where the same ID may appear more than once
+  if(count_min_id > 1)
+    {
+      int vertex_tasks[DIMS + 1];
+      int *task_count;  // counts of each task
+      task_count = (int *)mymalloc("task_count", NTask * sizeof(int));
+      for(int i = 0; i < NTask; i++)
+        {
+          task_count[i] = 0;
+        }
+      for(int i = 0; i < DIMS + 1; i++)
+        {
+          vertex_tasks[i] = DP[DT[DTindex].p[i]].task;
+          task_count[vertex_tasks[i]] += 1;
+        }
+      responsible_task = arg_imax(task_count, NTask);
+      myfree(task_count);
+      if(responsible_task == ThisTask)
+        return 0;
+      else
+        return -1;
+    }
+  // non-reflective boundary, where the same ID appears only once
+  else
+    {
+      // get triangle timebin/timestep
+      int timebin_vertices[DIMS + 1];
+      for(int i = 0; i < DIMS + 1; i++)
+        {
+          if(DP[DT[DTindex].p[i]].task == ThisTask)
+            {
+              int SphP_index = DP[DT[DTindex].p[i]].index;
+              if(SphP_index >= NumGas)
+                SphP_index -= NumGas;
+
+              timebin_vertices[i] = P[SphP_index].TimeBinHydro;
+            }
+          else
+            {
+              int PrimExch_index  = DP[DT[DTindex].p[i]].index;
+              timebin_vertices[i] = PrimExch[PrimExch_index].TimeBinHydro;
+            }
+        }
+
+      // start from min ID, responsible if the active vertex is local
+      for(int i = 0; i < DIMS + 1; i++)
+        {
+          int vertex_check = (min_id_index + i) % (DIMS + 1);
+
+          if(TimeBinSynchronized[timebin_vertices[vertex_check]]) //use this active vertex to determine the responsible task
+            {
+              if(DP[DT[DTindex].p[vertex_check]].task == ThisTask)
+                {
+                  int vertex_index = DP[DT[DTindex].p[vertex_check]].index;
+                  if(vertex_index < NumGas && vertex_index >= 0) //this active vertex is local
+                    {
+                      return 0;
+                    }
+                }
+              return -1;  
+            }
+        }
+    }
+}
+
 
 int boundary_triangle_check_responsibility_thistask(tessellation *T, int DTindex)
 {
