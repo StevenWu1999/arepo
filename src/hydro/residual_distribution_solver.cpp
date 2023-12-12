@@ -341,7 +341,7 @@ void compute_residuals(tessellation *T)
   //flag: this task = 1, other task = 0
   flag_thistask_triangles = (int*)  mymalloc_movable(&flag_thistask_triangles, "flag_thistask_triangles", Ndt * sizeof(int));
 
-  for(i = 0; i > Ndt; i++)
+  for(i = 0; i < Ndt; i++)
     {
       flag_thistask_triangles[i] = 0;
 
@@ -482,11 +482,11 @@ void compute_residuals(tessellation *T)
           if(timebin_vertices[j] < timebin_this_triangle)
             timebin_this_triangle = timebin_vertices[j];
         }
-        
-      /* The new algorithm has already skipped inactive triangles
-      if(is_active == false)
-        continue;
-      */  
+
+      // The new algorithm does not need this check  
+      // if(is_active == false)
+      //   continue;
+     
       
       double triangle_dt = (((integertime)1) << timebin_this_triangle) * All.Timebase_interval;
 
